@@ -1,0 +1,6 @@
+{
+  "projects": {
+    "default": "vethosia-production",
+    "prod": "vethosia-production"
+  }
+}

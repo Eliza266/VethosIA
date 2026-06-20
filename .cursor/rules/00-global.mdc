@@ -1,0 +1,12 @@
+---
+description: Convenciones globales del repo VetIA (siempre activas)
+alwaysApply: true
+---
+
+- Idioma de docs/comentarios: español; identificadores de código en inglés.
+- Una micro-tarea = un commit (Conventional Commits: feat/fix/test/chore/refactor). Cada commit deja el repo verde (lint + typecheck + tests).
+- Vertical slices: UI → API → datos → test por feature. No "todo el backend primero".
+- Prohibido poner claves de proveedor en `VITE_*` o en el cliente. Secretos solo server-side (env de Cloud Run / Secret Manager).
+- TDD donde aplique: para lógica de dominio (consumo, máquinas de estado, aislamiento por tenant, firma Wompi) se escribe el test primero.
+- No declarar una tarea "done" sin su fila verde en `docs/qa/matriz.md`.
+- No romper el verde: si un cambio rompe CI, se arregla en el mismo commit.

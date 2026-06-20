@@ -1,0 +1,49 @@
+{
+  "consulta": {
+    "id": "rzTXnJXIU6UeUBSFcF5d",
+    "numeroHC": "HC000002",
+    "motivo": "Vómito y diarrea de 24 horas de evolución con decaimiento y hiporexia",
+    "prioridad": "urgente",
+    "fechaHora": "2026-06-16T04:04:18.794Z",
+    "signosVitales": {},
+    "soap": {
+      "generadoPorIA": true,
+      "subjetivo": "Paciente canino macho con vómito y diarrea de inicio aproximadamente 24 horas previas a la consulta. El propietario refiere decaimiento, hiporexia e hipodipsia.",
+      "objetivo": "Temperatura rectal de 39.2°C (febrícula). Resto de parámetros del examen físico no documentados en la transcripción.",
+      "analisis": "Gastroenteritis aguda canina con febrícula. Diagnósticos diferenciales incluyen: gastroenteritis infecciosa (viral, bacteriana o parasitaria), gastroenteritis hemorrágica, intoxicación alimentaria o ingestión de cuerpo extraño. No se puede descartar parvovirus sin pruebas complementarias.",
+      "plan": "Fluidoterapia de mantenimiento e hidratación. Control y seguimiento en 29 horas según indicación clínica. Se recomienda hemograma, química sanguínea y prueba rápida de parvovirus como complementarios. Dieta blanda durante el período de recuperación.",
+      "medicamentosSugeridos": [
+        {
+          "nombre": "Solución Ringer Lactato o Solución Salina 0.9%",
+          "dosis": "Según cálculo de déficit hídrico y mantenimiento (40-60 ml/kg/día)",
+          "via": "Intravenosa o subcutánea",
+          "frecuencia": "Infusión continua IV o fraccionada SC cada 8-12h",
+          "duracion": "Hasta estabilización clínica y tolerancia oral",
+          "indicacion": "Rehidratación y corrección de desequilibrio hidroelectrolítico"
+        }
+      ]
+    },
+    "transcripcion": "Paciente canino macho presenta vómito y diarrea desde ayer, está decaído, come poco y toma poca agua. Temperatura 39.2, recomiendo hidratación y controles 29 horas.",
+    "estado": "aprobada"
+  },
+  "paciente": {
+    "codigo": "PAC-000001",
+    "nombre": "Firulais Test",
+    "especie": "perro",
+    "sexo": "macho",
+    "estadoReproductivo": "entero",
+    "propietario": {
+      "nombre": "Prueba Vethosia",
+      "telefono": "3002555948"
+    }
+  },
+  "vet": {
+    "nombre": "Veterinario",
+    "email": "gerencia@nextvoiceia.com"
+  },
+  "entidad": {
+    "nombre": "Vethosia",
+    "plan": "free",
+    "ciudad": "Colombia"
+  }
+}

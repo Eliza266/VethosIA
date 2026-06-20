@@ -1,0 +1,225 @@
+rules_version = '2';
+
+// VetIA - reglas de Firestore.
+// Estrategia: durante la migracion multi-tenant convivimos con datos viejos que
+// solo tienen veterinarioId y datos nuevos que ya traen orgId. Por eso cada chequeo
+// intenta primero el aislamiento por orgId (request.auth.token.orgId, seteado via
+// custom claims) y si el doc todavia no tiene orgId cae al dueño legacy (veterinarioId).
+// Ojo: cuando todos los docs tengan orgId conviene borrar el fallback para cerrar del todo.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helpers ────────────────────────────────────────────────
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function uid() {
+      return request.auth.uid;
+    }
+
+    function tokenOrg() {
+      return request.auth.token.orgId;
+    }
+
+    function hasOrgClaim() {
+      return isSignedIn() && 'orgId' in request.auth.token && request.auth.token.orgId != null;
+    }
+
+    // Sin rol en claims NO se asume vet (fail-closed).
+    function hasRol() {
+      return isSignedIn() && 'rol' in request.auth.token && request.auth.token.rol != null;
+    }
+
+    function rol() {
+      return request.auth.token.rol;
+    }
+
+    function isAdmin() {
+      return hasRol() && (rol() == 'admin' || rol() == 'superadmin');
+    }
+
+    function isSuperadmin() {
+      return hasRol() && rol() == 'superadmin';
+    }
+
+    function ownsByVet(data) {
+      return isSuperadmin()
+             || (hasOrgClaim() && hasRol() && 'orgId' in data && data.orgId == tokenOrg())
+             || (!hasOrgClaim() && !('orgId' in data) && data.veterinarioId == uid());
+    }
+
+    function ownsByVetList(data) {
+      return isSuperadmin()
+             || (hasOrgClaim() && hasRol() && 'orgId' in data && data.orgId == tokenOrg())
+             || (!hasOrgClaim() && !('orgId' in data) && uid() in data.veterinarioIds);
+    }
+
+    function ownsByOrg(data) {
+      return isSuperadmin() || (hasOrgClaim() && 'orgId' in data && data.orgId == tokenOrg());
+    }
+
+    function createOrgOk(data) {
+      return (hasOrgClaim() && hasRol() && 'orgId' in data && data.orgId == tokenOrg())
+             || (!hasOrgClaim() && data.veterinarioId == uid());
+    }
+
+    // Bloquea aprobacion y transiciones sensibles desde el cliente (solo backend).
+    function consultaUpdateSeguro() {
+      let prevEstado = resource.data.keys().hasAny(['estado']) ? resource.data.estado : 'borrador';
+      return !('estado' in request.resource.data)
+             || request.resource.data.estado == prevEstado
+             || (request.resource.data.estado != 'aprobada'
+                 && request.resource.data.estado != 'procesando');
+    }
+
+    function consultaNoAprobada() {
+      return !resource.data.keys().hasAny(['estado'])
+             || resource.data.estado != 'aprobada';
+    }
+
+    function notificacionSoloLeida() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['leida']);
+    }
+
+    // ── organizaciones ─────────────────────────────────────────
+    match /organizaciones/{orgId} {
+      allow read: if hasOrgClaim() && tokenOrg() == orgId;
+      allow create, update, delete: if isAdmin() && tokenOrg() == orgId;
+    }
+
+    // ── miembros ───────────────────────────────────────────────
+    match /miembros/{memberUid} {
+      allow read: if isSignedIn() && (memberUid == uid()
+                  || (isAdmin() && resource.data.orgId == tokenOrg()));
+      allow create, update: if isAdmin()
+                  && request.resource.data.orgId == tokenOrg();
+      allow delete: if isAdmin() && resource.data.orgId == tokenOrg();
+    }
+
+    // ── invitaciones (solo backend) ────────────────────────────
+    match /invitaciones/{invitacionId} {
+      allow read, write: if false;
+    }
+
+    match /solicitudesTecnicas/{solicitudId} {
+      allow read, write: if false;
+    }
+
+    // ── veterinarios (perfil) ──────────────────────────────────
+    match /veterinarios/{vetUid} {
+      allow read: if isSignedIn() && vetUid == uid();
+      allow create, update: if isSignedIn() && vetUid == uid();
+      allow delete: if isSignedIn() && vetUid == uid();
+    }
+
+    // ── pacientes ──────────────────────────────────────────────
+    match /pacientes/{pacienteId} {
+      allow read: if ownsByVet(resource.data);
+      allow create: if createOrgOk(request.resource.data);
+      allow update: if ownsByVet(resource.data)
+                    && ownsByVet(request.resource.data);
+      allow delete: if ownsByVet(resource.data)
+                    && (isAdmin() || (hasRol() && rol() == 'vet') || !hasOrgClaim());
+    }
+
+    // ── consultas ──────────────────────────────────────────────
+    match /consultas/{consultaId} {
+      allow read: if ownsByVet(resource.data);
+      allow create: if createOrgOk(request.resource.data);
+      allow update: if ownsByVet(resource.data)
+                    && ownsByVet(request.resource.data)
+                    && consultaNoAprobada()
+                    && consultaUpdateSeguro();
+      allow delete: if ownsByVet(resource.data)
+                    && consultaNoAprobada()
+                    && (isAdmin() || (hasRol() && rol() == 'vet') || !hasOrgClaim());
+    }
+
+    // ── citas ──────────────────────────────────────────────────
+    match /citas/{citaId} {
+      allow read: if ownsByVet(resource.data);
+      allow create: if createOrgOk(request.resource.data);
+      allow update: if ownsByVet(resource.data)
+                    && ownsByVet(request.resource.data);
+      allow delete: if ownsByVet(resource.data)
+                    && (isAdmin() || (hasRol() && rol() == 'vet') || !hasOrgClaim());
+    }
+
+    // ── vacunas ────────────────────────────────────────────────
+    match /vacunas/{vacunaId} {
+      allow read: if ownsByVet(resource.data);
+      allow create: if createOrgOk(request.resource.data);
+      allow update: if ownsByVet(resource.data)
+                    && ownsByVet(request.resource.data);
+      allow delete: if false;
+    }
+
+    // ── enmiendas ───────────────────────────────────────────────
+    match /enmiendas/{enmiendaId} {
+      allow read: if ownsByVet(resource.data);
+      allow create: if createOrgOk(request.resource.data);
+      allow update, delete: if false;
+    }
+
+    // ── planes ─────────────────────────────────────────────────
+    match /planes/{planId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    // ── suscripciones / consumos / pagos ────────────────────────
+    match /suscripciones/{subId} {
+      allow read: if hasRol() && ownsByOrg(resource.data);
+      allow write: if false;
+    }
+    match /consumos/{consumoId} {
+      allow read: if hasRol() && ownsByOrg(resource.data);
+      allow write: if false;
+    }
+    match /pagos/{pagoId} {
+      allow read: if hasRol() && ownsByOrg(resource.data);
+      allow write: if false;
+    }
+
+    // ── notificaciones ──────────────────────────────────────────
+    match /notificaciones/{notifId} {
+      allow read: if hasRol()
+                  && (resource.data.destinatarioUid == uid()
+                      || (isAdmin() && ownsByOrg(resource.data)));
+      allow update: if hasRol()
+                    && resource.data.destinatarioUid == uid()
+                    && notificacionSoloLeida();
+      allow create, delete: if false;
+    }
+
+    // ── auditoria ───────────────────────────────────────────────
+    match /auditoria/{logId} {
+      allow read: if hasRol() && isAdmin() && ownsByOrg(resource.data);
+      allow write: if false;
+    }
+
+    // ── brigadas ───────────────────────────────────────────────
+    match /brigadas/{brigadaId} {
+      allow read: if ownsByVetList(resource.data);
+      allow create: if (hasOrgClaim() && hasRol() && request.resource.data.orgId == tokenOrg())
+                    || (!hasOrgClaim() && uid() in request.resource.data.veterinarioIds);
+      allow update: if ownsByVetList(resource.data)
+                    && ownsByVetList(request.resource.data)
+                    && (!hasOrgClaim() || request.resource.data.orgId == resource.data.orgId);
+      allow delete: if ownsByVetList(resource.data)
+                    && (isAdmin() || !hasOrgClaim());
+    }
+
+    // ── configuracion ──────────────────────────────────────────
+    match /configuracion/{docId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

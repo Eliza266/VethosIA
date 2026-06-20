@@ -1,0 +1,11 @@
+---
+description: Reglas de seguridad de VetIA (siempre activas)
+alwaysApply: true
+---
+
+- Worker `/v1/ia/procesar`: rechazar si falta `IA_WORKER_SECRET` (fail-closed, NO fail-open). En prod exigir OIDC de Cloud Tasks.
+- Storage: rutas con `orgId` (`historiales/{orgId}/{consultaId}.pdf`, `audios/{uid}/...`), lectura por signed URL temporal. Nunca `allow read: if isSignedIn()` abierto.
+- `crearOrganizacion` no debe pisar los custom claims de un usuario que ya pertenece a una org.
+- `CORS_ORIGIN` cerrado por defecto en prod (lista blanca de orígenes).
+- Cero claves de proveedor en el bundle del navegador: ningún `VITE_*` con clave de IA/pagos. Un lint/test debe fallar si reaparece.
+- Aislamiento por tenant probado con tests negativos (usuario de org A no accede a recursos de org B), tanto en API como en reglas.

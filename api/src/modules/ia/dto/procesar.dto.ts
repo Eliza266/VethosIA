@@ -1,0 +1,21 @@
+import { IsOptional, IsString, MaxLength } from 'class-validator';
+import { MAX_AUDIO_BASE64 } from './transcribir.dto';
+
+// body de POST /v1/consultas/:id/procesar (encola el pipeline async de IA).
+// Preferido: audioPath (Storage). El base64 inline tiene tope de tamaño.
+export class ProcesarConsultaDto {
+  @IsOptional()
+  @IsString()
+  audioPath?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(MAX_AUDIO_BASE64, {
+    message: 'Audio inline demasiado grande; sube el audio a Storage y envia audioPath.',
+  })
+  audioBase64?: string;
+
+  @IsOptional()
+  @IsString()
+  mimeType?: string;
+}

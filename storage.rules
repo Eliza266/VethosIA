@@ -1,0 +1,78 @@
+rules_version = '2';
+
+// VetIA - reglas de Storage.
+// Arboles:
+//   audios/{uid}/...                    -> grabaciones de consulta (dueño).
+//   historiales/{orgId}/...             -> PDFs (solo lectura por org; write via API).
+//   fotos-pacientes/{orgId}/{pacienteId}/{file} -> fotos de pacientes (aislamiento por org).
+//   fotos-pacientes/{uid}/{pacienteId}  -> legacy uid-scoped (compatibilidad).
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function tokenOrg() {
+      return request.auth.token.orgId;
+    }
+
+    // Audios: solo el dueño de la carpeta (su propio uid) lee/escribe.
+    // Limitamos tamaño y content-type para no usar el bucket como vertedero.
+    match /audios/{userId}/{allPaths=**} {
+      allow read: if isSignedIn() && request.auth.uid == userId;
+      allow write: if isSignedIn() && request.auth.uid == userId
+                   && request.resource.size < 50 * 1024 * 1024
+                   && request.resource.contentType.matches('audio/.*');
+    }
+
+    // Historiales (PDFs) AISLADOS POR TENANT: historiales/{orgId}/{consultaId}.pdf.
+    // Lectura solo para miembros de esa org (defensa en profundidad; la API ademas
+    // entrega signed URLs temporales). Escritura: SOLO el backend (Admin SDK se salta
+    // estas reglas), por eso desde el cliente la escritura esta prohibida.
+    match /historiales/{orgId}/{allPaths=**} {
+      allow read: if isSignedIn() && tokenOrg() == orgId;
+      allow write: if false;
+    }
+
+    function hasOrgClaim() {
+      return isSignedIn()
+             && 'orgId' in request.auth.token
+             && request.auth.token.orgId != null;
+    }
+
+    function isPatientPhotoUpload() {
+      return request.resource.size < 10 * 1024 * 1024
+             && request.resource.contentType.matches('image/.*');
+    }
+
+    // Fotos de pacientes (org-scoped): fotos-pacientes/{orgId}/{pacienteId}/{fileName}
+    match /fotos-pacientes/{orgId}/{pacienteId}/{fileName} {
+      allow read: if hasOrgClaim() && tokenOrg() == orgId;
+      allow write: if hasOrgClaim() && tokenOrg() == orgId && isPatientPhotoUpload();
+      allow delete: if hasOrgClaim() && tokenOrg() == orgId;
+    }
+
+    // Legacy uid-scoped (sin subcarpeta de archivo): fotos-pacientes/{uid}/{pacienteId}
+    // Compatibilidad con datos viejos; lectura tambien para miembros de la org del paciente.
+    match /fotos-pacientes/{userId}/{pacienteId} {
+      allow read: if isSignedIn() && (
+        request.auth.uid == userId
+        || (hasOrgClaim()
+            && firestore.get(/databases/(default)/documents/pacientes/$(pacienteId)).data.orgId
+               == tokenOrg())
+      );
+      allow write: if isSignedIn()
+                   && request.auth.uid == userId
+                   && isPatientPhotoUpload();
+      allow delete: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Resto (incluida la ruta plana legacy historiales/{file}.pdf): cerrado por defecto.
+    // El acceso a PDFs legacy pasa exclusivamente por signed URL generada por la API.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

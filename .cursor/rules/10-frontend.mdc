@@ -1,0 +1,11 @@
+---
+description: Convenciones del frontend de VetIA
+globs: frontend/**
+---
+
+- React 19 + TS estricto. Estado servidor con TanStack Query; estado UI ligero con Zustand.
+- El frontend SOLO consume `/v1` vía `lib/apiClient`. Nada de Firestore directo ni claves de IA en el navegador.
+- Tokens de diseño en CSS variables (`--bg`, `--surface`, `--accent`, ...); sin colores hardcodeados en componentes.
+- Accesibilidad AA. Todo componente con estados loading / empty / error.
+- Tests: Vitest + React Testing Library + MSW (mock de `/v1`). E2E con Playwright.
+- PWA: `vite-plugin-pwa` + Workbox; la app debe ser instalable y funcionar offline (shell + datos GET cacheados + cola de subida de audio).

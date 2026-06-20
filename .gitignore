@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Environment variables - NUNCA subir a GitHub
+.env
+.env.local
+.env.*.local
+.env.*
+!.env.example
+!.env*.example
+**/.env
+**/.env.local
+**/.env.*.local
+**/.env.*
+!**/.env.example
+!**/.env*.example
+
+# Claves filtradas de otros proyectos (no deben volver al repo)
+dossier-forge-keys.env.txt
+
+# Build / artefactos
+dist/
+**/dist/
+coverage/
+**/coverage/
+frontend/dist/
+api/dist/
+functions/lib/
+**/.firebase/
+tmp/
+
+# Logs y capturas temporales
+*.log
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+frontend/test-results/
+frontend/e2e-screenshots/
+
+# System
+.DS_Store
+Thumbs.db
+
+# Patch local de fixes (generar con: git diff main..HEAD > vetia-local-fixes.patch)
+vetia-local-fixes.patch
+
+# Backups locales de export Cloud Run (no versionar)
+vetia-api-run-config-backup-*.yaml

@@ -1,0 +1,11 @@
+---
+description: Convenciones del backend (API NestJS) de VetIA
+globs: api/**
+---
+
+- NestJS 10, DTOs validados (zod / class-validator), guards fail-closed (AuthGuard + RolesGuard globales).
+- `common/auth/access.ts` es la fuente única de autorización: orgId primero, fallback legacy `veterinarioId == uid`. Superadmin puede cruzar tenants solo donde esté declarado.
+- Cobertura 100% en: `access.ts`, consumo/límites, máquinas de estado (historia y suscripción), validación de firma Wompi, `WorkerGuard`.
+- Endpoints idempotentes donde aplique (webhooks de pago, numeración HC).
+- Nada de leer `process.env` disperso: toda config tipada en `common/config`. Validación fail-fast al boot (`env.schema.ts`).
+- El Admin SDK se salta las reglas de Firestore; por eso la autorización fina SIEMPRE se hace en la API con `assertAcceso`.

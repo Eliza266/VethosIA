@@ -1,0 +1,63 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`buildHistoriaClinicaModel (golden / texto en vez de binario) > arma el modelo completo del PDF 1`] = `
+{
+  "consulta": {
+    "fechaHora": "15/1/2024, 5:30:00 a. m.",
+    "motivo": "Vómito agudo",
+    "prioridad": "Urgente",
+  },
+  "firma": {
+    "matricula": "Matrícula Profesional: MP-999",
+    "nombre": "Dr(a). Dra. López",
+  },
+  "header": {
+    "fecha": "15/1/2024",
+    "numeroHC": "HC-001",
+    "vetName": "Clínica Patitas",
+    "vetSede": "Sede: Norte - Bogotá",
+    "vetTel": "Tel: 6011234",
+  },
+  "paciente": {
+    "chip": "123",
+    "color": "Marrón",
+    "edad": "6 años",
+    "especie": "perro",
+    "nombre": "Firulais",
+    "peso": "10 kg",
+    "propietarioNombre": "Ana",
+    "propietarioTelefono": "3001234567",
+    "raza": "Criollo",
+    "sexo": "macho",
+  },
+  "plan": "Hidratar y dieta blanda",
+  "soapSections": [
+    {
+      "text": "Vomitó 3 veces",
+      "title": "SUBJETIVO (S)",
+    },
+    {
+      "text": "Deshidratación leve",
+      "title": "OBJETIVO (O)",
+    },
+    {
+      "text": "Gastroenteritis",
+      "title": "ANÁLISIS (A)",
+    },
+  ],
+  "vitales": [
+    {
+      "label": "Peso",
+      "val": "10 kg",
+    },
+    {
+      "label": "Talla",
+      "val": "35 cm",
+    },
+    {
+      "label": "Temp",
+      "val": "39 °C",
+    },
+  ],
+}
+`;

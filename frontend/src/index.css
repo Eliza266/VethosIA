@@ -1,0 +1,383 @@
+@import "tailwindcss";
+
+/* ── Vethosia Clinical Command Center ─────────────────────────────────
+   Tokens de diseño: clínica, premium, tecnológica. Usar var() en componentes. */
+:root {
+  --bg: #eaf1f5;
+  --bg-subtle: #f6f9fb;
+  --surface: #ffffff;
+  --surface-2: #f3f7fa;
+  --surface-elevated: #ffffff;
+  --border: #dbe3ec;
+  --border-strong: #c5d0de;
+  --text: #0b1220;
+  --text-secondary: #334155;
+  --muted: #64748b;
+  --accent: #0c6b5a;
+  --accent-strong: #064d42;
+  --accent-soft: #e7f6f1;
+  --accent-contrast: #ffffff;
+  --accent-glow: rgba(12, 107, 90, 0.18);
+  --clinical-blue: #173b73;
+  --clinical-cyan: #0e7490;
+  --clinical-lime: #9ccf3f;
+  --ink: #07111f;
+  --success: #15803d;
+  --success-soft: #ecfdf3;
+  --warn: #b45309;
+  --warn-soft: #fffbeb;
+  --danger: #b91c1c;
+  --danger-soft: #fef2f2;
+  --info: #1d4ed8;
+  --info-soft: #eff6ff;
+  --whatsapp: #128c7e;
+  --whatsapp-soft: #ecfdf5;
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius: 16px;
+  --radius-lg: 22px;
+  --radius-xl: 28px;
+  --shadow-xs: 0 1px 2px rgba(11, 18, 32, 0.04);
+  --shadow-sm: 0 2px 8px rgba(11, 18, 32, 0.06);
+  --shadow: 0 4px 16px rgba(11, 18, 32, 0.08), 0 1px 3px rgba(11, 18, 32, 0.04);
+  --shadow-md: 0 12px 32px -8px rgba(11, 18, 32, 0.12), 0 4px 12px -4px rgba(11, 18, 32, 0.06);
+  --shadow-lg: 0 24px 48px -16px rgba(11, 18, 32, 0.16);
+  --shadow-accent: 0 12px 32px -8px var(--accent-glow);
+  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--accent) 28%, transparent);
+  --gradient-hero: linear-gradient(135deg, #042f2e 0%, #0c6b5a 46%, #173b73 100%);
+  --gradient-surface: linear-gradient(180deg, rgba(255,255,255,0.96) 0%, color-mix(in srgb, var(--surface-2) 52%, var(--surface)) 100%);
+  --gradient-command: radial-gradient(circle at 12% 8%, rgba(12, 107, 90, 0.18), transparent 30%),
+    radial-gradient(circle at 88% 0%, rgba(23, 59, 115, 0.14), transparent 34%),
+    linear-gradient(180deg, #f8fbfc 0%, #eef5f8 42%, #f8fafc 100%);
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 220ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+:root[data-theme="dark"] {
+  --bg: #070b14;
+  --bg-subtle: #0a0f1a;
+  --surface: #111827;
+  --surface-2: #0f1626;
+  --surface-elevated: #151d2e;
+  --border: #1e293b;
+  --border-strong: #334155;
+  --text: #e8eef5;
+  --text-secondary: #cbd5e1;
+  --muted: #94a3b8;
+  --accent: #2dd4bf;
+  --accent-strong: #14b8a6;
+  --accent-soft: rgba(45, 212, 191, 0.12);
+  --accent-contrast: #04221c;
+  --accent-glow: rgba(45, 212, 191, 0.22);
+  --success: #34d399;
+  --success-soft: rgba(52, 211, 153, 0.12);
+  --warn: #fbbf24;
+  --warn-soft: rgba(251, 191, 36, 0.12);
+  --danger: #f87171;
+  --danger-soft: rgba(248, 113, 113, 0.12);
+  --info: #60a5fa;
+  --info-soft: rgba(96, 165, 250, 0.12);
+  --whatsapp: #25d366;
+  --whatsapp-soft: rgba(37, 211, 102, 0.12);
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+  --shadow-md: 0 12px 32px -8px rgba(0, 0, 0, 0.55);
+  --shadow-lg: 0 24px 48px -16px rgba(0, 0, 0, 0.65);
+  --gradient-hero: linear-gradient(145deg, #04221c 0%, #0f3d34 50%, #115e52 100%);
+  --gradient-surface: linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%);
+}
+
+@theme inline {
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-surface: var(--surface);
+  --color-muted: var(--muted);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  background: var(--gradient-command);
+  color: var(--text);
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  line-height: 1.5;
+}
+
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+@layer utilities {
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes toastIn {
+    from {
+      opacity: 0;
+      transform: translateX(100%);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out forwards;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.35s ease-out forwards;
+  }
+
+  .veth-card {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 251, 252, 0.94));
+    border: 1px solid color-mix(in srgb, var(--border) 88%, transparent);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-md);
+  }
+
+  .veth-card-interactive {
+    transition: transform var(--transition-base), box-shadow var(--transition-base), border-color var(--transition-base);
+  }
+
+  .veth-card-interactive:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+    border-color: color-mix(in srgb, var(--accent) 22%, var(--border));
+  }
+
+  .veth-page-shell {
+    position: relative;
+    overflow-x: clip;
+    background:
+      radial-gradient(circle at 8% 4%, rgba(12, 107, 90, 0.16), transparent 24rem),
+      radial-gradient(circle at 92% 0%, rgba(23, 59, 115, 0.14), transparent 24rem),
+      linear-gradient(180deg, #f8fbfc 0%, #edf4f7 46%, #f8fafc 100%);
+    min-height: 100vh;
+  }
+
+  .veth-page-shell::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image:
+      linear-gradient(rgba(15, 23, 42, 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(15, 23, 42, 0.035) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.55), transparent 70%);
+  }
+
+  .veth-page-shell > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .veth-accent-gradient {
+    background: var(--gradient-hero);
+  }
+
+  .veth-kpi-value {
+    font-size: 1.875rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    line-height: 1.1;
+  }
+
+  .veth-section-label {
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .veth-sticky-actions {
+    position: sticky;
+    top: 4rem;
+    z-index: 30;
+  }
+
+  .command-nav {
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(247, 250, 252, 0.82));
+    box-shadow: 0 18px 50px -38px rgba(7, 17, 31, 0.5);
+    backdrop-filter: blur(22px);
+  }
+
+  .brand-orb {
+    background:
+      radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.72), transparent 24%),
+      linear-gradient(135deg, var(--accent-strong), var(--accent), var(--clinical-blue));
+    box-shadow: 0 16px 34px -18px rgba(12, 107, 90, 0.74), inset 0 1px 0 rgba(255, 255, 255, 0.38);
+  }
+
+  .nav-rail {
+    border: 1px solid rgba(203, 213, 225, 0.7);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.68);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75), 0 10px 26px -24px rgba(15, 23, 42, 0.65);
+    padding: 0.25rem;
+  }
+
+  .nav-pill-active {
+    background: linear-gradient(135deg, rgba(12, 107, 90, 0.12), rgba(23, 59, 115, 0.08));
+    color: var(--accent-strong);
+    box-shadow: inset 0 0 0 1px rgba(12, 107, 90, 0.16);
+  }
+
+  .command-hero {
+    position: relative;
+    overflow: hidden;
+    border-radius: 32px;
+    border: 1px solid rgba(255, 255, 255, 0.72);
+    background:
+      radial-gradient(circle at 86% 16%, rgba(156, 207, 63, 0.22), transparent 18rem),
+      radial-gradient(circle at 18% 10%, rgba(45, 212, 191, 0.22), transparent 17rem),
+      linear-gradient(135deg, #062722 0%, #0b594d 48%, #132f59 100%);
+    color: #ffffff;
+    box-shadow: 0 34px 90px -54px rgba(7, 17, 31, 0.75);
+  }
+
+  .command-hero::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+    background-size: 42px 42px;
+    mask-image: radial-gradient(circle at 72% 24%, black, transparent 62%);
+  }
+
+  .command-hero > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .command-hero p {
+    color: rgba(255, 255, 255, 0.78);
+  }
+
+  .command-panel {
+    border: 1px solid rgba(203, 213, 225, 0.72);
+    border-radius: 26px;
+    background: rgba(255, 255, 255, 0.82);
+    box-shadow: 0 26px 70px -52px rgba(7, 17, 31, 0.62), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(18px);
+  }
+
+  .command-panel-dark {
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.1);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(18px);
+  }
+
+  .premium-card {
+    border: 1px solid rgba(203, 213, 225, 0.74);
+    border-radius: 24px;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 251, 252, 0.9));
+    box-shadow: 0 24px 62px -50px rgba(7, 17, 31, 0.66), inset 0 1px 0 rgba(255, 255, 255, 0.92);
+  }
+
+  .premium-card-hover {
+    transition: transform var(--transition-base), box-shadow var(--transition-base), border-color var(--transition-base), background var(--transition-base);
+  }
+
+  .premium-card-hover:hover {
+    transform: translateY(-3px);
+    border-color: rgba(12, 107, 90, 0.24);
+    box-shadow: 0 32px 72px -46px rgba(7, 17, 31, 0.72), 0 12px 28px -22px rgba(12, 107, 90, 0.55);
+  }
+
+  .metric-tile {
+    border: 1px solid rgba(203, 213, 225, 0.72);
+    border-radius: 22px;
+    background:
+      radial-gradient(circle at 92% 10%, rgba(12, 107, 90, 0.12), transparent 42%),
+      rgba(255, 255, 255, 0.88);
+    box-shadow: 0 18px 46px -40px rgba(7, 17, 31, 0.62);
+  }
+
+  .clinical-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border-radius: 999px;
+    border: 1px solid rgba(12, 107, 90, 0.16);
+    background: rgba(231, 246, 241, 0.9);
+    color: var(--accent-strong);
+    padding: 0.35rem 0.75rem;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .soap-intelligence-card {
+    border-radius: 28px;
+    border: 1px solid rgba(203, 213, 225, 0.72);
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(246, 250, 252, 0.92));
+    box-shadow: 0 28px 74px -54px rgba(7, 17, 31, 0.72);
+  }
+
+  .stable-visual-ready {
+    min-height: 1px;
+  }
+
+  @media (max-width: 1023px) {
+    .veth-sticky-actions {
+      top: 0;
+      position: sticky;
+      z-index: 25;
+    }
+  }
+}
