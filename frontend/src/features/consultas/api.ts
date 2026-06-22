@@ -64,6 +64,27 @@ export const transcribirAudio = async (audioBlob: Blob, audioPath?: string): Pro
   }
 };
 
+// ─── PROCESAMIENTO ASINCRONO ─────────────────────────────────
+/**
+ * Encola el procesamiento asincrono de IA en el backend (Cloud Tasks / Cola en memoria).
+ * POST /v1/consultas/:id/procesar
+ */
+export const procesarConsultaConIA = async (
+  consultaId: string,
+  audioPath: string,
+  mimeType: string
+): Promise<{ estado: string }> => {
+  try {
+    const res = await apiClient.post<{ estado: string }>(`/v1/consultas/${consultaId}/procesar`, {
+      audioPath,
+      mimeType,
+    });
+    return res.data;
+  } catch (err) {
+    throw toAppError(err, 'ia/procesar', 'Error al encolar el procesamiento de la consulta.');
+  }
+};
+
 // ─── GENERACION SOAP ───────────────────────────────────────
 /**
  * Estructura la transcripcion en SOAP. Legacy: Gemini directo (gemini.ts).

@@ -251,8 +251,11 @@ describe('VacunasService', () => {
 
   it('crea recordatorio interno al registrar vacuna proxima o vencida', async () => {
     const { svc, notificaciones } = build();
+    const proxima = new Date();
+    proxima.setDate(proxima.getDate() + 5);
+    const proximaStr = proxima.toISOString().slice(0, 10);
     await svc.crear(
-      { pacienteId: 'p1', nombre: 'Rabia', proximaDosis: '2026-06-20' },
+      { pacienteId: 'p1', nombre: 'Rabia', proximaDosis: proximaStr },
       user,
     );
     expect(notificaciones.crear).toHaveBeenCalledWith(

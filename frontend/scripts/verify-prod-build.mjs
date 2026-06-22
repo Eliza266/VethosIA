@@ -6,8 +6,9 @@ import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { extname, join } from 'node:path';
 
 const DIST_DIR = join(process.cwd(), 'dist');
-const PROJECT_ID = 'vethosia-production';
-const ALLOWED_API_BASE_URL = 'https://vetia-api-cwepwj6irq-uc.a.run.app';
+const PROJECT_ID = process.env.VETIA_VERIFY_PROJECT_ID || 'vethosia-production';
+const ALLOWED_API_BASE_URL =
+  process.env.VETIA_VERIFY_API_URL || 'https://vetia-api-cwepwj6irq-uc.a.run.app';
 const ALLOWED_API_ORIGIN = new URL(ALLOWED_API_BASE_URL).origin;
 const PREVIEW_BUILD_TARGET = 'preview';
 const LIVE_BUILD_TARGET = 'live';

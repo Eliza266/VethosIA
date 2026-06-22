@@ -9,6 +9,7 @@ describe('getFeatureFlags', () => {
     vi.stubEnv('VITE_USE_API_IA', '');
     vi.stubEnv('VITE_USE_API_DOCS', '');
     vi.stubEnv('VITE_USE_API_CRUD', '');
+    vi.stubEnv('VITE_EMAIL_REAL_ENABLED', '');
     expect(getFeatureFlags()).toEqual({
       useApiHC: false,
       useApiIA: false,

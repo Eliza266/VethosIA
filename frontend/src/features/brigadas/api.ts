@@ -84,7 +84,9 @@ export const actualizarBrigadaDoc = async (
   campos: Partial<Brigada>,
 ): Promise<void> => {
   if (getFeatureFlags().useApiCRUD) {
-    const { id: _id, creadoEn: _c, ...payload } = campos;
+    const payload = { ...campos };
+    delete payload.id;
+    delete (payload as Partial<Brigada>).creadoEn;
     await apiClient.patch(`/v1/brigadas/${id}`, payload);
     return;
   }

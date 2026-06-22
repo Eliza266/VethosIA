@@ -19,6 +19,17 @@ vi.mock('./data', () => ({
   eliminarConsultaDoc: vi.fn(),
 }));
 
+let mockUseApiIa = false;
+vi.mock('../../lib/featureFlags', () => ({
+  getFeatureFlags: () => ({
+    useApiHC: false,
+    useApiIA: mockUseApiIa,
+    useApiDocs: false,
+    useApiCRUD: false,
+    emailRealEnabled: false,
+  }),
+}));
+
 vi.mock('./api', () => ({
   generarNumeroHC: vi.fn().mockResolvedValue('HC1'),
   transcribirAudio: vi.fn().mockResolvedValue('el perro tiene fiebre'),
@@ -43,11 +54,12 @@ vi.mock('./api', () => ({
     medicamentosSugeridos: [],
     generadoPorIA: true,
   }),
+  procesarConsultaConIA: vi.fn().mockResolvedValue({ estado: 'procesando' }),
 }));
 
 import { useConsultas } from './hooks';
 import { actualizarConsultaDoc, aprobarConsultaDoc } from './data';
-import { transcribirAudio, generarSOAP } from './api';
+import { transcribirAudio, generarSOAP, procesarConsultaConIA } from './api';
 
 const estadosEnviados = () =>
   (actualizarConsultaDoc as unknown as ReturnType<typeof vi.fn>).mock.calls
@@ -104,6 +116,26 @@ describe('useConsultas.procesarAudioConsulta', () => {
     expect(llamada?.diagnosticoEstructurado).toEqual([
       expect.objectContaining({ nombre: 'Fiebre', origen: 'ia' }),
     ]);
+  });
+
+  it('con useApiIA activo encola procesamiento asincrono y retorna true', async () => {
+    mockUseApiIa = true;
+    const { result } = renderHook(() => useConsultas());
+    const blob = new Blob(['x'], { type: 'audio/webm' });
+    const onProgress = vi.fn();
+
+    let ok = false;
+    await act(async () => {
+      ok = await result.current.procesarAudioConsulta('c1', blob, onProgress);
+    });
+
+    expect(ok).toBe(true);
+    expect(procesarConsultaConIA).toHaveBeenCalledWith('c1', 'audios/u1/c1.webm', 'audio/webm');
+    expect(transcribirAudio).not.toHaveBeenCalled();
+    expect(generarSOAP).not.toHaveBeenCalled();
+    
+    // cleanup
+    mockUseApiIa = false;
   });
 
   it('si la transcripcion falla -> estado error y retorna false', async () => {

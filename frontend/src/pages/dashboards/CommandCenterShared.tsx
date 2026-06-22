@@ -17,7 +17,7 @@ import { getModuleStatusLabel } from '../../lib/roleNavigation';
 import type { NavIcon, RoleModule } from '../../lib/rbac';
 import { SectionHeader } from '../../components/ui/Primitives';
 
-export const MODULE_ICON: Record<NavIcon, LucideIcon> = {
+const MODULE_ICON: Record<NavIcon, LucideIcon> = {
   dashboard: FileText,
   pacientes: Users,
   agenda: Calendar,

@@ -78,7 +78,10 @@ export interface MeProfile {
   organizacionNombre: string | null;
 }
 
+
 export interface ActualizarPerfilInput {
+  nombre?: string;
+  foto?: string | null;
   telefono?: string;
   whatsapp?: string;
   ciudad?: string;

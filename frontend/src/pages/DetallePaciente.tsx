@@ -6,6 +6,10 @@ import { VacunasPanel } from '../features/vacunas/VacunasPanel';
 import { construirEvolucionClinica } from '../features/pacientes/evolucion';
 import { listarVacunasPaciente } from '../features/vacunas/api';
 import type { Paciente, Consulta } from '../types';
+import { storage } from '../services/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { buildPatientPhotoStoragePath } from '../lib/patientPhotoStorage';
+import { useMe } from '../features/tenant/hooks';
 import {
   LineChart,
   Line,
@@ -48,10 +52,22 @@ const DetallePaciente: React.FC = () => {
 
   const { getPaciente, pacientes, fetchPacientes, actualizarPaciente } = usePacientes();
   const { fetchConsultasPorPaciente } = useConsultas();
+  const { data: me } = useMe();
 
   const [paciente, setPaciente] = useState<Paciente | null>(null);
   const [consultasPaciente, setConsultasPaciente] = useState<Consulta[]>([]);
   const [loadingGeneral, setLoadingGeneral] = useState(true);
+
+  const [fotoFile, setFotoFile] = useState<File | null>(null);
+  const [fotoPreview, setFotoPreview] = useState<string | null>(null);
+
+  const handleFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setFotoFile(file);
+      setFotoPreview(URL.createObjectURL(file));
+    }
+  };
 
   // Vaccines stats
   const [vacunasCount, setVacunasCount] = useState(0);
@@ -217,27 +233,38 @@ const DetallePaciente: React.FC = () => {
   const formatPesoTooltip = (value: unknown) => [`${value} kg`, 'Peso'];
 
   const handleOpenEdit = () => {
+    setFotoFile(null);
+    setFotoPreview(null);
     setEditForm({
-      nombre: paciente.nombre || '',
-      sexo: paciente.sexo || 'macho',
-      estadoReproductivo: paciente.estadoReproductivo || 'entero',
-      fechaNacimiento: paciente.fechaNacimiento || '',
-      color: paciente.color || '',
-      chip: paciente.chip || '',
-      origen: paciente.origen || '',
-      notasGenerales: paciente.notasGenerales || '',
-      propietarioNombre: paciente.propietario?.nombre || '',
-      propietarioTelefono: paciente.propietario?.telefono || '',
-      propietarioWhatsapp: paciente.propietario?.whatsapp || '',
-      propietarioEmail: paciente.propietario?.email || '',
+      nombre: paciente?.nombre || '',
+      sexo: paciente?.sexo || 'macho',
+      estadoReproductivo: paciente?.estadoReproductivo || 'entero',
+      fechaNacimiento: paciente?.fechaNacimiento || '',
+      color: paciente?.color || '',
+      chip: paciente?.chip || '',
+      origen: paciente?.origen || '',
+      notasGenerales: paciente?.notasGenerales || '',
+      propietarioNombre: paciente?.propietario?.nombre || '',
+      propietarioTelefono: paciente?.propietario?.telefono || '',
+      propietarioWhatsapp: paciente?.propietario?.whatsapp || '',
+      propietarioEmail: paciente?.propietario?.email || '',
     });
     setIsEditModalOpen(true);
   };
 
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!id) return;
+    if (!id || !paciente) return;
     try {
+      let currentFotoUrl = paciente.foto || undefined;
+      if (fotoFile) {
+        const orgId = me?.orgId || 'no-org';
+        const fotoPath = buildPatientPhotoStoragePath(orgId, id, fotoFile);
+        const storageRef = ref(storage, fotoPath);
+        const uploadResult = await uploadBytes(storageRef, fotoFile);
+        currentFotoUrl = await getDownloadURL(uploadResult.ref);
+      }
+
       const updated = await actualizarPaciente(id, {
         nombre: editForm.nombre.trim(),
         sexo: editForm.sexo,
@@ -247,6 +274,7 @@ const DetallePaciente: React.FC = () => {
         chip: editForm.chip.trim() || undefined,
         origen: editForm.origen.trim() || undefined,
         notasGenerales: editForm.notasGenerales.trim() || undefined,
+        foto: currentFotoUrl,
         propietario: {
           nombre: editForm.propietarioNombre.trim(),
           telefono: editForm.propietarioTelefono.trim(),
@@ -267,6 +295,7 @@ const DetallePaciente: React.FC = () => {
             chip: editForm.chip.trim() || undefined,
             origen: editForm.origen.trim() || undefined,
             notasGenerales: editForm.notasGenerales.trim() || undefined,
+            foto: currentFotoUrl,
             propietario: {
               nombre: editForm.propietarioNombre.trim(),
               telefono: editForm.propietarioTelefono.trim(),
@@ -369,6 +398,16 @@ const DetallePaciente: React.FC = () => {
                   Editar
                 </button>
               </div>
+
+              {paciente.foto && (
+                <div className="flex justify-center pb-2">
+                  <img
+                    src={paciente.foto}
+                    alt={paciente.nombre}
+                    className="h-32 w-32 rounded-2xl object-cover border border-slate-100 shadow-sm"
+                  />
+                </div>
+              )}
 
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between py-1 border-b border-slate-50/50">
@@ -658,6 +697,29 @@ const DetallePaciente: React.FC = () => {
               <div className="space-y-4">
                 <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-50 pb-1">🐾 Mascota</h3>
                 
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 mb-1">Foto de la Mascota</label>
+                  <div className="flex items-center gap-4">
+                    {fotoPreview || paciente?.foto ? (
+                      <img
+                        src={fotoPreview || paciente?.foto || undefined}
+                        alt="Vista previa"
+                        className="h-14 w-14 rounded-full object-cover border border-slate-200"
+                      />
+                    ) : (
+                      <div className="h-14 w-14 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200">
+                        <span className="text-xl">🐾</span>
+                      </div>
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFotoChange}
+                      className="text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#0F6E56]/10 file:text-[#0F6E56] hover:file:bg-[#0F6E56]/20 cursor-pointer"
+                    />
+                  </div>
+                </div>
+
                 <div>
                   <label className="block text-xs font-semibold text-slate-500 mb-1">Nombre</label>
                   <input

@@ -3,6 +3,8 @@ import { IsOptional, IsString, MaxLength } from 'class-validator';
 // Campos editables del perfil veterinario vía PATCH /v1/me.
 // uid, email, orgId, rol y claims quedan fuera (solo server-side).
 export class ActualizarPerfilDto {
+  @IsOptional() @IsString() @MaxLength(150) nombre?: string;
+  @IsOptional() @IsString() @MaxLength(2000) foto?: string;
   @IsOptional() @IsString() @MaxLength(120) telefono?: string;
   @IsOptional() @IsString() @MaxLength(120) whatsapp?: string;
   @IsOptional() @IsString() @MaxLength(120) ciudad?: string;

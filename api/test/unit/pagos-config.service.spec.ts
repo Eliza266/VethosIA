@@ -2,6 +2,7 @@ import { ForbiddenException, ServiceUnavailableException } from '@nestjs/common'
 import { PagosConfigService } from '../../src/modules/saas/pagos-config.service';
 import { TenantSecretsService } from '../../src/modules/saas/tenant-secrets.service';
 import type { AuthUser, AuthUserV2 } from '../../src/common/auth/auth-user.interface';
+import { validateEnv } from '../../src/common/config/env.schema';
 import { fakeFirebase } from './saas.fakes';
 import { pagosConfigDocInStore, seedWompiForPlanOwner } from './pagos-test-helpers';
 
@@ -205,7 +206,7 @@ describe('PagosConfigService', () => {
 
 describe('validateEnv — Wompi global opcional', () => {
   it('permite boot en produccion sin WOMPI_* global', () => {
-    const { validateEnv } = require('../../src/common/config/env.schema') as typeof import('../../src/common/config/env.schema');
+
     expect(() =>
       validateEnv({
         NODE_ENV: 'production',

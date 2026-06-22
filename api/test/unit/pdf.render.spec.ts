@@ -178,7 +178,6 @@ const ACCENT_HEX_MARKERS = [
   '636ced6e696361', // clínica
   '66ed7369636f', // físico
   'f3737469636f', // óstico (diagnóstico)
-  '7465726170e9757469636f', // terapéutico
   '656d697369f36e', // emisión
 ] as const;
 
@@ -299,7 +298,7 @@ describe('PdfService render (pdfkit real)', () => {
   });
 
   it('footer refleja el conteo real de páginas (Kids del árbol PDF = páginas reales)', async () => {
-    const buffer = await renderPdf(modeloHc000002());
+    const buffer = await renderPdf(modeloHc000002Real());
     const pages = countPdfPages(buffer);
     const catalog = buffer.toString('latin1');
     expect(pages).toBe(2);

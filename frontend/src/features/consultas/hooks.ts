@@ -13,7 +13,7 @@ import {
   aprobarConsultaDoc,
   eliminarConsultaDoc,
 } from './data';
-import { generarNumeroHC, transcribirAudio, generarSOAP } from './api';
+import { generarNumeroHC, transcribirAudio, generarSOAP, procesarConsultaConIA } from './api';
 import type { Consulta } from '../../types';
 
 export const useConsultas = () => {
@@ -172,11 +172,29 @@ export const useConsultas = () => {
       const downloadUrl = await getDownloadURL(uploadResult.ref);
       await actualizarConsultaDoc(consultaId, { audioUrl: downloadUrl });
 
-      // Transcripcion
+      // 1. Determinar si usamos la API asíncrona de IA (Fase 5) o el camino síncrono/legacy
+      const flags = getFeatureFlags();
+      if (flags.useApiIA) {
+        onProgress?.('Iniciando procesamiento asíncrono con IA...', 50);
+        try {
+          await procesarConsultaConIA(consultaId, audioPath, audioBlob.type || 'audio/webm');
+          onProgress?.('¡Procesamiento encolado!', 100);
+          return true;
+        } catch (apiIaErr) {
+          console.error('[VetIA] Error encolando en API IA:', apiIaErr);
+          await actualizarConsultaDoc(consultaId, {
+            estado: 'error',
+            transcripcion: 'Error al iniciar el procesamiento en la nube.',
+          });
+          throw apiIaErr;
+        }
+      }
+
+      // 2. Camino síncrono/legacy: Transcribir (ahora pasándole audioPath para evitar base64 gigante)
       onProgress?.('Transcribiendo consulta...', 50);
       let transcriptionText = '';
       try {
-        transcriptionText = await transcribirAudio(audioBlob);
+        transcriptionText = await transcribirAudio(audioBlob, audioPath);
         await actualizarConsultaDoc(consultaId, { transcripcion: transcriptionText });
       } catch (txErr) {
         console.error('[VetIA] Error transcribiendo:', txErr);
@@ -187,7 +205,7 @@ export const useConsultas = () => {
         throw txErr;
       }
 
-      // SOAP
+      // 3. SOAP síncrono
       onProgress?.('Generando historia clínica con IA...', 75);
       try {
         const resultado = await generarSOAP(transcriptionText);

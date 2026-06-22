@@ -541,10 +541,11 @@ class PdfLayout {
     this.y = this.doc.page.margins.top;
     this.resetCursor();
 
+    // 1) Encabezado (HC N°, fecha, prioridad, clínica)
     this.drawHeaderBand(m.entidad);
     this.drawHcBanner(m.numeroHC, m.fechaConsulta, m.prioridad, opts?.tituloExtra);
-    this.drawClinicalSummary(m);
 
+    // 2) Paciente + Propietario
     this.drawTwoColumnInfoCards(
       'Propietario',
       [
@@ -567,22 +568,23 @@ class PdfLayout {
       ],
     );
 
-    this.drawSection('Anamnesis', () => {
-      this.drawParagraph(m.anamnesis);
+    // 3) Motivo de consulta
+    this.drawSection('Motivo de consulta', () => {
+      this.drawParagraph(m.motivo);
     });
 
-    this.drawSection('Examen físico', () => {
+    // 4) Signos vitales / examen físico
+    this.drawSection('Signos vitales y examen físico', () => {
       this.drawSubheading('Signos vitales y constantes');
       this.drawVitalesCards(m.examenFisico.vitales);
-      this.y += 6;
-      this.drawSubheading('Hallazgos del examen');
-      this.drawParagraph(m.examenFisico.hallazgos);
+      if (m.revisionSistemas && m.revisionSistemas !== ND) {
+        this.y += 6;
+        this.drawSubheading('Revisión por sistemas');
+        this.drawParagraph(m.revisionSistemas);
+      }
     });
 
-    this.drawSection('Revisión por sistemas', () => {
-      this.drawParagraph(m.revisionSistemas);
-    });
-
+    // 5) Nota clínica SOAP (S, O, A, P)
     this.drawSection(
       'Nota clínica SOAP',
       () => {
@@ -591,46 +593,43 @@ class PdfLayout {
       { minFirstBlockHeight: this.measureSoapCardHeight(m.soap.subjetivo) },
     );
 
-    this.drawSection(
-      'Diagnóstico',
-      () => {
-        this.drawHighlightBox(m.diagnostico, COLOR.brandDark, COLOR.brandLight);
-      },
-      { minFirstBlockHeight: this.measureHighlightBoxHeight(m.diagnostico) },
-    );
-
-    this.drawSection('Exámenes complementarios', () => {
-      this.drawParagraph(m.examenesComplementarios);
+    // 6) Diagnósticos estructurados (lista de diferenciales, UNA vez)
+    this.drawSection('Diagnósticos estructurados', () => {
+      if (m.diagnosticos && m.diagnosticos.length > 0) {
+        m.diagnosticos.forEach((d, idx) => {
+          const partes = [
+            d.nombre,
+            d.codigo ? `Código: ${d.codigo}` : '',
+            d.tipo !== 'principal' ? `Tipo: ${d.tipo}` : '',
+            d.estado ? `Estado: ${d.estado}` : '',
+            d.notas ? `Notas: ${d.notas}` : '',
+          ].filter(Boolean);
+          this.drawParagraph(`${idx + 1}. ${partes.join(' - ')}`);
+        });
+      } else {
+        this.drawParagraph(EMPTY_SECTION);
+      }
     });
 
-    this.drawSection(
-      'Plan terapéutico',
-      () => {
-        this.drawHighlightBox(m.planTerapeutico, COLOR.brandDark, COLOR.brandLight);
-        if (m.medicamentos.length > 0) {
-          this.y += 8;
-          this.ensureSpaceForSubsection(this.measureMedicamentoCardHeight(m.medicamentos[0]));
-          this.drawSubheading('Medicamentos prescritos');
-          this.drawMedicamentosCards(m.medicamentos);
-        }
-      },
-      { minFirstBlockHeight: this.measureHighlightBoxHeight(m.planTerapeutico) },
-    );
-
-    if (m.evolucion !== ND) {
-      this.drawSection('Evolución', () => {
-        this.drawParagraph(m.evolucion);
+    // 7) Medicamentos prescritos (tabla)
+    if (m.medicamentos && m.medicamentos.length > 0) {
+      this.drawSection('Medicamentos prescritos', () => {
+        this.drawMedicamentosCards(m.medicamentos);
       });
     }
 
-    this.drawSection('Observaciones y anexos', () => {
-      this.drawParagraph(m.observaciones);
-    });
+    // 8) Transcripción original (anexo)
+    if (m.transcripcion && m.transcripcion !== ND) {
+      this.drawSection('Transcripción original (anexo)', () => {
+        this.drawParagraph(m.transcripcion);
+      });
+    }
 
+    // 9) Firma del profesional
     this.drawSignatureSection(m);
   }
 
-  drawFooters(tagline: string): void {
+    drawFooters(tagline: string): void {
     const range = this.doc.bufferedPageRange();
     const totalPages = range.count;
     const impreso = formatFechaHora(new Date());
