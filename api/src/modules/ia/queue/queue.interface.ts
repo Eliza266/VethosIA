@@ -13,6 +13,7 @@ export interface IaJob {
   veterinarioId?: string;
   // preferido: ruta en Storage (audios/{uid}/...). Evita mandar el audio inline.
   audioPath?: string;
+  audioPaths?: string[];
   // alternativa para audios cortos: base64 inline.
   audioBase64?: string;
   mimeType?: string;

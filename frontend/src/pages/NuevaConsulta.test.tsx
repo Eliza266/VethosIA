@@ -86,7 +86,9 @@ describe('NuevaConsulta manual fallback', () => {
     await screen.findByText(/luna/i);
     fireEvent.click(screen.getByTitle(/iniciar/i));
 
-    expect(mockGetUserMedia).toHaveBeenCalledWith({ audio: true });
+    expect(mockGetUserMedia).toHaveBeenCalledWith({
+      audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true },
+    });
     expect(await screen.findByRole('form', { name: /consulta manual/i })).toBeInTheDocument();
   });
 

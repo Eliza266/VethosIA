@@ -73,26 +73,47 @@ export class IaService implements IaProcessor, OnModuleInit {
     await this.queue.enqueue(job);
   }
 
-  // Worker. Idempotente-ish: si algo truena, deja la consulta en 'error' (no huerfana en
+  // Worker. Worker. Idempotente-ish: si algo truena, deja la consulta en 'error' (no huerfana en
   // 'procesando' para siempre). Cloud Tasks / la cola in-memory reintentan antes de rendirse.
   async procesar(job: IaJob): Promise<void> {
     const { consultaId } = job;
     try {
       let vetId = job.veterinarioId;
-      if (!vetId && job.audioPath) {
+      if (!vetId) {
         const c = await this.consultas.getById(consultaId);
         vetId = c.veterinarioId;
       }
-      if (job.audioPath && !vetId) {
-        throw new BadRequestException('No se pudo validar el dueno del audio.');
+      
+      const audioContext = vetId ? { uid: vetId, orgId: job.orgId } : undefined;
+      let transcripcion = '';
+
+      const paths = job.audioPaths?.length ? job.audioPaths : (job.audioPath ? [job.audioPath] : []);
+      
+      if (paths.length > 0) {
+        const transcripcionesArr: string[] = [];
+        for (const path of paths) {
+          const { base64, mimeType } = await this.resolverAudio({
+            audioPath: path,
+            mimeType: job.mimeType,
+            audioContext,
+          });
+          const tx = await this.stt.transcribir(base64, mimeType);
+          if (tx.trim()) {
+            transcripcionesArr.push(tx);
+          }
+        }
+        transcripcion = transcripcionesArr.join('\n\n');
+      } else if (job.audioBase64) {
+        const { base64, mimeType } = await this.resolverAudio({
+          audioBase64: job.audioBase64,
+          mimeType: job.mimeType,
+          audioContext,
+        });
+        transcripcion = await this.stt.transcribir(base64, mimeType);
+      } else {
+        throw new BadRequestException('Debes enviar audioPath, audioPaths o audioBase64.');
       }
-      const { base64, mimeType } = await this.resolverAudio({
-        audioPath: job.audioPath,
-        audioBase64: job.audioBase64,
-        mimeType: job.mimeType,
-        audioContext: vetId ? { uid: vetId, orgId: job.orgId } : undefined,
-      });
-      const transcripcion = await this.stt.transcribir(base64, mimeType);
+
       await this.consultas.update(consultaId, { transcripcion });
 
       const soap = await this.soap.generarSoap(transcripcion);

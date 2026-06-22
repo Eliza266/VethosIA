@@ -101,7 +101,7 @@ const NuevaConsulta: React.FC = () => {
     loadPaciente();
   }, [pacienteId, getPaciente]);
 
-  const handleAudioRecorded = async (audioBlob: Blob) => {
+  const handleAudioRecorded = async (audioBlobs: Blob[]) => {
     if (!pacienteId) return;
     setIsProcessing(true);
     setError(null);
@@ -111,7 +111,7 @@ const NuevaConsulta: React.FC = () => {
       const id = await crearConsulta(pacienteId, citaId);
       if (!id) throw new Error('No se pudo crear la consulta.');
       
-      const success = await procesarAudioConsulta(id, audioBlob, (msg, pct) => {
+      const success = await procesarAudioConsulta(id, audioBlobs, (msg, pct) => {
         setProgressText(msg);
         setProgressPct(pct);
       });

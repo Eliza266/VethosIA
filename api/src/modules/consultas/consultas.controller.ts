@@ -136,6 +136,7 @@ export class ConsultasController {
       orgId: user.orgId ?? consulta.orgId,
       veterinarioId: consulta.veterinarioId,
       audioPath: dto.audioPath,
+      audioPaths: dto.audioPaths,
       audioBase64: dto.audioBase64,
       mimeType: dto.mimeType,
     });

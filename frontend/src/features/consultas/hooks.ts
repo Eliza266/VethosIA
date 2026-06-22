@@ -151,7 +151,7 @@ export const useConsultas = () => {
    */
   const procesarAudioConsulta = async (
     consultaId: string,
-    audioBlob: Blob,
+    audioBlobs: Blob[],
     onProgress?: (msg: string, pct: number) => void
   ): Promise<boolean> => {
     if (!user) {
@@ -167,17 +167,31 @@ export const useConsultas = () => {
       // Subimos el audio a Storage siempre (para el reproductor en el detalle),
       // independientemente del flag de IA.
       onProgress?.('Subiendo audio...', 25);
-      const audioPath = `audios/${user.uid}/${consultaId}.webm`;
-      const uploadResult = await uploadBytes(ref(storage, audioPath), audioBlob);
-      const downloadUrl = await getDownloadURL(uploadResult.ref);
-      await actualizarConsultaDoc(consultaId, { audioUrl: downloadUrl });
+      const mimeType = audioBlobs[0]?.type || 'audio/webm';
+      
+      const uploadPromises = audioBlobs.map(async (blob, i) => {
+        const path = `audios/${user.uid}/${consultaId}-${i}.webm`;
+        const uploadResult = await uploadBytes(ref(storage, path), blob);
+        const downloadUrl = await getDownloadURL(uploadResult.ref);
+        return { path, downloadUrl };
+      });
+      
+      const uploadResults = await Promise.all(uploadPromises);
+      const audioPaths = uploadResults.map(r => r.path);
+      const audioUrls = uploadResults.map(r => r.downloadUrl);
+      const downloadUrl = audioUrls[0] || '';
+
+      await actualizarConsultaDoc(consultaId, { 
+        audioUrl: downloadUrl,
+        audioUrls: audioUrls,
+      } as Partial<Consulta>);
 
       // 1. Determinar si usamos la API asíncrona de IA (Fase 5) o el camino síncrono/legacy
       const flags = getFeatureFlags();
       if (flags.useApiIA) {
         onProgress?.('Iniciando procesamiento asíncrono con IA...', 50);
         try {
-          await procesarConsultaConIA(consultaId, audioPath, audioBlob.type || 'audio/webm');
+          await procesarConsultaConIA(consultaId, audioPaths, mimeType);
           onProgress?.('¡Procesamiento encolado!', 100);
           return true;
         } catch (apiIaErr) {
@@ -190,11 +204,14 @@ export const useConsultas = () => {
         }
       }
 
-      // 2. Camino síncrono/legacy: Transcribir (ahora pasándole audioPath para evitar base64 gigante)
+      // 2. Camino síncrono/legacy: Transcribir cada bloque
       onProgress?.('Transcribiendo consulta...', 50);
       let transcriptionText = '';
       try {
-        transcriptionText = await transcribirAudio(audioBlob, audioPath);
+        const transcriptions = await Promise.all(
+          audioBlobs.map((blob, i) => transcribirAudio(blob, audioPaths[i]))
+        );
+        transcriptionText = transcriptions.filter(t => t.trim().length > 0).join('\n\n');
         await actualizarConsultaDoc(consultaId, { transcripcion: transcriptionText });
       } catch (txErr) {
         console.error('[VetIA] Error transcribiendo:', txErr);

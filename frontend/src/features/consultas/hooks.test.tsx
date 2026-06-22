@@ -73,12 +73,12 @@ describe('useConsultas.procesarAudioConsulta', () => {
 
   it('sigue la secuencia procesando -> borrador y llama transcribir + SOAP', async () => {
     const { result } = renderHook(() => useConsultas());
-    const blob = new Blob(['x'], { type: 'audio/webm' });
+    const blobs = [new Blob(['x'], { type: 'audio/webm' })];
     const onProgress = vi.fn();
 
     let ok = false;
     await act(async () => {
-      ok = await result.current.procesarAudioConsulta('c1', blob, onProgress);
+      ok = await result.current.procesarAudioConsulta('c1', blobs, onProgress);
     });
 
     expect(ok).toBe(true);
@@ -94,9 +94,9 @@ describe('useConsultas.procesarAudioConsulta', () => {
 
   it('persiste el flag generadoPorIA en el SOAP guardado', async () => {
     const { result } = renderHook(() => useConsultas());
-    const blob = new Blob(['x'], { type: 'audio/webm' });
+    const blobs = [new Blob(['x'], { type: 'audio/webm' })];
     await act(async () => {
-      await result.current.procesarAudioConsulta('c1', blob);
+      await result.current.procesarAudioConsulta('c1', blobs);
     });
     const llamadaConSoap = (actualizarConsultaDoc as unknown as ReturnType<typeof vi.fn>).mock.calls
       .map((c: unknown[]) => c[1] as { soap?: { generadoPorIA?: boolean } })
@@ -106,9 +106,9 @@ describe('useConsultas.procesarAudioConsulta', () => {
 
   it('persiste diagnostico estructurado IA a nivel de consulta', async () => {
     const { result } = renderHook(() => useConsultas());
-    const blob = new Blob(['x'], { type: 'audio/webm' });
+    const blobs = [new Blob(['x'], { type: 'audio/webm' })];
     await act(async () => {
-      await result.current.procesarAudioConsulta('c1', blob);
+      await result.current.procesarAudioConsulta('c1', blobs);
     });
     const llamada = (actualizarConsultaDoc as unknown as ReturnType<typeof vi.fn>).mock.calls
       .map((c: unknown[]) => c[1] as { diagnosticoEstructurado?: unknown[] })
@@ -121,16 +121,16 @@ describe('useConsultas.procesarAudioConsulta', () => {
   it('con useApiIA activo encola procesamiento asincrono y retorna true', async () => {
     mockUseApiIa = true;
     const { result } = renderHook(() => useConsultas());
-    const blob = new Blob(['x'], { type: 'audio/webm' });
+    const blobs = [new Blob(['x'], { type: 'audio/webm' })];
     const onProgress = vi.fn();
 
     let ok = false;
     await act(async () => {
-      ok = await result.current.procesarAudioConsulta('c1', blob, onProgress);
+      ok = await result.current.procesarAudioConsulta('c1', blobs, onProgress);
     });
 
     expect(ok).toBe(true);
-    expect(procesarConsultaConIA).toHaveBeenCalledWith('c1', 'audios/u1/c1.webm', 'audio/webm');
+    expect(procesarConsultaConIA).toHaveBeenCalledWith('c1', ['audios/u1/c1-0.webm'], 'audio/webm');
     expect(transcribirAudio).not.toHaveBeenCalled();
     expect(generarSOAP).not.toHaveBeenCalled();
     
@@ -143,11 +143,11 @@ describe('useConsultas.procesarAudioConsulta', () => {
       new Error('gemini caido')
     );
     const { result } = renderHook(() => useConsultas());
-    const blob = new Blob(['x'], { type: 'audio/webm' });
+    const blobs = [new Blob(['x'], { type: 'audio/webm' })];
 
     let ok = true;
     await act(async () => {
-      ok = await result.current.procesarAudioConsulta('c1', blob);
+      ok = await result.current.procesarAudioConsulta('c1', blobs);
     });
 
     expect(ok).toBe(false);

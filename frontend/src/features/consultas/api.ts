@@ -71,12 +71,12 @@ export const transcribirAudio = async (audioBlob: Blob, audioPath?: string): Pro
  */
 export const procesarConsultaConIA = async (
   consultaId: string,
-  audioPath: string,
+  audioPaths: string[],
   mimeType: string
 ): Promise<{ estado: string }> => {
   try {
     const res = await apiClient.post<{ estado: string }>(`/v1/consultas/${consultaId}/procesar`, {
-      audioPath,
+      audioPaths,
       mimeType,
     });
     return res.data;
