@@ -51,6 +51,13 @@ INSTRUCCIONES:
 - Si un dato no se menciona, usa null
 - Usa terminología veterinaria clínica apropiada
 - En el Plan incluye medicamentos con nombre, dosis, vía, frecuencia y duración
+- SIGNOS VITALES (IMPORTANTE): si en la transcripción aparece peso, temperatura, frecuencia
+  cardíaca, frecuencia respiratoria o condición corporal —aunque sea dentro del relato—
+  DEBES extraer el valor NUMÉRICO y ponerlo en "signosVitales". Ejemplos:
+  "pesa 32 kilos" → peso: 32; "temperatura de 38.5" → temperatura: 38.5;
+  "frecuencia cardíaca 90" → frecuenciaCardiaca: 90; "respira a 24" → frecuenciaRespiratoria: 24;
+  "condición corporal 4 de 5" o "4/5" → condicionCorporal: 4.
+  Usa solo el número (sin unidades ni texto). Deja null SOLO si de verdad no se menciona.
 
 Devuelve ÚNICAMENTE un objeto JSON válido sin comentarios ni backticks:
 {
