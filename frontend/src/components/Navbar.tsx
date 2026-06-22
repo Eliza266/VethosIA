@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useMe } from '../features/tenant/hooks';
@@ -8,6 +8,7 @@ import { rolLabel } from '../lib/rbac';
 import type { NavIcon } from '../lib/rbac';
 import type { MeProfile } from '../features/tenant/api';
 import NotificationBell from './NotificationBell';
+import { VET_NAVIGATION } from '../config/navigation';
 import {
   LogOut,
   User,
@@ -22,8 +23,17 @@ import {
   Building2,
   ShieldCheck,
   CreditCard,
+  Hospital,
+  FileClock,
+  Settings,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+
+declare global {
+  interface Window {
+    __currentPaciente?: { nombre: string; especie: string } | null;
+  }
+}
 
 const NAV_ICON: Record<NavIcon, LucideIcon> = {
   dashboard: LayoutDashboard,
@@ -114,10 +124,61 @@ const Navbar: React.FC = () => {
   const { data: me, isLoading: meLoading, isFetching } = useMe();
   const sessionMe = me?.uid === firebaseUser?.uid ? me : undefined;
   const profileLoading = !!firebaseUser && !sessionMe && (meLoading || isFetching);
-  const navItems = getNavbarItemsForProfile(sessionMe ?? null);
+  const meRole = sessionMe?.role ?? sessionMe?.rol;
+  const isSuperadmin = meRole === 'superadmin';
+  const isVet = meRole === 'vet' || meRole === 'veterinario';
+
   const navigate = useNavigate();
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
+  const [currentPaciente, setCurrentPaciente] = useState<{ nombre: string; especie: string } | null>(
+    () => (typeof window !== 'undefined' ? window.__currentPaciente ?? null : null),
+  );
+
+  useEffect(() => {
+    const handlePacienteChange = () => {
+      setCurrentPaciente(window.__currentPaciente || null);
+    };
+    window.addEventListener('current-paciente-changed', handlePacienteChange);
+    return () => {
+      window.removeEventListener('current-paciente-changed', handlePacienteChange);
+    };
+  }, []);
+
+  const superAdminItems = [
+    { id: 'overview', label: 'Dashboard', path: '/admin', icon: ShieldCheck },
+    { id: 'entidades', label: 'Entidades', path: '/admin?panel=entidades', icon: Building2 },
+    { id: 'veterinarias', label: 'Veterinarias', path: '/admin?panel=veterinarias', icon: Hospital },
+    { id: 'usuarios', label: 'Usuarios', path: '/admin?panel=usuarios', icon: Users },
+    { id: 'planes', label: 'Planes', path: '/planes', icon: CreditCard },
+    { id: 'suscripciones', label: 'Suscripciones', path: '/suscripciones', icon: Activity },
+    { id: 'pagos', label: 'Pagos', path: '/admin?panel=pagos', icon: CreditCard },
+    { id: 'auditoria', label: 'Auditoría', path: '/auditoria', icon: FileClock },
+    { id: 'configuracion', label: 'Configuración', path: '/configuracion', icon: Settings },
+  ];
+
+  const getSuperAdminActiveSection = () => {
+    const pathname = location.pathname;
+    const search = location.search;
+    if (pathname === '/planes') return 'planes';
+    if (pathname === '/suscripciones') return 'suscripciones';
+    if (pathname === '/auditoria') return 'auditoria';
+    if (pathname === '/configuracion') return 'configuracion';
+    const panel = new URLSearchParams(search).get('panel');
+    if (
+      panel === 'entidades' ||
+      panel === 'veterinarias' ||
+      panel === 'usuarios' ||
+      panel === 'pagos'
+    ) {
+      return panel;
+    }
+    if (pathname === '/admin' || pathname.startsWith('/admin')) {
+      return 'overview';
+    }
+    return null;
+  };
+  const activeSection = getSuperAdminActiveSection();
 
   const handleLogout = async () => {
     try {
@@ -128,67 +189,188 @@ const Navbar: React.FC = () => {
     }
   };
 
-  const isActive = (path: string) => location.pathname === path;
-  const isNavActive = (path: string) =>
-    path === '/' ? isActive('/') : location.pathname === path || location.pathname.startsWith(`${path}/`);
   const showSession = !!firebaseUser;
 
+  // Modulos para otros roles
+  const navItems = isSuperadmin ? superAdminItems : getNavbarItemsForProfile(sessionMe ?? null);
+
+  // Niveles para veterinario
+  const matchPatient = location.pathname.match(/^\/pacientes\/([^/]+)/);
+  const isLevel3 = isVet && matchPatient && matchPatient[1] !== 'nuevo';
+  const patientId = isLevel3 ? matchPatient[1] : null;
+
+  const activeModule = isVet
+    ? VET_NAVIGATION.find((m) => m.path !== '/' && location.pathname.startsWith(m.path))
+    : null;
+  const isLevel2 = isVet && !isLevel3 && !!activeModule;
+
+  const getSpeciesEmoji = (esp?: string) => {
+    switch (esp) {
+      case 'perro': return '🐶';
+      case 'gato': return '🐱';
+      case 'ave': return '🦜';
+      case 'reptil': return '🦎';
+      default: return '🐾';
+    }
+  };
+
   return (
-    <nav className="command-nav sticky top-0 z-[100]">
+    <nav className="command-nav sticky top-0 z-[150] w-full border-b border-slate-200 bg-white/90 backdrop-blur-md">
       <div className="mx-auto max-w-[1920px] px-3 py-2 sm:px-5 lg:px-7">
-        <div className="flex min-h-16 min-w-0 items-center justify-between gap-3">
-          <div className="flex min-w-0 flex-1 items-center gap-4 lg:gap-6 xl:gap-8">
-            <Link to="/" className="group flex shrink-0 items-center gap-3">
-              <span className="brand-orb flex h-11 w-11 items-center justify-center rounded-2xl text-xl font-black text-white transition-transform group-hover:scale-[1.03]">
+        <div className="flex min-h-16 items-center justify-between gap-4">
+          
+          {/* Left: Logo */}
+          <div className="flex shrink-0 items-center">
+            <Link to="/" className="group flex items-center gap-3">
+              <span className="brand-orb flex h-10 w-10 items-center justify-center rounded-2xl text-lg font-black text-white transition-transform group-hover:scale-[1.03]">
                 V
               </span>
               <span className="hidden min-w-0 sm:block">
-                <span className="block text-lg font-black leading-none tracking-tight text-[var(--ink)]">
-                  Vethos<span className="text-[var(--accent)]"> AI</span>
+                <span className="block text-base font-black leading-none tracking-tight text-slate-900">
+                  Vethos<span className="text-[#0F6E56]"> AI</span>
                 </span>
-                <span className="mt-0.5 block text-[10px] font-extrabold uppercase tracking-[0.18em] text-slate-400">
+                <span className="mt-0.5 block text-[9px] font-extrabold uppercase tracking-[0.18em] text-slate-400">
                   Clinical Command
                 </span>
               </span>
             </Link>
-            
-            {/* Desktop Navigation */}
-            {showSession && (
-              <div className="nav-rail hidden min-w-0 flex-1 items-center gap-1 overflow-hidden lg:flex">
-                {navItems.map((item) => {
-                  const Icon = NAV_ICON[item.icon];
-                  return (
-                    <Link
-                      key={item.id}
-                      to={item.path}
-                      aria-label={item.label}
-                      title={item.label}
-                      className={`flex min-w-0 shrink-0 items-center gap-2 rounded-full px-3 py-2 text-sm font-bold transition-all 2xl:max-w-[10rem] 2xl:px-3.5 ${
-                        isNavActive(item.path)
-                          ? 'nav-pill-active'
-                          : 'text-slate-600 hover:bg-white/80 hover:text-[var(--ink)]'
-                      }`}
-                    >
-                      <Icon className="h-4 w-4 shrink-0" />
-                      <span className="hidden min-w-0 truncate 2xl:inline">{item.label}</span>
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
           </div>
 
-          {/* User profile / actions */}
+          {/* Center: Modules (Desktop) */}
+          {showSession && (
+            <div className="hidden lg:flex flex-1 items-center justify-center min-w-0 px-4">
+              {isVet ? (
+                isLevel3 ? (
+                  /* LEVEL 3 */
+                  <div className="flex items-center gap-4">
+                    <Link
+                      to="/pacientes"
+                      className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all shrink-0"
+                    >
+                      ← Pacientes
+                    </Link>
+                    <div className="h-4 w-px bg-slate-200 shrink-0" />
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0F6E56]/10 text-[#0F6E56] rounded-full text-xs font-bold shrink-0">
+                      <span>{getSpeciesEmoji(currentPaciente?.especie)}</span>
+                      <span>{currentPaciente?.nombre || 'Expediente'}</span>
+                    </div>
+                    <div className="h-4 w-px bg-slate-200 shrink-0" />
+                    <div className="flex items-center gap-1">
+                      {[
+                        { label: 'Perfil', val: 'perfil' },
+                        { label: 'Vacunas', val: 'vacunas' },
+                        { label: 'Consultas', val: 'consultas' },
+                      ].map((tab) => {
+                        const queryParams = new URLSearchParams(location.search);
+                        const active = (queryParams.get('tab') || 'perfil') === tab.val;
+                        return (
+                          <Link
+                            key={tab.val}
+                            to={`/pacientes/${patientId}?tab=${tab.val}`}
+                            className={`inline-flex items-center rounded-full px-3 py-1.5 text-xs font-bold transition-all ${
+                              active
+                                ? 'bg-[#0F6E56] text-white shadow-sm'
+                                : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                            }`}
+                          >
+                            {tab.label}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : isLevel2 && activeModule ? (
+                  /* LEVEL 2 */
+                  <div className="flex items-center gap-4">
+                    <Link
+                      to="/"
+                      className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all shrink-0"
+                    >
+                      ← Inicio
+                    </Link>
+                    <div className="h-4 w-px bg-slate-200 shrink-0" />
+                    <div className="flex items-center gap-1">
+                      {activeModule.subModules.map((sub) => {
+                        const queryParams = new URLSearchParams(location.search);
+                        const active = (queryParams.get('tab') || activeModule.subModules[0].tabValue) === sub.tabValue;
+                        return (
+                          <Link
+                            key={sub.id}
+                            to={`${activeModule.path}?tab=${sub.tabValue}`}
+                            className={`inline-flex items-center rounded-full px-3 py-1.5 text-xs font-bold transition-all ${
+                              active
+                                ? 'bg-[#0F6E56] text-white shadow-sm'
+                                : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                            }`}
+                          >
+                            {sub.label}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1.5">
+                    {navItems.map((item) => {
+                      const Icon = typeof item.icon === 'string' ? NAV_ICON[item.icon as NavIcon] : item.icon;
+                      const active = item.path === '/'
+                        ? location.pathname === '/'
+                        : location.pathname.startsWith(item.path);
+                      return (
+                        <Link
+                          key={item.id}
+                          to={item.path}
+                          className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold transition-all ${
+                            active
+                              ? 'bg-[#0F6E56] text-white shadow-sm'
+                              : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                          }`}
+                        >
+                          <Icon className="h-3.5 w-3.5" />
+                          <span>{item.label}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )
+              ) : (
+                /* Otros roles */
+                <div className="flex items-center gap-1.5">
+                  {navItems.map((item) => {
+                    const Icon = typeof item.icon === 'string' ? NAV_ICON[item.icon as NavIcon] : item.icon;
+                    const active = isSuperadmin
+                      ? activeSection === item.id
+                      : location.pathname === item.path || location.pathname.startsWith(`${item.path}/`);
+                    return (
+                      <Link
+                        key={item.id}
+                        to={item.path}
+                        className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold transition-all ${
+                          active
+                            ? 'bg-[#0F6E56] text-white shadow-sm'
+                            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                        }`}
+                      >
+                        <Icon className="h-3.5 w-3.5 shrink-0" />
+                        <span>{item.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Right: Actions (Desktop) */}
           <div className="hidden shrink-0 items-center gap-2 lg:flex">
             {showSession ? (
-              <div className="flex min-w-0 items-center gap-2 rounded-full border border-white/80 bg-white/70 px-2.5 py-1.5 shadow-[0_18px_40px_-34px_rgba(7,17,31,0.7)] backdrop-blur-xl lg:gap-3">
+              <div className="flex min-w-0 items-center gap-2 rounded-full border border-slate-100 bg-slate-50/50 px-2.5 py-1.5 shadow-sm lg:gap-3">
                 <NotificationBell />
                 <NavbarUserProfile
                   me={sessionMe}
                   loading={profileLoading}
                   onNavigatePerfil={() => navigate('/perfil')}
                 />
-                
                 <button
                   onClick={handleLogout}
                   className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500"
@@ -200,47 +382,145 @@ const Navbar: React.FC = () => {
             ) : (
               <Link
                 to="/login"
-                className="rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-bold text-[var(--accent-contrast)] shadow-[var(--shadow-accent)] transition-all hover:brightness-95"
+                className="rounded-full bg-[#0F6E56] px-4 py-2 text-sm font-bold text-white shadow-md transition-all hover:bg-[#0c5945]"
               >
                 Iniciar Sesión
               </Link>
             )}
           </div>
 
-          {/* Mobile: notificaciones + menú */}
+          {/* Mobile triggers */}
           <div className="flex shrink-0 items-center gap-1 lg:hidden">
             {showSession && <NotificationBell />}
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="inline-flex items-center justify-center rounded-2xl border border-white/80 bg-white/70 p-2 text-slate-500 shadow-sm transition-colors hover:bg-white hover:text-slate-700"
+              className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white p-2 text-slate-500 shadow-sm transition-colors hover:bg-slate-50 hover:text-slate-700"
             >
               {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
           </div>
+
         </div>
       </div>
 
       {/* Mobile menu */}
       {isOpen && showSession && (
-        <div className="mx-3 mb-3 space-y-1 rounded-3xl border border-white/80 bg-white/95 px-4 py-4 shadow-[0_24px_60px_-40px_rgba(7,17,31,0.72)] backdrop-blur-xl lg:hidden">
-          {navItems.map((item) => {
-            const Icon = NAV_ICON[item.icon];
-            return (
-              <Link
-                key={item.id}
-                to={item.path}
-                onClick={() => setIsOpen(false)}
-                className={`flex items-center gap-3 rounded-2xl px-3 py-3 text-base font-bold ${
-                  isNavActive(item.path)
-                    ? 'bg-[var(--accent-soft)] text-[var(--accent)]'
-                    : 'text-[var(--text-secondary)] hover:bg-slate-50'
-                }`}
-              >
-                <Icon className="h-5 w-5" />
-                {item.label}
-              </Link>
-            );
-          })}
+        <div className="mx-3 mb-3 space-y-2 rounded-3xl border border-slate-200 bg-white/95 px-4 py-4 shadow-lg backdrop-blur-xl lg:hidden">
+          {isVet ? (
+            isLevel3 ? (
+              <div className="space-y-1">
+                <Link
+                  to="/pacientes"
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-2 rounded-2xl px-3 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-50"
+                >
+                  ← Pacientes
+                </Link>
+                <div className="px-3 py-2 bg-[#0F6E56]/10 text-[#0F6E56] rounded-xl text-sm font-black flex items-center gap-2">
+                  <span>{getSpeciesEmoji(currentPaciente?.especie)}</span>
+                  <span>{currentPaciente?.nombre || 'Expediente'}</span>
+                </div>
+                <div className="border-t border-slate-100 my-2" />
+                {[
+                  { label: 'Perfil', val: 'perfil' },
+                  { label: 'Vacunas', val: 'vacunas' },
+                  { label: 'Consultas', val: 'consultas' },
+                ].map((tab) => {
+                  const queryParams = new URLSearchParams(location.search);
+                  const active = (queryParams.get('tab') || 'perfil') === tab.val;
+                  return (
+                    <Link
+                      key={tab.val}
+                      to={`/pacientes/${patientId}?tab=${tab.val}`}
+                      onClick={() => setIsOpen(false)}
+                      className={`flex items-center gap-3 rounded-2xl px-3 py-3 text-base font-bold ${
+                        active
+                          ? 'bg-[#0F6E56]/10 text-[#0F6E56]'
+                          : 'text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      {tab.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            ) : isLevel2 && activeModule ? (
+              <div className="space-y-1">
+                <Link
+                  to="/"
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-2 rounded-2xl px-3 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-50"
+                >
+                  ← Inicio
+                </Link>
+                <div className="border-t border-slate-100 my-2" />
+                {activeModule.subModules.map((sub) => {
+                  const queryParams = new URLSearchParams(location.search);
+                  const active = (queryParams.get('tab') || activeModule.subModules[0].tabValue) === sub.tabValue;
+                  return (
+                    <Link
+                      key={sub.id}
+                      to={`${activeModule.path}?tab=${sub.tabValue}`}
+                      onClick={() => setIsOpen(false)}
+                      className={`flex items-center gap-3 rounded-2xl px-3 py-3 text-base font-bold ${
+                        active
+                          ? 'bg-[#0F6E56]/10 text-[#0F6E56]'
+                          : 'text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      {sub.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="space-y-1">
+                {navItems.map((item) => {
+                  const Icon = typeof item.icon === 'string' ? NAV_ICON[item.icon as NavIcon] : item.icon;
+                  const active = item.path === '/'
+                    ? location.pathname === '/'
+                    : location.pathname.startsWith(item.path);
+                  return (
+                    <Link
+                      key={item.id}
+                      to={item.path}
+                      onClick={() => setIsOpen(false)}
+                      className={`flex items-center gap-3 rounded-2xl px-3 py-3 text-base font-bold ${
+                        active
+                          ? 'bg-[#0F6E56]/10 text-[#0F6E56]'
+                          : 'text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      <Icon className="h-5 w-5" />
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            )
+          ) : (
+            navItems.map((item) => {
+              const Icon = typeof item.icon === 'string' ? NAV_ICON[item.icon as NavIcon] : item.icon;
+              const active = isSuperadmin
+                ? activeSection === item.id
+                : location.pathname === item.path || location.pathname.startsWith(`${item.path}/`);
+              return (
+                <Link
+                  key={item.id}
+                  to={item.path}
+                  onClick={() => setIsOpen(false)}
+                  className={`flex items-center gap-3 rounded-2xl px-3 py-3 text-base font-bold ${
+                    active
+                      ? 'bg-[#0F6E56]/10 text-[#0F6E56]'
+                      : 'text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  <Icon className="h-5 w-5" />
+                  {item.label}
+                </Link>
+              );
+            })
+          )}
 
           <div className="mt-3 border-t border-slate-100 pt-4">
             <div className="px-3 py-2" onClick={() => { setIsOpen(false); navigate('/perfil'); }}>

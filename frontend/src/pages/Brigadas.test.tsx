@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import Brigadas from './Brigadas';
 
 const {
@@ -127,7 +128,11 @@ function setup(role: 'admin_entidad' | 'admin_veterinaria' | 'veterinario' = 'ad
     fechaHora: '2026-07-01T11:00:00.000Z',
     createdBy: 'vet1',
   });
-  render(<Brigadas />);
+  render(
+    <MemoryRouter>
+      <Brigadas />
+    </MemoryRouter>
+  );
 }
 
 describe('Brigadas', () => {

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useMe } from '../features/tenant/hooks';
 import { normalizarRol, rolLabel } from '../lib/rbac';
@@ -7,7 +8,7 @@ import { EmptyState, PageHeader } from '../components/ui/Primitives';
 import VeterinarioCommandCenter from './dashboards/VeterinarioCommandCenter';
 import AdminVeterinariaCommandCenter from './dashboards/AdminVeterinariaCommandCenter';
 import AdminEntidadCommandCenter from './dashboards/AdminEntidadCommandCenter';
-import SuperAdminCommandCenter from './dashboards/SuperAdminCommandCenter';
+
 
 const DashboardFallback: React.FC<{ rol?: string | null }> = ({ rol }) => (
   <div className="space-y-6 animate-fade-in" data-testid="dashboard-fallback">
@@ -41,7 +42,7 @@ const Dashboard: React.FC = () => {
     case 'admin_entidad':
       return <AdminEntidadCommandCenter me={me ?? undefined} />;
     case 'superadmin':
-      return <SuperAdminCommandCenter me={me ?? undefined} />;
+      return <Navigate to="/admin" replace />;
     default:
       return <DashboardFallback rol={me?.role ?? me?.rol ?? null} />;
   }

@@ -37,9 +37,11 @@ vi.mock('../hooks/usePacientes', () => ({
 
 vi.mock('../features/citas/hooks', () => ({
   useCitas: () => {
+    // Set baseline hours to noon to avoid date/week boundary crossings during tests
     const fechaBase = new Date();
-    const fechaSuelta = new Date(fechaBase.getTime() + 60 * 60 * 1000).toISOString();
-    const fechaVinculada = new Date(fechaBase.getTime() + 2 * 60 * 60 * 1000).toISOString();
+    fechaBase.setHours(12, 0, 0, 0);
+    const fechaSuelta = new Date(fechaBase.getTime() + 30 * 60 * 1000).toISOString();
+    const fechaVinculada = new Date(fechaBase.getTime() + 60 * 60 * 1000).toISOString();
     return {
       data: [
         {
@@ -93,6 +95,10 @@ describe('Agenda page', () => {
   it('crea cita vinculada a paciente con payload /v1', async () => {
     const user = userEvent.setup();
     renderAgenda();
+
+    // Click Nueva Cita button to open the modal
+    const openBtn = screen.getByRole('button', { name: /nueva cita/i });
+    await user.click(openBtn);
 
     await user.selectOptions(screen.getByLabelText('Paciente'), 'p1');
     await user.type(screen.getByLabelText('Motivo de la cita'), 'Control vacuna');

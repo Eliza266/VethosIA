@@ -4,6 +4,14 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
 import { UIProviders } from '../components/ui/Primitives';
 import SuperAdmin from './SuperAdmin';
+import Navbar from '../components/Navbar';
+
+vi.mock('../hooks/useAuth', () => ({
+  useAuth: () => ({
+    firebaseUser: { uid: 'super1' },
+    logout: vi.fn(),
+  }),
+}));
 
 const {
   mockUseMe,
@@ -87,6 +95,7 @@ function renderSuperAdmin(initialEntry = '/admin') {
     <QueryClientProvider client={qc}>
       <UIProviders>
         <MemoryRouter initialEntries={[initialEntry]}>
+          <Navbar />
           <SuperAdmin />
         </MemoryRouter>
       </UIProviders>
@@ -326,7 +335,7 @@ describe('SuperAdmin', () => {
   it('no expone enlaces tenant como panel principal de superadmin', async () => {
     renderSuperAdmin('/admin');
 
-    expect(await screen.findByText('Super Admin')).toBeInTheDocument();
+    expect((await screen.findAllByText('Super Admin')).length).toBeGreaterThan(0);
     expect(screen.queryByRole('link', { name: /vista entidad/i })).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: /^veterinarias$/i })).toHaveAttribute(
       'href',

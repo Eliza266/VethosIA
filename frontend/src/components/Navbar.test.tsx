@@ -212,7 +212,7 @@ describe('Navbar (roles y entidad)', () => {
     expect(screen.getByTitle(/cerrar sesi/i)).toBeInTheDocument();
   });
 
-  it('superadmin ve soporte/plataforma', () => {
+  it('superadmin muestra los 9 módulos de plataforma en la barra global', () => {
     mockUseMe.mockReturnValue({
       data: { ...meAdmin, rol: 'superadmin' },
       isLoading: false,
@@ -220,8 +220,15 @@ describe('Navbar (roles y entidad)', () => {
     });
     renderNavbar();
     expect(screen.getByText('Super Admin')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /soporte plataforma/i })).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /vista entidad/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /dashboard/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /entidades/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /veterinarias/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /usuarios/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /planes/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /suscripciones/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /pagos/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /auditoría/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /configuración/i })).toBeInTheDocument();
   });
 
   it('R123: asistente legacy no ve opciones de navegacion V2', () => {

@@ -1,6 +1,5 @@
 {
   "projects": {
-    "default": "vethosia-production",
-    "prod": "vethosia-production"
+    "default": "vethosia-5895b"
   }
 }

@@ -1,16 +1,15 @@
 import React, { useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { CalendarClock, CalendarDays, CheckCircle2, Clock3, Link2, Plus, Users } from 'lucide-react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { CalendarClock, CalendarDays, CheckCircle2, Clock3, Link2, Plus, Users, X, Save, TrendingUp, AlertTriangle } from 'lucide-react';
 import { useCitas } from '../features/citas/hooks';
 import { citasEnVista, agruparPorDia, type VistaAgenda } from '../features/citas/agenda';
 import {
-  etiquetaPacienteCita,
   motivoCita,
   sugerirPacientePorTitulo,
   type Cita,
 } from '../features/citas/api';
 import { usePacientes } from '../hooks/usePacientes';
-import { Card, Button, Badge, Skeleton, EmptyState, KpiCard, PageHeader, SectionHeader } from '../components/ui/Primitives';
+import { Card, Button, Badge, Skeleton, EmptyState, KpiCard, SectionHeader } from '../components/ui/Primitives';
 
 const ESTADO_LABEL: Record<Cita['estado'], string> = {
   programada: 'Programada',
@@ -21,22 +20,51 @@ const ESTADO_LABEL: Record<Cita['estado'], string> = {
 };
 
 const inputClasses =
-  'min-h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none transition-all placeholder:text-slate-400 focus:border-[#0F6E56] focus:ring-2 focus:ring-[#0F6E56]/12';
+  'min-h-11 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-800 outline-none transition-all placeholder:text-slate-400 focus:border-[#0F6E56] focus:ring-2 focus:ring-[#0F6E56]/12 w-full';
 
-// Agenda: citas vinculadas a paciente y consulta clínica vía /v1/citas.
 const Agenda: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { data, isLoading, crear, cambiarEstado, vincularPaciente } = useCitas();
   const { pacientes } = usePacientes();
+
+  const currentTab = new URLSearchParams(location.search).get('tab') || 'calendario';
+
+  const [subTab, setSubTab] = useState<'calendario' | 'citas_dia'>('calendario');
   const [vista, setVista] = useState<VistaAgenda>('semana');
-  const [pacienteId, setPacienteId] = useState('');
-  const [motivo, setMotivo] = useState('');
-  const [fecha, setFecha] = useState('');
+
+  // Modal State for new appointment
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newCita, setNewCita] = useState({
+    pacienteId: '',
+    motivo: '',
+    fecha: '',
+  });
+
   const [vinculoManual, setVinculoManual] = useState<Record<string, string>>({});
 
   const referencia = useMemo(() => new Date(), []);
   const visibles = useMemo(() => citasEnVista(data ?? [], vista, referencia), [data, vista, referencia]);
-  const porDia = useMemo(() => agruparPorDia(visibles), [visibles]);
+  const porDia = useMemo(() => {
+    const grouped = agruparPorDia(visibles);
+    return Object.entries(grouped).map(([fecha, items]) => ({ fecha, items }));
+  }, [visibles]);
+
+  const formatHora = (fechaIso: string) => {
+    try {
+      const d = new Date(fechaIso);
+      return d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+    } catch {
+      return 'n/d';
+    }
+  };
+
+  // Today's appointments
+  const hoyCitas = useMemo(() => {
+    const todayStr = new Date().toDateString();
+    return (data ?? []).filter(c => new Date(c.fecha).toDateString() === todayStr);
+  }, [data]);
+
   const citasProgramadas = visibles.filter((c) => c.estado === 'programada').length;
   const citasVinculadas = visibles.filter((c) => Boolean(c.pacienteId)).length;
   const citasAtendidas = visibles.filter((c) => c.estado === 'realizada' || Boolean(c.consultaId)).length;
@@ -75,7 +103,7 @@ const Agenda: React.FC = () => {
             aria-label="Vincular paciente"
             value={seleccion}
             onChange={(e) => setVinculoManual((m) => ({ ...m, [c.id]: e.target.value }))}
-            className={inputClasses}
+            className="min-h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none transition-all placeholder:text-slate-400 focus:border-[#0F6E56] focus:ring-2 focus:ring-[#0F6E56]/12"
           >
             <option value="">Seleccionar paciente…</option>
             {pacientes.map((p) => (
@@ -100,180 +128,442 @@ const Agenda: React.FC = () => {
     return null;
   };
 
+  const handleCreateCita = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCita.pacienteId || !newCita.motivo || !newCita.fecha) return;
+    crear.mutate({
+      pacienteId: newCita.pacienteId,
+      motivo: newCita.motivo,
+      fecha: new Date(newCita.fecha).toISOString(),
+    });
+    setNewCita({ pacienteId: '', motivo: '', fecha: '' });
+    setIsModalOpen(false);
+  };
+
+  // Calculate real metrics
+  const totalCitas = data?.length ?? 0;
+  const programadasCount = data?.filter((c) => c.estado === 'programada').length ?? 0;
+  const enAtencionCount = data?.filter((c) => c.estado === 'en_atencion').length ?? 0;
+  const realizadasCount = data?.filter((c) => c.estado === 'realizada').length ?? 0;
+  const canceladasCount = data?.filter((c) => c.estado === 'cancelada').length ?? 0;
+  const noAsistioCount = data?.filter((c) => c.estado === 'no_asistio').length ?? 0;
+
+  const totalCerradas = realizadasCount + noAsistioCount;
+  const asistenciaPct = totalCerradas ? Math.round((realizadasCount / totalCerradas) * 100) : 100;
+
   return (
     <div className="mx-auto grid max-w-6xl gap-6 animate-fade-in py-4">
-      <PageHeader
-        badge="Operación clínica"
-        title="Agenda"
-        description="Planifica citas, vincula pacientes y abre la consulta clínica desde una vista segura por rol."
-        action={
-          <div
-            role="tablist"
-            aria-label="Vista de agenda"
-            className="inline-flex rounded-2xl border border-slate-200 bg-white/80 p-1 shadow-sm"
-          >
-            {(['dia', 'semana', 'mes'] as VistaAgenda[]).map((v) => (
-              <Button
-                key={v}
-                variant={v === vista ? 'primary' : 'ghost'}
-                size="sm"
-                onClick={() => setVista(v)}
-                className="min-w-20"
-                style={v === vista ? undefined : { border: 'none', boxShadow: 'none' }}
-              >
-                {v === 'dia' ? 'Día' : v === 'semana' ? 'Semana' : 'Mes'}
-              </Button>
-            ))}
-          </div>
-        }
-      />
-
-      <div className="grid gap-4 md:grid-cols-3">
-        <KpiCard
-          label="Citas visibles"
-          value={visibles.length}
-          hint={`${citasProgramadas} programadas`}
-          icon={<CalendarDays className="h-5 w-5" />}
-          accent="info"
-        />
-        <KpiCard
-          label="Pacientes vinculados"
-          value={`${citasVinculadas}/${visibles.length || 0}`}
-          hint="Listas para abrir consulta"
-          icon={<Users className="h-5 w-5" />}
-          accent="success"
-        />
-        <KpiCard
-          label="Atención cerrada"
-          value={citasAtendidas}
-          hint="Consulta creada o realizada"
-          icon={<CheckCircle2 className="h-5 w-5" />}
-          accent="warn"
-        />
-      </div>
-
-      <Card padding="lg">
-        <SectionHeader
-          title="Nueva cita"
-          description="Registra una atención programada sin salir del flujo clínico."
-          action={<Plus className="h-5 w-5 text-[var(--accent)]" />}
-        />
-        <div className="mt-5 grid gap-3 lg:grid-cols-[minmax(180px,1.1fr)_minmax(180px,1fr)_minmax(180px,0.9fr)_auto]">
-          <select
-            aria-label="Paciente"
-            value={pacienteId}
-            onChange={(e) => setPacienteId(e.target.value)}
-            className={inputClasses}
-          >
-            <option value="">Seleccionar paciente…</option>
-            {pacientes.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.nombre}
-              </option>
-            ))}
-          </select>
-          <input
-            aria-label="Motivo de la cita"
-            placeholder="Motivo (ej. control, vacuna)"
-            value={motivo}
-            onChange={(e) => setMotivo(e.target.value)}
-            className={inputClasses}
-          />
-          <input
-            aria-label="Fecha y hora"
-            type="datetime-local"
-            value={fecha}
-            onChange={(e) => setFecha(e.target.value)}
-            className={inputClasses}
-          />
-          <Button
-            disabled={!pacienteId || !motivo || !fecha || crear.isPending}
-            className="min-h-11"
-            onClick={() => {
-              crear.mutate({ pacienteId, motivo, fecha: new Date(fecha).toISOString() });
-              setMotivo('');
-              setFecha('');
-              setPacienteId('');
-            }}
-          >
-            Agendar
-          </Button>
+      
+      {/* Compact Page Header — replaces old header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-5">
+        <div className="min-w-0">
+          <span className="text-xs font-bold uppercase tracking-wider text-[#0F6E56]">Operación clínica</span>
+          <h1 className="mt-1 text-xl font-black text-slate-900 sm:text-2xl">Agenda Médica</h1>
+          <p className="text-xs text-slate-500">Planifica citas, vincula pacientes y abre la consulta clínica.</p>
         </div>
-      </Card>
-
-      <Card padding="lg">
-        <SectionHeader
-          title="Calendario operativo"
-          description="Citas agrupadas por día, estado y siguiente acción clínica."
-        />
-        <div className="mt-5">
-          {isLoading && (
-            <div className="grid gap-3">
-              <Skeleton height={78} />
-              <Skeleton height={78} />
+        <div className="flex shrink-0 flex-wrap gap-2">
+          {currentTab === 'calendario' && subTab === 'calendario' && (
+            <div
+              role="tablist"
+              aria-label="Vista de agenda"
+              className="inline-flex rounded-2xl border border-slate-200 bg-white/80 p-1 shadow-sm shrink-0"
+            >
+              {(['dia', 'semana', 'mes'] as VistaAgenda[]).map((v) => (
+                <Button
+                  key={v}
+                  variant={v === vista ? 'primary' : 'ghost'}
+                  size="sm"
+                  onClick={() => setVista(v)}
+                  className="min-w-20"
+                  style={v === vista ? undefined : { border: 'none', boxShadow: 'none' }}
+                >
+                  {v === 'dia' ? 'Día' : v === 'semana' ? 'Semana' : 'Mes'}
+                </Button>
+              ))}
             </div>
           )}
-          {!isLoading && visibles.length === 0 && (
-            <EmptyState
-              titulo="Sin citas en esta vista"
-              mensaje="Crea una cita o cambia de día, semana o mes para revisar otra ventana operativa."
-              icon={<CalendarClock className="h-5 w-5" />}
-            />
-          )}
+          <Button
+            variant="primary"
+            onClick={() => setIsModalOpen(true)}
+            className="rounded-xl"
+          >
+            <Plus className="h-4 w-4" />
+            Nueva Cita
+          </Button>
+        </div>
+      </div>
 
-          {!isLoading &&
-            Object.entries(porDia).map(([dia, citas]) => (
-              <section key={dia} className="mb-5 last:mb-0">
-                <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="veth-section-label">Día de atención</p>
-                    <h2 className="text-lg font-black text-slate-950">{dia}</h2>
-                  </div>
-                  <Badge estado="info">{citas.length} citas</Badge>
+      {currentTab === 'metricas' ? (
+        /* Real Metrics Dashboard view */
+        <div className="space-y-6 animate-fade-in">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <KpiCard
+              label="Total de Citas"
+              value={totalCitas}
+              hint="Histórico de citas gestionadas"
+              icon={<CalendarDays className="h-5 w-5" />}
+              accent="info"
+            />
+            <KpiCard
+              label="Tasa de Asistencia"
+              value={`${asistenciaPct}%`}
+              hint={`${realizadasCount} asistidas de ${totalCerradas} cerradas`}
+              icon={<TrendingUp className="h-5 w-5" />}
+              accent="success"
+            />
+            <KpiCard
+              label="Citas Canceladas / No asistió"
+              value={canceladasCount + noAsistioCount}
+              hint={`${canceladasCount} canceladas · ${noAsistioCount} ausentes`}
+              icon={<AlertTriangle className="h-5 w-5" />}
+              accent="danger"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <Card padding="lg">
+              <SectionHeader
+                title="Distribución de Estados"
+                description="Estado actual de todas las citas agendadas."
+              />
+              <div className="mt-6 space-y-4">
+                {[
+                  { label: 'Programadas', count: programadasCount, color: 'bg-blue-500' },
+                  { label: 'En atención', count: enAtencionCount, color: 'bg-amber-500' },
+                  { label: 'Realizadas', count: realizadasCount, color: 'bg-emerald-500' },
+                  { label: 'Canceladas', count: canceladasCount, color: 'bg-slate-400' },
+                  { label: 'No asistió', count: noAsistioCount, color: 'bg-red-500' },
+                ].map((item) => {
+                  const pct = totalCitas ? Math.round((item.count / totalCitas) * 100) : 0;
+                  return (
+                    <div key={item.label} className="space-y-2">
+                      <div className="flex justify-between text-xs font-bold text-slate-700">
+                        <span>{item.label}</span>
+                        <span>{item.count} ({pct}%)</span>
+                      </div>
+                      <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full ${item.color} rounded-full transition-all`}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+
+            <Card padding="lg">
+              <SectionHeader
+                title="Eficiencia de la Agenda"
+                description="Métricas operativas del flujo de consultas."
+              />
+              <div className="mt-6 space-y-6">
+                <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl">
+                  <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Tasa de Ausentismo</h4>
+                  <p className="text-xs text-slate-500 leading-relaxed">
+                    Las citas marcadas como "No asistió" o "Cancelada" representan tiempo clínico desaprovechado. Recomendamos enviar confirmaciones automáticas de citas 24h antes para optimizar el flujo.
+                  </p>
                 </div>
-                <ul className="grid gap-3">
-                  {citas.map((c) => (
-                    <li
+                <div className="flex items-center justify-between p-4 bg-[#0F6E56]/5 border border-[#0F6E56]/10 rounded-2xl">
+                  <div>
+                    <h5 className="text-xs font-extrabold text-[#0F6E56] uppercase tracking-wider">Citas del día programadas</h5>
+                    <p className="text-[10px] text-slate-500 mt-0.5">Pendientes de atención hoy</p>
+                  </div>
+                  <span className="text-lg font-black text-[#0F6E56] bg-white px-3 py-1 rounded-xl shadow-sm border border-[#0F6E56]/10">
+                    {hoyCitas.filter(c => c.estado === 'programada').length}
+                  </span>
+                </div>
+              </div>
+            </Card>
+          </div>
+        </div>
+      ) : (
+        /* Default Calendar View */
+        <>
+          {/* Level 2 Sub-Tabs */}
+          <div className="flex border-b border-slate-200">
+            <button
+              onClick={() => setSubTab('calendario')}
+              className={`px-6 py-3 font-bold text-sm border-b-2 transition-all ${
+                subTab === 'calendario'
+                  ? 'border-[#0F6E56] text-[#0F6E56]'
+                  : 'border-transparent text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              Calendario
+            </button>
+            <button
+              onClick={() => setSubTab('citas_dia')}
+              className={`px-6 py-3 font-bold text-sm border-b-2 transition-all ${
+                subTab === 'citas_dia'
+                  ? 'border-[#0F6E56] text-[#0F6E56]'
+                  : 'border-transparent text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              Citas del día ({hoyCitas.length})
+            </button>
+          </div>
+
+          {/* Conditional View Rendering */}
+          {subTab === 'calendario' ? (
+            <div className="space-y-6">
+              
+              {/* KPI Dashboard */}
+              <div className="grid gap-4 md:grid-cols-3">
+                <KpiCard
+                  label="Citas visibles"
+                  value={visibles.length}
+                  hint={`${citasProgramadas} programadas`}
+                  icon={<CalendarDays className="h-5 w-5" />}
+                  accent="info"
+                />
+                <KpiCard
+                  label="Pacientes vinculados"
+                  value={`${citasVinculadas}/${visibles.length || 0}`}
+                  hint="Listas para abrir consulta"
+                  icon={<Users className="h-5 w-5" />}
+                  accent="success"
+                />
+                <KpiCard
+                  label="Atención cerrada"
+                  value={citasAtendidas}
+                  hint="Consulta creada o realizada"
+                  icon={<CheckCircle2 className="h-5 w-5" />}
+                  accent="warn"
+                />
+              </div>
+
+              {/* Main Calendario Card */}
+              <Card padding="lg">
+                <div className="flex justify-between items-center mb-6">
+                  <SectionHeader
+                    title="Calendario operativo"
+                    description="Citas agrupadas por día, estado y siguiente acción clínica."
+                  />
+                </div>
+
+                {isLoading ? (
+                  <div className="grid gap-3">
+                    <Skeleton height={60} />
+                    <Skeleton height={60} />
+                    <Skeleton height={60} />
+                  </div>
+                ) : visibles.length === 0 ? (
+                  <EmptyState
+                    titulo="Sin citas en esta vista"
+                    mensaje="Agrega una nueva cita médica o cambia el rango de fechas en la parte superior."
+                    icon={<CalendarDays className="h-6 w-6" />}
+                  />
+                ) : (
+                  <div className="space-y-6">
+                    {porDia.map(({ fecha, items }) => (
+                      <div key={fecha} className="space-y-3">
+                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100/50 inline-block">
+                          {fecha}
+                        </h3>
+                        <div className="grid gap-3">
+                          {items.map((c) => (
+                            <div
+                              key={c.id}
+                              className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 bg-white border border-slate-200/80 rounded-2xl shadow-[0_2px_8px_-3px_rgba(15,23,42,0.05)] hover:border-[#0F6E56]/30 transition-all duration-200"
+                            >
+                              <div className="flex items-start gap-3">
+                                <div className="p-2.5 bg-[#0F6E56]/5 text-[#0F6E56] rounded-xl shrink-0 mt-0.5">
+                                  <Clock3 className="h-4 w-4" />
+                                </div>
+                                <div className="min-w-0">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <strong className="text-slate-800 text-sm">{c.titulo}</strong>
+                                    <Badge estado={c.estado}>{ESTADO_LABEL[c.estado] || c.estado}</Badge>
+                                  </div>
+                                  <p className="text-xs text-slate-500 mt-1 flex items-center gap-1.5">
+                                    <span>🕒 {formatHora(c.fecha)}</span>
+                                    <span>•</span>
+                                    <span>📝 {motivoCita(c)}</span>
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 self-end md:self-center">
+                                {renderAcciones(c)}
+                                <div className="flex gap-1.5">
+                                  {c.estado !== 'realizada' && c.estado !== 'cancelada' && (
+                                    <>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() =>
+                                          cambiarEstado.mutate({ id: c.id, estado: 'realizada' })
+                                        }
+                                      >
+                                        Marcar realizada
+                                      </Button>
+                                      <Button
+                                        variant="danger"
+                                        size="sm"
+                                        onClick={() =>
+                                          cambiarEstado.mutate({ id: c.id, estado: 'cancelada' })
+                                        }
+                                      >
+                                        Cancelar
+                                      </Button>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </Card>
+            </div>
+          ) : (
+            /* Citas del Día view */
+            <Card padding="lg">
+              <div className="flex justify-between items-center mb-6">
+                <SectionHeader
+                  title="Citas para el día de hoy"
+                  description="Flujo de atenciones planificadas para hoy."
+                />
+              </div>
+
+              {hoyCitas.length === 0 ? (
+                <EmptyState
+                  titulo="Sin citas para hoy"
+                  mensaje="No tienes atenciones agendadas para el día de hoy."
+                  icon={<CheckCircle2 className="h-6 w-6" />}
+                />
+              ) : (
+                <div className="grid gap-3">
+                  {hoyCitas.map((c) => (
+                    <div
                       key={c.id}
-                      className="rounded-2xl border border-slate-200 bg-white/85 p-4 shadow-[0_16px_42px_-36px_rgba(15,23,42,0.55)] transition-all hover:border-[#0F6E56]/30 hover:bg-white"
+                      className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 bg-white border border-slate-200/80 rounded-2xl shadow-[0_2px_8px_-3px_rgba(15,23,42,0.05)] hover:border-[#0F6E56]/30 transition-all duration-200"
                     >
-                      <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="flex items-start gap-3">
+                        <div className="p-2.5 bg-[#0F6E56]/5 text-[#0F6E56] rounded-xl shrink-0 mt-0.5">
+                          <CalendarClock className="h-4 w-4" />
+                        </div>
                         <div className="min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
-                            <span className="inline-flex items-center gap-1.5 text-sm font-black text-slate-950">
-                              <Clock3 className="h-4 w-4 text-[var(--accent)]" />
-                              {new Date(c.fecha).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}
-                            </span>
-                            <span className="text-slate-300">/</span>
-                            <span className="font-bold text-slate-900">{etiquetaPacienteCita(c)}</span>
+                            <strong className="text-slate-800 text-sm">{c.pacienteNombre ?? c.titulo}</strong>
+                            <Badge estado={c.estado}>{ESTADO_LABEL[c.estado] || c.estado}</Badge>
                           </div>
-                          <div className="mt-1 text-sm text-slate-500">{motivoCita(c)}</div>
-                          {c.historiaClinicaId && (
-                            <div className="mt-1 text-xs font-semibold text-slate-400">HC: {c.historiaClinicaId}</div>
-                          )}
+                          <p className="text-xs text-slate-500 mt-1 flex items-center gap-1.5">
+                            <span>🕒 {formatHora(c.fecha)}</span>
+                            <span>•</span>
+                            <span>📝 {c.motivo ?? c.titulo}</span>
+                          </p>
                         </div>
-                        <Badge estado={c.estado}>{ESTADO_LABEL[c.estado] ?? c.estado}</Badge>
                       </div>
-                      <div className="mt-4 flex flex-wrap items-center gap-2">
+                      <div className="flex items-center gap-2 self-end md:self-center">
                         {renderAcciones(c)}
-                        {c.estado === 'programada' && c.pacienteId && (
-                          <>
-                            <Button variant="ghost" onClick={() => cambiarEstado.mutate({ id: c.id, estado: 'cancelada' })}>
-                              Cancelar
-                            </Button>
-                            <Button variant="ghost" onClick={() => cambiarEstado.mutate({ id: c.id, estado: 'no_asistio' })}>
-                              No asistió
-                            </Button>
-                          </>
+                        {c.estado !== 'realizada' && c.estado !== 'cancelada' && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => cambiarEstado.mutate({ id: c.id, estado: 'realizada' })}
+                          >
+                            Marcar realizada
+                          </Button>
                         )}
                       </div>
-                    </li>
+                    </div>
                   ))}
-                </ul>
-              </section>
-            ))}
+                </div>
+              )}
+            </Card>
+          )}
+        </>
+      )}
+
+      {/* New Appointment Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 space-y-5 animate-fade-in">
+            <div className="flex justify-between items-center pb-3 border-b border-slate-100">
+              <h2 className="text-lg font-extrabold text-slate-800">Nueva Cita Médica</h2>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="p-1.5 hover:bg-slate-100 rounded-xl text-slate-400 hover:text-slate-700 transition-all"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateCita} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">
+                  Mascota / Paciente
+                </label>
+                <select
+                  required
+                  aria-label="Paciente"
+                  value={newCita.pacienteId}
+                  onChange={(e) => setNewCita({ ...newCita, pacienteId: e.target.value })}
+                  className={inputClasses}
+                >
+                  <option value="">Selecciona una mascota…</option>
+                  {pacientes.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.nombre} ({p.propietario?.nombre ?? 'Sin propietario'})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">
+                  Motivo de la Cita
+                </label>
+                <input
+                  required
+                  aria-label="Motivo de la cita"
+                  placeholder="Ej. Control post-operatorio, vacunación"
+                  value={newCita.motivo}
+                  onChange={(e) => setNewCita({ ...newCita, motivo: e.target.value })}
+                  className={inputClasses}
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">
+                  Fecha y Hora
+                </label>
+                <input
+                  required
+                  aria-label="Fecha y hora"
+                  type="datetime-local"
+                  value={newCita.fecha}
+                  onChange={(e) => setNewCita({ ...newCita, fecha: e.target.value })}
+                  className={inputClasses}
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="flex-1 py-2.5 text-sm font-bold text-slate-500 border border-slate-200 bg-white hover:bg-slate-50 rounded-xl transition-all"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-bold text-white bg-[#0F6E56] hover:bg-[#0c5945] rounded-xl transition-all shadow-md shadow-[#0F6E56]/15"
+                >
+                  <Save className="h-4 w-4" />
+                  Agendar
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
-      </Card>
+      )}
+
     </div>
   );
 };

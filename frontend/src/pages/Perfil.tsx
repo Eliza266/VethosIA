@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { db } from '../services/firebase';
+import { db, auth } from '../services/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { updatePassword } from 'firebase/auth';
 import { Phone, User, Mail, Save, CheckCircle, AlertCircle, MapPin, Building2, IdCard, MessageCircle, type LucideIcon } from 'lucide-react';
 import { getErrorMessage } from '../lib/errors';
 import { getFeatureFlags } from '../lib/featureFlags';
@@ -46,6 +47,9 @@ const Perfil: React.FC = () => {
     veterinaria: '',
     matriculaProfesional: '',
   });
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [nuevaContrasena, setNuevaContrasena] = useState('');
+  const [confirmarContrasena, setConfirmarContrasena] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -56,6 +60,7 @@ const Perfil: React.FC = () => {
       try {
         if (getFeatureFlags().useApiCRUD) {
           const me = await obtenerMe();
+          setIsSuperAdmin(me.rol === 'superadmin' || me.role === 'superadmin');
           setFields({
             telefono: me.telefono || '',
             whatsapp: me.whatsapp || '',
@@ -98,21 +103,44 @@ const Perfil: React.FC = () => {
     setSaving(true);
     setStatus(null);
     try {
-      if (getFeatureFlags().useApiCRUD) {
-        await actualizarMe(fields);
-      } else {
-        const docRef = doc(db, 'veterinarios', user.uid);
-        await setDoc(docRef, {
-          uid: user.uid,
-          nombre: user.nombre,
-          email: user.email,
-          foto: user.foto || null,
-          ...fields,
-        }, { merge: true });
+      if (nuevaContrasena) {
+        if (nuevaContrasena !== confirmarContrasena) {
+          setStatus({ type: 'error', message: 'Las contraseñas no coinciden.' });
+          setSaving(false);
+          return;
+        }
+        if (nuevaContrasena.length < 6) {
+          setStatus({ type: 'error', message: 'La contraseña debe tener al menos 6 caracteres.' });
+          setSaving(false);
+          return;
+        }
+        const currentUser = auth.currentUser;
+        if (currentUser) {
+          await updatePassword(currentUser, nuevaContrasena);
+          setNuevaContrasena('');
+          setConfirmarContrasena('');
+        }
       }
+
+      // Solo actualizamos campos de perfil si no es superadmin
+      if (!isSuperAdmin) {
+        if (getFeatureFlags().useApiCRUD) {
+          await actualizarMe(fields);
+        } else {
+          const docRef = doc(db, 'veterinarios', user.uid);
+          await setDoc(docRef, {
+            uid: user.uid,
+            nombre: user.nombre,
+            email: user.email,
+            foto: user.foto || null,
+            ...fields,
+          }, { merge: true });
+        }
+      }
+
       setStatus({ type: 'success', message: '¡Perfil actualizado con éxito!' });
     } catch (error: unknown) {
-      console.error('Error saving veterinarian changes:', error);
+      console.error('Error saving changes:', error);
       setStatus({ type: 'error', message: getErrorMessage(error, 'Error al guardar los cambios.') });
     } finally {
       setSaving(false);
@@ -163,8 +191,10 @@ const Perfil: React.FC = () => {
             )}
             <div className="text-center sm:text-left pb-1">
               <h1 className="text-2xl font-extrabold text-slate-800">{user.nombre}</h1>
-              <p className="text-sm font-semibold text-[#0F6E56]">Médico Veterinario</p>
-              {fields.matriculaProfesional && (
+              <p className="text-sm font-semibold text-[#0F6E56]">
+                {isSuperAdmin ? 'Super Administrador' : 'Médico Veterinario'}
+              </p>
+              {!isSuperAdmin && fields.matriculaProfesional && (
                 <p className="text-xs text-slate-400 mt-0.5">Mat. Prof. {fields.matriculaProfesional}</p>
               )}
             </div>
@@ -204,53 +234,84 @@ const Perfil: React.FC = () => {
               </div>
             </div>
 
-            {/* Divider */}
-            <div className="border-t border-slate-100 pt-5">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Información de Contacto</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                {CONTACT_FIELDS.map(({ field, label, Icon, placeholder, type }) => (
-                  <div key={field}>
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{label}</label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                        <Icon className="h-4 w-4" />
-                      </div>
-                      <input
-                        type={type}
-                        placeholder={placeholder}
-                        value={fields[field]}
-                        onChange={(e) => handleChange(field as keyof VetFields, e.target.value)}
-                        className="block w-full pl-10 pr-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56] outline-none transition-shadow"
-                      />
-                    </div>
+            {isSuperAdmin ? (
+              /* Cambiar Contraseña */
+              <div className="border-t border-slate-100 pt-5">
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Cambiar Contraseña</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Nueva Contraseña</label>
+                    <input
+                      type="password"
+                      placeholder="Mínimo 6 caracteres"
+                      value={nuevaContrasena}
+                      onChange={(e) => setNuevaContrasena(e.target.value)}
+                      className="block w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56] outline-none transition-shadow"
+                    />
                   </div>
-                ))}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Confirmar Nueva Contraseña</label>
+                    <input
+                      type="password"
+                      placeholder="Repite la contraseña"
+                      value={confirmarContrasena}
+                      onChange={(e) => setConfirmarContrasena(e.target.value)}
+                      className="block w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56] outline-none transition-shadow"
+                    />
+                  </div>
+                </div>
               </div>
-            </div>
+            ) : (
+              <>
+                {/* Divider */}
+                <div className="border-t border-slate-100 pt-5">
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Información de Contacto</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    {CONTACT_FIELDS.map(({ field, label, Icon, placeholder, type }) => (
+                      <div key={field}>
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{label}</label>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                            <Icon className="h-4 w-4" />
+                          </div>
+                          <input
+                            type={type}
+                            placeholder={placeholder}
+                            value={fields[field]}
+                            onChange={(e) => handleChange(field as keyof VetFields, e.target.value)}
+                            className="block w-full pl-10 pr-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56] outline-none transition-shadow"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
 
-            {/* Clinical Info */}
-            <div className="border-t border-slate-100 pt-5">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Información Clínica</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                {CLINICAL_FIELDS.map(({ field, label, Icon, placeholder, type }) => (
-                  <div key={field}>
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{label}</label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                        <Icon className="h-4 w-4" />
+                {/* Clinical Info */}
+                <div className="border-t border-slate-100 pt-5">
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Información Clínica</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    {CLINICAL_FIELDS.map(({ field, label, Icon, placeholder, type }) => (
+                      <div key={field}>
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{label}</label>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                            <Icon className="h-4 w-4" />
+                          </div>
+                          <input
+                            type={type}
+                            placeholder={placeholder}
+                            value={fields[field]}
+                            onChange={(e) => handleChange(field as keyof VetFields, e.target.value)}
+                            className="block w-full pl-10 pr-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56] outline-none transition-shadow"
+                          />
+                        </div>
                       </div>
-                      <input
-                        type={type}
-                        placeholder={placeholder}
-                        value={fields[field]}
-                        onChange={(e) => handleChange(field as keyof VetFields, e.target.value)}
-                        className="block w-full pl-10 pr-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56] outline-none transition-shadow"
-                      />
-                    </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </div>
+                </div>
+              </>
+            )}
 
             <div className="flex justify-end pt-4">
               <button

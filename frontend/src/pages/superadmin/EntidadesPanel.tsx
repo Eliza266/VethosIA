@@ -25,14 +25,44 @@ export const EntidadesPanel: React.FC<{
           title="Entidades"
           description="Listado, detalle y edición global de entidades. No crea usuarios, claims ni suscripciones automáticamente."
         />
-        <section aria-label="Crear entidad global" className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-          <input aria-label="Nombre entidad global" placeholder="Nombre" value={nueva.nombre} onChange={(e) => setNueva((c) => ({ ...c, nombre: e.target.value }))} style={inputStyle} />
-          <select aria-label="Tipo entidad global" value={nueva.tipo} onChange={(e) => setNueva((c) => ({ ...c, tipo: e.target.value as EntidadDraft['tipo'] }))} style={inputStyle}>
-            <option value="">Tipo</option><option value="gobierno">gobierno</option><option value="cadena">cadena</option><option value="ong">ong</option><option value="entidad">entidad</option>
-          </select>
-          <input aria-label="Ciudad entidad global" placeholder="Ciudad" value={nueva.ciudad} onChange={(e) => setNueva((c) => ({ ...c, ciudad: e.target.value }))} style={inputStyle} />
-          <input aria-label="Correo entidad global" placeholder="Correo contacto" value={nueva.emailContacto} onChange={(e) => setNueva((c) => ({ ...c, emailContacto: e.target.value }))} style={inputStyle} />
-          <Button onClick={onCreate} disabled={Boolean(nuevaError) || actionState.crearEntidad}>Crear entidad</Button>
+        <section aria-label="Crear entidad global" className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <label className="grid gap-1 text-xs font-black uppercase tracking-wider text-[var(--muted)]">
+            <span>Nombre de la entidad</span>
+            <input aria-label="Nombre entidad global" placeholder="Ej. Corporación Vethos" value={nueva.nombre} onChange={(e) => setNueva((c) => ({ ...c, nombre: e.target.value }))} style={inputStyle} />
+          </label>
+          <label className="grid gap-1 text-xs font-black uppercase tracking-wider text-[var(--muted)]">
+            <span>Tipo de organización</span>
+            <select aria-label="Tipo entidad global" value={nueva.tipo} onChange={(e) => setNueva((c) => ({ ...c, tipo: e.target.value as EntidadDraft['tipo'] }))} style={inputStyle}>
+              <option value="">Selecciona tipo</option>
+              <option value="gobierno">gobierno</option>
+              <option value="cadena">cadena</option>
+              <option value="ong">ong</option>
+              <option value="entidad">entidad</option>
+            </select>
+          </label>
+          <label className="grid gap-1 text-xs font-black uppercase tracking-wider text-[var(--muted)]">
+            <span>Dirección</span>
+            <input aria-label="Dirección entidad global" placeholder="Ej. Calle 123 #45-67" value={nueva.direccion} onChange={(e) => setNueva((c) => ({ ...c, direccion: e.target.value }))} style={inputStyle} />
+          </label>
+          <label className="grid gap-1 text-xs font-black uppercase tracking-wider text-[var(--muted)]">
+            <span>Ciudad</span>
+            <input aria-label="Ciudad entidad global" placeholder="Ej. Bogotá" value={nueva.ciudad} onChange={(e) => setNueva((c) => ({ ...c, ciudad: e.target.value }))} style={inputStyle} />
+          </label>
+          <label className="grid gap-1 text-xs font-black uppercase tracking-wider text-[var(--muted)]">
+            <span>País</span>
+            <input aria-label="País entidad global" placeholder="Ej. Colombia" value={nueva.pais} onChange={(e) => setNueva((c) => ({ ...c, pais: e.target.value }))} style={inputStyle} />
+          </label>
+          <label className="grid gap-1 text-xs font-black uppercase tracking-wider text-[var(--muted)]">
+            <span>Teléfono</span>
+            <input aria-label="Teléfono entidad global" placeholder="Ej. +57 300 123 4567" value={nueva.telefono} onChange={(e) => setNueva((c) => ({ ...c, telefono: e.target.value }))} style={inputStyle} />
+          </label>
+          <label className="grid gap-1 text-xs font-black uppercase tracking-wider text-[var(--muted)]">
+            <span>Correo contacto</span>
+            <input aria-label="Correo entidad global" placeholder="Ej. contacto@entidad.com" value={nueva.emailContacto} onChange={(e) => setNueva((c) => ({ ...c, emailContacto: e.target.value }))} style={inputStyle} />
+          </label>
+          <div className="flex items-end">
+            <Button onClick={onCreate} disabled={Boolean(nuevaError) || actionState.crearEntidad}>Crear entidad</Button>
+          </div>
         </section>
         {nuevaError && <p className="mt-2 text-sm text-[var(--muted)]">{nuevaError}</p>}
       </Card>
@@ -59,17 +89,52 @@ export const EntidadesPanel: React.FC<{
                 </div>
                 <div className="flex flex-wrap gap-4 text-sm"><span>{sedes.length} sedes</span><span>Consumo {consumoLabel(consumos)}</span><span>{text(entidad.emailContacto, 'Sin correo')}</span></div>
                 {editando ? (
-                  <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-6">
-                    <input aria-label={`Nombre entidad ${entidad.nombre}`} value={draft.nombre} onChange={(e) => setDraft((c) => ({ ...c, nombre: e.target.value }))} style={inputStyle} />
-                    <select aria-label={`Tipo entidad ${entidad.nombre}`} value={draft.tipo} onChange={(e) => setDraft((c) => ({ ...c, tipo: e.target.value as EntidadDraft['tipo'] }))} style={inputStyle}>
-                      <option value="">Tipo</option><option value="gobierno">gobierno</option><option value="cadena">cadena</option><option value="ong">ong</option><option value="entidad">entidad</option>
-                    </select>
-                    <input aria-label={`Ciudad entidad ${entidad.nombre}`} value={draft.ciudad} onChange={(e) => setDraft((c) => ({ ...c, ciudad: e.target.value }))} style={inputStyle} />
-                    <input aria-label={`Correo entidad ${entidad.nombre}`} value={draft.emailContacto} onChange={(e) => setDraft((c) => ({ ...c, emailContacto: e.target.value }))} style={inputStyle} />
-                    <select aria-label={`Estado entidad ${entidad.nombre}`} value={draft.estado} onChange={(e) => setDraft((c) => ({ ...c, estado: e.target.value === 'inactiva' ? 'inactiva' : 'activa' }))} style={inputStyle}>
-                      <option value="activa">activa</option><option value="inactiva">inactiva</option>
-                    </select>
-                    <div className="flex gap-2"><Button aria-label={`Guardar entidad ${entidad.nombre}`} onClick={() => onSave(entidad.id, draft)} disabled={!draft.nombre.trim() || actionState.editarEntidad}>Guardar</Button><Button variant="ghost" onClick={onEditCancel}>Cancelar</Button></div>
+                  <div className="grid gap-3 mt-3 md:grid-cols-2 xl:grid-cols-4 border-t border-[var(--border)] pt-3">
+                    <label className="grid gap-1 text-xs font-black uppercase tracking-wider text-[var(--muted)]">
+                      <span>Nombre de la entidad</span>
+                      <input aria-label={`Nombre entidad ${entidad.nombre}`} value={draft.nombre} onChange={(e) => setDraft((c) => ({ ...c, nombre: e.target.value }))} style={inputStyle} />
+                    </label>
+                    <label className="grid gap-1 text-xs font-black uppercase tracking-wider text-[var(--muted)]">
+                      <span>Tipo de organización</span>
+                      <select aria-label={`Tipo entidad ${entidad.nombre}`} value={draft.tipo} onChange={(e) => setDraft((c) => ({ ...c, tipo: e.target.value as EntidadDraft['tipo'] }))} style={inputStyle}>
+                        <option value="">Selecciona tipo</option>
+                        <option value="gobierno">gobierno</option>
+                        <option value="cadena">cadena</option>
+                        <option value="ong">ong</option>
+                        <option value="entidad">entidad</option>
+                      </select>
+                    </label>
+                    <label className="grid gap-1 text-xs font-black uppercase tracking-wider text-[var(--muted)]">
+                      <span>Dirección</span>
+                      <input aria-label={`Dirección entidad ${entidad.nombre}`} placeholder="Ej. Calle 123 #45-67" value={draft.direccion} onChange={(e) => setDraft((c) => ({ ...c, direccion: e.target.value }))} style={inputStyle} />
+                    </label>
+                    <label className="grid gap-1 text-xs font-black uppercase tracking-wider text-[var(--muted)]">
+                      <span>Ciudad</span>
+                      <input aria-label={`Ciudad entidad ${entidad.nombre}`} value={draft.ciudad} onChange={(e) => setDraft((c) => ({ ...c, ciudad: e.target.value }))} style={inputStyle} />
+                    </label>
+                    <label className="grid gap-1 text-xs font-black uppercase tracking-wider text-[var(--muted)]">
+                      <span>País</span>
+                      <input aria-label={`País entidad ${entidad.nombre}`} placeholder="Ej. Colombia" value={draft.pais} onChange={(e) => setDraft((c) => ({ ...c, pais: e.target.value }))} style={inputStyle} />
+                    </label>
+                    <label className="grid gap-1 text-xs font-black uppercase tracking-wider text-[var(--muted)]">
+                      <span>Teléfono</span>
+                      <input aria-label={`Teléfono entidad ${entidad.nombre}`} placeholder="Ej. +57 300 123 4567" value={draft.telefono} onChange={(e) => setDraft((c) => ({ ...c, telefono: e.target.value }))} style={inputStyle} />
+                    </label>
+                    <label className="grid gap-1 text-xs font-black uppercase tracking-wider text-[var(--muted)]">
+                      <span>Correo contacto</span>
+                      <input aria-label={`Correo entidad ${entidad.nombre}`} value={draft.emailContacto} onChange={(e) => setDraft((c) => ({ ...c, emailContacto: e.target.value }))} style={inputStyle} />
+                    </label>
+                    <label className="grid gap-1 text-xs font-black uppercase tracking-wider text-[var(--muted)]">
+                      <span>Estado</span>
+                      <select aria-label={`Estado entidad ${entidad.nombre}`} value={draft.estado} onChange={(e) => setDraft((c) => ({ ...c, estado: e.target.value === 'inactiva' ? 'inactiva' : 'activa' }))} style={inputStyle}>
+                        <option value="activa">activa</option>
+                        <option value="inactiva">inactiva</option>
+                      </select>
+                    </label>
+                    <div className="flex gap-2 items-end">
+                      <Button aria-label={`Guardar entidad ${entidad.nombre}`} onClick={() => onSave(entidad.id, draft)} disabled={!draft.nombre.trim() || actionState.editarEntidad}>Guardar</Button>
+                      <Button variant="ghost" onClick={onEditCancel}>Cancelar</Button>
+                    </div>
                   </div>
                 ) : <Button variant="ghost" aria-label={`Editar entidad ${entidad.nombre}`} onClick={() => onEditStart(entidad)}>Editar entidad</Button>}
               </li>

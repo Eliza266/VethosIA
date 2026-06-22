@@ -16,6 +16,16 @@ vi.mock('../features/tenant/hooks', () => ({
   useMe: () => mockUseMe(),
 }));
 
+vi.mock('react-router-dom', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('react-router-dom')>();
+  return {
+    ...actual,
+    Navigate: vi.fn(({ to, replace }) => (
+      <div data-testid="navigate-mock" data-to={to} data-replace={replace ? 'true' : 'false'} />
+    )),
+  };
+});
+
 vi.mock('../hooks/usePacientes', () => ({
   usePacientes: () => ({
     pacientes: [
@@ -147,7 +157,7 @@ describe('Dashboard role command center router', () => {
     expect(screen.queryByText(/Operaci[oó]n Plataforma/i)).not.toBeInTheDocument();
   });
 
-  it('renderiza Operación Plataforma para superadmin sin flujo clínico principal', async () => {
+  it('redirecciona a /admin para superadmin sin renderizar flujo clinico', async () => {
     mockUseMe.mockReturnValue({
       data: { uid: 'u1', role: 'superadmin', rol: 'superadmin' },
       isLoading: false,
@@ -156,9 +166,10 @@ describe('Dashboard role command center router', () => {
 
     renderDashboard();
 
-    expect(await screen.findByTestId('superadmin-command-center')).toBeInTheDocument();
-    expect(screen.getByText(/Operaci[oó]n Plataforma/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/Gesti[oó]n centralizada/i).length).toBeGreaterThan(0);
+    const nav = await screen.findByTestId('navigate-mock');
+    expect(nav).toBeInTheDocument();
+    expect(nav).toHaveAttribute('data-to', '/admin');
+    expect(nav).toHaveAttribute('data-replace', 'true');
     expect(screen.queryByText(/Centro Cl[ií]nico/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Nueva consulta/i)).not.toBeInTheDocument();
   });

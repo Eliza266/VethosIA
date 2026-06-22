@@ -176,6 +176,26 @@ export const crearInvitacionEntidadFreelance = async (
   return res.data;
 };
 
+export interface CrearInvitacionV2Dto {
+  email: string;
+  role: 'admin_veterinaria' | 'veterinario';
+  orgId?: string;
+  entidadId?: string;
+  veterinariaId?: string;
+  accountId?: string;
+  accountType?: 'veterinaria' | 'entidad';
+  planOwnerType?: 'veterinaria' | 'entidad';
+  planOwnerId?: string;
+  vinculoTipo?: 'staff' | 'owner' | 'freelance';
+}
+
+export const crearInvitacionV2 = async (
+  dto: CrearInvitacionV2Dto,
+): Promise<{ token: string; expiraEn: string }> => {
+  const res = await apiClient.post<{ token: string; expiraEn: string }>('/v1/invitaciones/v2', dto);
+  return res.data;
+};
+
 export const aceptarInvitacion = async (token: string): Promise<AceptarInvitacionResponse> => {
   const res = await apiClient.post<AceptarInvitacionResponse>('/v1/invitaciones/aceptar', {
     token,

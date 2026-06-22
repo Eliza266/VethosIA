@@ -1,10 +1,7 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, Mic, Plus } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
-import { listarCitas, listarCitasProximas2h, type Cita as CitaApi } from '../../features/citas/api';
-import { obtenerMetricas } from '../../features/metricas/api';
-import { resumenVacunasPendientes } from '../../features/vacunas/api';
+import { FileText, Mic, Plus, Search, Calendar, ChevronRight } from 'lucide-react';
+import { listarCitas, type Cita as CitaApi } from '../../features/citas/api';
 import { useConsultas } from '../../hooks/useConsultas';
 import { usePacientes } from '../../hooks/usePacientes';
 import { displayUserLabel } from '../../lib/displayUser';
@@ -21,16 +18,9 @@ import {
 } from '../../lib/clinicalLabels';
 import { getDashboardModulesForProfile } from '../../lib/roleNavigation';
 import type { RbacProfileLike, RoleModule } from '../../lib/rbac';
-import type { Cita, Consulta, Paciente, Veterinario } from '../../types';
+import type { Cita, Consulta, Veterinario } from '../../types';
 import { EmptyState } from '../../components/ui/Primitives';
-import {
-  CommandCenterShell,
-  CommandHero,
-  InsightPanel,
-  ModuleGrid,
-  PrimaryLink,
-  StatStrip,
-} from './CommandCenterShared';
+import { CommandCenterShell, InsightPanel } from './CommandCenterShared';
 
 interface VeterinarioCommandCenterProps {
   me?: RbacProfileLike & { nombre?: string | null; email?: string | null };
@@ -66,18 +56,13 @@ const mapCitaApi = (c: CitaApi, nombrePaciente: string): Cita => ({
   creadoEn: new Date(),
 });
 
-const getSpeciesLabel = (esp: string) => {
+const getSpeciesEmoji = (esp?: string) => {
   switch (esp) {
-    case 'perro':
-      return 'Perro';
-    case 'gato':
-      return 'Gato';
-    case 'ave':
-      return 'Ave';
-    case 'reptil':
-      return 'Reptil';
-    default:
-      return 'Mascota';
+    case 'perro': return '🐶';
+    case 'gato': return '🐱';
+    case 'ave': return '🦜';
+    case 'reptil': return '🦎';
+    default: return '🐾';
   }
 };
 
@@ -87,7 +72,7 @@ const pickModules = (modules: RoleModule[], ids: string[]) =>
 const CompactConsultaAction: React.FC<{ to: string; children: React.ReactNode }> = ({ to, children }) => (
   <Link
     to={to}
-    className="inline-flex shrink-0 items-center rounded-full border border-[color-mix(in_srgb,var(--accent)_18%,var(--border))] bg-white px-3 py-1.5 text-xs font-bold text-[var(--accent)] transition-colors hover:bg-[var(--accent-soft)]"
+    className="inline-flex shrink-0 items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-[#0F6E56] transition-colors hover:bg-slate-50"
   >
     {children}
   </Link>
@@ -101,7 +86,7 @@ const ConsultaRecienteRow: React.FC<{
   const detallePath = consultaDetailPath(consulta);
 
   return (
-    <article className="py-4" data-testid={`consulta-reciente-${consulta.id}`}>
+    <article className="py-4 border-b border-slate-100 last:border-b-0" data-testid={`consulta-reciente-${consulta.id}`}>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <Link to={detallePath} className="min-w-0 flex-1">
           <p className="truncate text-sm font-black text-slate-900">{patientName}</p>
@@ -132,29 +117,16 @@ const ConsultaRecienteRow: React.FC<{
 };
 
 const VeterinarioCommandCenter: React.FC<VeterinarioCommandCenterProps> = ({ me, user }) => {
-  const { pacientes, loading: loadingPacientes } = usePacientes();
+  const { pacientes } = usePacientes();
   const { fetchTodasConsultas } = useConsultas();
   const [consultas, setConsultas] = useState<Consulta[]>([]);
   const [citasHoy, setCitasHoy] = useState<Cita[]>([]);
-  const [loadingClinico, setLoadingClinico] = useState(true);
 
-  const vacunas = useQuery({
-    queryKey: ['vacunas-pendientes'],
-    queryFn: resumenVacunasPendientes,
-  });
-  const metricas = useQuery({
-    queryKey: ['metricas-dashboard'],
-    queryFn: () => obtenerMetricas(),
-  });
-  const citasProximas2h = useQuery({
-    queryKey: ['citas-proximas-2h'],
-    queryFn: listarCitasProximas2h,
-  });
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     let alive = true;
     const load = async () => {
-      setLoadingClinico(true);
       try {
         const [consultaList, apiCitas] = await Promise.all([fetchTodasConsultas(), listarCitas()]);
         if (!alive) return;
@@ -175,8 +147,6 @@ const VeterinarioCommandCenter: React.FC<VeterinarioCommandCenterProps> = ({ me,
         if (!alive) return;
         setConsultas([]);
         setCitasHoy([]);
-      } finally {
-        if (alive) setLoadingClinico(false);
       }
     };
     void load();
@@ -189,9 +159,6 @@ const VeterinarioCommandCenter: React.FC<VeterinarioCommandCenterProps> = ({ me,
   const modules = getDashboardModulesForProfile(me ?? null);
   const primaryModules = pickModules(modules, PRIMARY_MODULE_IDS);
   const secondaryModules = pickModules(modules, SECONDARY_MODULE_IDS);
-  const consultasAprobadas = consultas.filter((c) => isConsultaAprobada(c)).length;
-  const pendientesVacunas = (vacunas.data?.proximas ?? 0) + (vacunas.data?.vencidas ?? 0);
-  const loading = loadingPacientes || loadingClinico;
 
   const resolveHref = useCallback(
     (module: RoleModule) => resolveModulePath(module.id, module.path, consultas),
@@ -201,58 +168,114 @@ const VeterinarioCommandCenter: React.FC<VeterinarioCommandCenterProps> = ({ me,
   const getPatientName = (pacienteId: string) =>
     formatClinicalName(pacientes.find((p) => p.id === pacienteId)?.nombre, 'Paciente');
 
-  const getPatientSpecies = (pacienteId: string): Paciente['especie'] =>
-    pacientes.find((p) => p.id === pacienteId)?.especie ?? 'otro';
+  // Combined modules for a single line quick access strip
+  const allModules = useMemo(() => {
+    return [...primaryModules, ...secondaryModules];
+  }, [primaryModules, secondaryModules]);
+
+  // Patients search logic
+  const filteredPacientes = useMemo(() => {
+    if (!searchTerm.trim()) return pacientes.slice(0, 5);
+    const q = searchTerm.toLowerCase();
+    return pacientes.filter(
+      p =>
+        p.nombre.toLowerCase().includes(q) ||
+        (p.propietario?.nombre || '').toLowerCase().includes(q)
+    );
+  }, [pacientes, searchTerm]);
 
   return (
     <CommandCenterShell testId="veterinario-command-center">
-      <CommandHero
-        variant="clinical"
-        eyebrow="Centro clínico"
-        title={`Hola, ${nombre}. Empieza por una consulta, el SOAP o tus pacientes.`}
-        description="Prioriza atención clínica y revisión SOAP. PDF, email demo y WhatsApp seguro son acciones documentales controladas, no módulos independientes."
-        action={
-          <>
-            <PrimaryLink to="/pacientes" icon={<Mic className="h-4 w-4" />}>
-              Nueva consulta
-            </PrimaryLink>
-            <PrimaryLink to="/pacientes/nuevo" icon={<Plus className="h-4 w-4" />}>
-              Nuevo paciente
-            </PrimaryLink>
-          </>
-        }
-      />
+      {/* Compact header — replaces the old green banner */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <span className="text-xs font-bold uppercase tracking-wider text-[#0F6E56]">Centro clínico</span>
+          <h1 className="mt-1 text-xl font-black text-slate-900 sm:text-2xl">Hola, {nombre}</h1>
+        </div>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <Link
+            to="/pacientes"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-[#0F6E56] px-4 py-2.5 text-sm font-bold text-white shadow-md shadow-[#0F6E56]/10 hover:bg-[#0c5945] transition-all hover:scale-[1.01]"
+          >
+            <Mic className="h-4 w-4" />
+            Nueva consulta
+          </Link>
+          <Link
+            to="/pacientes/nuevo"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-white border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all"
+          >
+            <Plus className="h-4 w-4" />
+            Nuevo paciente
+          </Link>
+        </div>
+      </div>
 
-      <StatStrip
-        stats={[
-          { label: 'Pacientes', value: loading ? '...' : pacientes.length, hint: 'Expedientes activos', tone: 'accent' },
-          { label: 'Consultas', value: loading ? '...' : consultas.length, hint: `${consultasAprobadas} con SOAP aprobado`, tone: 'success' },
-          { label: 'Citas hoy', value: loading ? '...' : citasHoy.length, hint: `${citasProximas2h.data?.length ?? 0} próximas 2 h`, tone: 'info' },
-          { label: 'Vacunas', value: pendientesVacunas, hint: `${vacunas.data?.vencidas ?? 0} vencidas`, tone: pendientesVacunas > 0 ? 'warn' : 'success' },
-        ]}
-      />
+      {/* Quick access strip */}
+      <div className="space-y-2 bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+        <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Prioridad clínica</h2>
+        <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-none">
+          {allModules.map((module) => {
+            const href = resolveHref(module);
+            return (
+              <Link
+                key={module.id}
+                to={href}
+                className="flex items-center gap-2 px-4 py-2.5 bg-slate-50/70 hover:bg-slate-50 border border-slate-100 hover:border-[#0F6E56]/30 rounded-xl transition-all shrink-0 font-bold text-xs text-slate-700"
+              >
+                <span>{module.label === 'Pacientes' ? '🐾' : module.label === 'Agenda' ? '📅' : module.label === 'Vacunas' ? '💉' : '✨'}</span>
+                <span>{module.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
 
-      <ModuleGrid
-        title="Prioridad clínica"
-        description="Lo primero del día: iniciar consulta, revisar SOAP y abrir expedientes."
-        modules={primaryModules}
-        variant="primary"
-        resolveHref={resolveHref}
-      />
+      {/* Patient search */}
+      <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h3 className="font-bold text-slate-800 text-sm">Buscador de Pacientes</h3>
+            <p className="text-xs text-slate-400">Busca expedientes clínicos o selecciona de la lista de pacientes recientes.</p>
+          </div>
+          <div className="relative w-full sm:max-w-xs">
+            <Search className="absolute left-3 top-3.5 h-4 w-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Buscar por nombre o dueño..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-4 py-2.5 text-xs text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#0F6E56] focus:bg-white outline-none transition-all"
+            />
+          </div>
+        </div>
 
-      <ModuleGrid
-        title="Operación diaria"
-        description="Agenda, vacunas, brigadas y registro de pacientes como soporte secundario."
-        modules={secondaryModules}
-        variant="secondary"
-        resolveHref={resolveHref}
-      />
+        {filteredPacientes.length === 0 ? (
+          <p className="text-xs text-slate-400 italic py-4 text-center">No se encontraron pacientes que coincidan.</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
+            {filteredPacientes.map((p) => (
+              <Link
+                key={p.id}
+                to={`/pacientes/${p.id}`}
+                className="flex items-center gap-3 p-3 bg-slate-50/50 hover:bg-slate-50 border border-slate-100 hover:border-[#0F6E56]/30 rounded-xl transition-all"
+              >
+                <span className="text-2xl">{getSpeciesEmoji(p.especie)}</span>
+                <div className="min-w-0">
+                  <h4 className="text-xs font-bold text-slate-800 truncate">{p.nombre}</h4>
+                  <p className="text-[10px] text-slate-400 truncate capitalize">{p.raza || p.especie}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
 
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.25fr_0.75fr]">
+      {/* Consultas & Citas panels */}
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.25fr_0.75fr]">
         <InsightPanel
-          title="Consultas recientes"
-          description="Acciones documentales compactas disponibles solo en consultas con SOAP aprobado."
-          action={<Link to="/pacientes" className="text-sm font-black text-[var(--accent)]">Ver pacientes</Link>}
+          title="Historial clínico de consultas"
+          description="Últimas consultas clínicas realizadas con el borrador SOAP e historial."
+          action={<Link to="/pacientes" className="text-xs font-bold text-[#0F6E56] hover:underline flex items-center">Ver todos <ChevronRight className="h-3 w-3" /></Link>}
         >
           {consultas.length === 0 ? (
             <EmptyState
@@ -273,34 +296,32 @@ const VeterinarioCommandCenter: React.FC<VeterinarioCommandCenterProps> = ({ me,
           )}
         </InsightPanel>
 
-        <InsightPanel title="Agenda y alertas" description="Atenciones del día, vacunas y consumo clínico.">
+        <InsightPanel
+          title="Próximas citas"
+          description="Atenciones programadas para el día de hoy."
+          action={<Link to="/agenda" className="text-xs font-bold text-[#0F6E56] hover:underline flex items-center">Ver agenda <ChevronRight className="h-3 w-3" /></Link>}
+        >
           <div className="space-y-3">
             {citasHoy.length === 0 ? (
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-500 flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-slate-400" />
                 No hay citas programadas para hoy.
               </div>
             ) : (
               citasHoy.slice(0, 4).map((cita) => (
-                <div key={cita.id} className="rounded-2xl border border-slate-200 bg-white p-4">
-                  <p className="text-sm font-black text-slate-900">
-                    {cita.horaInicio} · {formatClinicalName(cita.nombrePaciente, 'Paciente')}
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500">{cita.motivo}</p>
+                <div key={cita.id} className="rounded-xl border border-slate-100 bg-slate-50/50 p-3 hover:bg-slate-50 transition-all flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-slate-900 truncate">
+                      {formatClinicalName(cita.nombrePaciente, 'Paciente')}
+                    </p>
+                    <p className="text-[10px] text-slate-400 truncate">{cita.motivo}</p>
+                  </div>
+                  <span className="text-[10px] font-black text-[#0F6E56] bg-[#0F6E56]/5 px-2 py-1 rounded-lg shrink-0">
+                    {cita.horaInicio}
+                  </span>
                 </div>
               ))
             )}
-            <div className="rounded-2xl border border-slate-200 bg-white p-4">
-              <p className="text-xs font-black uppercase tracking-wide text-slate-400">Consumo SOAP</p>
-              <p className="mt-1 text-lg font-black text-slate-950">
-                {metricas.data?.soapUsados ?? 0}/{metricas.data?.soapLimite ?? 0}
-              </p>
-            </div>
-            {pacientes.slice(0, 3).map((paciente) => (
-              <Link key={paciente.id} to={`/pacientes/${paciente.id ?? ''}`} className="flex items-center justify-between rounded-2xl bg-slate-50 p-3">
-                <span className="text-sm font-bold text-slate-800">{formatClinicalName(paciente.nombre, 'Paciente')}</span>
-                <span className="text-xs text-slate-500">{getSpeciesLabel(getPatientSpecies(paciente.id ?? ''))}</span>
-              </Link>
-            ))}
           </div>
         </InsightPanel>
       </div>
