@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
-const DEFAULT_PROD_API_BASE_URL = 'https://vetia-api-cwepwj6irq-uc.a.run.app'
+const DEFAULT_PROD_API_BASE_URL = 'https://vetia-api-awdlgzrxkq-uc.a.run.app'
 const DEFAULT_DEV_API_PROXY_TARGET = 'http://127.0.0.1:8081'
 
 function loadPublicProdDefaults(mode: string) {

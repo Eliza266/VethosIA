@@ -148,7 +148,7 @@ export class TenantSecretsService {
       this.projectIdForTests ??
       process.env.GCLOUD_PROJECT ??
       process.env.FIREBASE_PROJECT_ID ??
-      'vethosia-production';
+      'vethosia-5895b';
     if (!projectId.trim()) {
       throw new Error('GCLOUD_PROJECT o FIREBASE_PROJECT_ID es obligatorio para Secret Manager.');
     }

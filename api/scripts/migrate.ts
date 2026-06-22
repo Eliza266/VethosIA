@@ -35,7 +35,7 @@ const COLECCIONES_CON_VET = ['pacientes', 'consultas', 'citas'] as const;
 function initAdmin(): admin.app.App {
   if (admin.apps.length && admin.apps[0]) return admin.apps[0];
   return admin.initializeApp({
-    projectId: process.env.GCLOUD_PROJECT ?? 'vethosia-production',
+    projectId: process.env.GCLOUD_PROJECT ?? 'vethosia-5895b',
   });
 }
 

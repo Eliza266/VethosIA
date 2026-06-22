@@ -36,9 +36,9 @@ export const isFirebaseConfigured = useFirebaseEmulators || missingFirebaseConfi
 
 const firebaseConfig = {
   apiKey: rawFirebaseConfig.apiKey || 'vetia-local-missing-api-key',
-  authDomain: rawFirebaseConfig.authDomain || 'vethosia-production.firebaseapp.com',
-  projectId: rawFirebaseConfig.projectId || 'vethosia-production',
-  storageBucket: rawFirebaseConfig.storageBucket || 'vethosia-production.firebasestorage.app',
+  authDomain: rawFirebaseConfig.authDomain || 'vethosia-5895b.firebaseapp.com',
+  projectId: rawFirebaseConfig.projectId || 'vethosia-5895b',
+  storageBucket: rawFirebaseConfig.storageBucket || 'vethosia-5895b.firebasestorage.app',
   messagingSenderId: rawFirebaseConfig.messagingSenderId || '000000000000',
   appId: rawFirebaseConfig.appId || '1:000000000000:web:0000000000000000000000',
 };

@@ -23,7 +23,7 @@
  */
 import * as admin from 'firebase-admin';
 
-const PROYECTO = 'vethosia-production';
+const PROYECTO = process.env.GCLOUD_PROJECT ?? process.env.FIREBASE_PROJECT_ID ?? 'vethosia-5895b';
 const CUENTA_BOOTSTRAP = 'gerencia@nextvoiceia.com';
 
 type Args = {

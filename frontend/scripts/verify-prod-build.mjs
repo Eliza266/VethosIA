@@ -6,16 +6,16 @@ import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { extname, join } from 'node:path';
 
 const DIST_DIR = join(process.cwd(), 'dist');
-const PROJECT_ID = process.env.VETIA_VERIFY_PROJECT_ID || 'vethosia-production';
+const PROJECT_ID = process.env.VETIA_VERIFY_PROJECT_ID || 'vethosia-5895b';
 const ALLOWED_API_BASE_URL =
-  process.env.VETIA_VERIFY_API_URL || 'https://vetia-api-cwepwj6irq-uc.a.run.app';
+  process.env.VETIA_VERIFY_API_URL || 'https://vetia-api-awdlgzrxkq-uc.a.run.app';
 const ALLOWED_API_ORIGIN = new URL(ALLOWED_API_BASE_URL).origin;
 const PREVIEW_BUILD_TARGET = 'preview';
 const LIVE_BUILD_TARGET = 'live';
 const BUILD_TARGET = process.env.VETIA_BUILD_TARGET || LIVE_BUILD_TARGET;
 const TAGGED_API_ORIGIN_REGEX =
-  /^https:\/\/[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?---vetia-api-cwepwj6irq-uc\.a\.run\.app$/;
-const TAGGED_API_HOST_SUFFIX = '---vetia-api-cwepwj6irq-uc.a.run.app';
+  /^https:\/\/[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?---vetia-api-awdlgzrxkq-uc\.a\.run\.app$/;
+const TAGGED_API_HOST_SUFFIX = '---vetia-api-awdlgzrxkq-uc.a.run.app';
 
 const BLOCKED_TOKENS = [
   '127.0.0.1',

@@ -65,8 +65,8 @@ export function loadAppConfig(): AppConfig {
   return {
     port: num(process.env.PORT, 8080),
     apiPrefix: process.env.API_PREFIX ?? 'v1',
-    projectId: process.env.GCLOUD_PROJECT ?? process.env.FIREBASE_PROJECT_ID ?? 'vethosia-production',
-    storageBucket: process.env.STORAGE_BUCKET ?? 'vethosia-production.firebasestorage.app',
+    projectId: process.env.GCLOUD_PROJECT ?? process.env.FIREBASE_PROJECT_ID ?? 'vethosia-5895b',
+    storageBucket: process.env.STORAGE_BUCKET ?? 'vethosia-5895b.firebasestorage.app',
     // si hay host de emulador de firestore, asumimos modo emulador.
     useEmulators: !!process.env.FIRESTORE_EMULATOR_HOST,
   };
