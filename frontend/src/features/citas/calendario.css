@@ -1,0 +1,58 @@
+/* Contenedor del calendario */
+.rbc-calendar {
+  border-radius: 12px;
+  overflow: hidden;
+  font-family: inherit;
+}
+
+/* Acento verde #0F6E56 para el botón de vista activo y botones al pasar el cursor */
+.rbc-toolbar button.rbc-active {
+  background-color: #0F6E56 !important;
+  color: white !important;
+  border-color: #0F6E56 !important;
+}
+
+.rbc-toolbar button:hover {
+  background-color: rgba(15, 110, 86, 0.1) !important;
+  color: #0F6E56 !important;
+  border-color: #0F6E56 !important;
+}
+
+.rbc-toolbar button:active,
+.rbc-toolbar button:focus {
+  background-color: #0c5945 !important;
+  color: white !important;
+  border-color: #0c5945 !important;
+}
+
+/* Estilo para los botones en general */
+.rbc-toolbar button {
+  color: var(--text, #1e293b);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+/* Indicador de "hoy" en la cuadrícula */
+.rbc-today {
+  background-color: rgba(15, 110, 86, 0.04) !important;
+}
+
+/* Cabecera del día de hoy en vista semana/mes */
+.rbc-header.rbc-today {
+  background-color: #0F6E56 !important;
+  color: white !important;
+}
+
+/* Línea de tiempo actual en vista día/semana */
+.rbc-current-time-indicator {
+  background-color: #0F6E56 !important;
+}
+
+/* Ajustes de bordes y líneas */
+.rbc-time-view, .rbc-month-view, .rbc-agenda-view {
+  border: 1px solid var(--border, #e2e8f0) !important;
+  border-radius: 12px !important;
+}

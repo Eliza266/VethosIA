@@ -35,6 +35,28 @@ vi.mock('../hooks/usePacientes', () => ({
   }),
 }));
 
+vi.mock('../features/citas/CalendarioCitas', () => ({
+  __esModule: true,
+  default: ({ citas, onSelectCita }: any) => (
+    <div data-testid="mock-calendario">
+      {citas.map((c: any) => (
+        <button key={c.id} onClick={() => onSelectCita(c)}>
+          Ver Cita {c.id}
+        </button>
+      ))}
+    </div>
+  ),
+  CalendarioCitas: ({ citas, onSelectCita }: any) => (
+    <div data-testid="mock-calendario">
+      {citas.map((c: any) => (
+        <button key={c.id} onClick={() => onSelectCita(c)}>
+          Ver Cita {c.id}
+        </button>
+      ))}
+    </div>
+  ),
+}));
+
 vi.mock('../features/citas/hooks', () => ({
   useCitas: () => {
     // Set baseline hours to noon to avoid date/week boundary crossings during tests
@@ -116,15 +138,24 @@ describe('Agenda page', () => {
     const user = userEvent.setup();
     renderAgenda();
 
+    const eventBtn = await screen.findByRole('button', { name: /ver cita cita-suelta/i });
+    await user.click(eventBtn);
+
     const vincular = await screen.findByRole('button', { name: 'Vincular' });
     await user.click(vincular);
 
-    expect(mockVincularPacienteMutate).toHaveBeenCalledWith({ id: 'cita-suelta', pacienteId: 'p1' });
+    expect(mockVincularPacienteMutate).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'cita-suelta', pacienteId: 'p1' }),
+      expect.any(Object)
+    );
   });
 
   it('abre atencion desde cita programada y navega a nueva consulta con citaId', async () => {
     const user = userEvent.setup();
     renderAgenda();
+
+    const eventBtn = await screen.findByRole('button', { name: /ver cita cita-p1/i });
+    await user.click(eventBtn);
 
     await user.click(screen.getByRole('button', { name: /atender \/ crear consulta/i }));
 

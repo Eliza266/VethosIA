@@ -1,8 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { CalendarClock, CalendarDays, CheckCircle2, Clock3, Link2, Plus, Users, X, Save, TrendingUp, AlertTriangle } from 'lucide-react';
+import { CalendarClock, CalendarDays, CheckCircle2, Link2, Plus, Users, X, Save, TrendingUp, AlertTriangle } from 'lucide-react';
 import { useCitas } from '../features/citas/hooks';
-import { citasEnVista, agruparPorDia, type VistaAgenda } from '../features/citas/agenda';
 import {
   motivoCita,
   sugerirPacientePorTitulo,
@@ -10,6 +9,8 @@ import {
 } from '../features/citas/api';
 import { usePacientes } from '../hooks/usePacientes';
 import { Card, Button, Badge, Skeleton, EmptyState, KpiCard, SectionHeader } from '../components/ui/Primitives';
+
+const CalendarioCitas = React.lazy(() => import('../features/citas/CalendarioCitas'));
 
 const ESTADO_LABEL: Record<Cita['estado'], string> = {
   programada: 'Programada',
@@ -31,7 +32,7 @@ const Agenda: React.FC = () => {
   const currentTab = new URLSearchParams(location.search).get('tab') || 'calendario';
 
   const [subTab, setSubTab] = useState<'calendario' | 'citas_dia'>('calendario');
-  const [vista, setVista] = useState<VistaAgenda>('semana');
+  const [selectedCita, setSelectedCita] = useState<Cita | null>(null);
 
   // Modal State for new appointment
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -43,12 +44,24 @@ const Agenda: React.FC = () => {
 
   const [vinculoManual, setVinculoManual] = useState<Record<string, string>>({});
 
-  const referencia = useMemo(() => new Date(), []);
-  const visibles = useMemo(() => citasEnVista(data ?? [], vista, referencia), [data, vista, referencia]);
-  const porDia = useMemo(() => {
-    const grouped = agruparPorDia(visibles);
-    return Object.entries(grouped).map(([fecha, items]) => ({ fecha, items }));
-  }, [visibles]);
+  const toDatetimeLocal = (date: Date): string => {
+    const pad = (num: number) => String(num).padStart(2, '0');
+    const yyyy = date.getFullYear();
+    const MM = pad(date.getMonth() + 1);
+    const dd = pad(date.getDate());
+    const hh = pad(date.getHours());
+    const mm = pad(date.getMinutes());
+    return `${yyyy}-${MM}-${dd}T${hh}:${mm}`;
+  };
+
+  const handleSelectSlot = (start: Date) => {
+    setNewCita({
+      pacienteId: '',
+      motivo: '',
+      fecha: toDatetimeLocal(start),
+    });
+    setIsModalOpen(true);
+  };
 
   const formatHora = (fechaIso: string) => {
     try {
@@ -65,20 +78,21 @@ const Agenda: React.FC = () => {
     return (data ?? []).filter(c => new Date(c.fecha).toDateString() === todayStr);
   }, [data]);
 
-  const citasProgramadas = visibles.filter((c) => c.estado === 'programada').length;
-  const citasVinculadas = visibles.filter((c) => Boolean(c.pacienteId)).length;
-  const citasAtendidas = visibles.filter((c) => c.estado === 'realizada' || Boolean(c.consultaId)).length;
+  const citasProgramadas = (data ?? []).filter((c) => c.estado === 'programada').length;
+  const citasVinculadas = (data ?? []).filter((c) => Boolean(c.pacienteId)).length;
+  const citasAtendidas = (data ?? []).filter((c) => c.estado === 'realizada' || Boolean(c.consultaId)).length;
 
   const atender = async (cita: Cita) => {
     if (!cita.pacienteId) return;
     await cambiarEstado.mutateAsync({ id: cita.id, estado: 'en_atencion' });
+    setSelectedCita(null);
     navigate(`/pacientes/${cita.pacienteId}/consultas/nueva?citaId=${cita.id}`);
   };
 
   const renderAcciones = (c: Cita) => {
     if (c.consultaId && c.pacienteId) {
       return (
-        <Link to={`/pacientes/${c.pacienteId}/consultas/${c.consultaId}`}>
+        <Link to={`/pacientes/${c.pacienteId}/consultas/${c.consultaId}`} onClick={() => setSelectedCita(null)}>
           <Button variant="ghost">Abrir consulta</Button>
         </Link>
       );
@@ -117,7 +131,12 @@ const Agenda: React.FC = () => {
             <Button
               variant="ghost"
               disabled={vincularPaciente.isPending}
-              onClick={() => vincularPaciente.mutate({ id: c.id, pacienteId: seleccion })}
+              onClick={() => {
+                vincularPaciente.mutate(
+                  { id: c.id, pacienteId: seleccion },
+                  { onSuccess: () => setSelectedCita(null) }
+                );
+              }}
             >
               Vincular
             </Button>
@@ -162,26 +181,6 @@ const Agenda: React.FC = () => {
           <p className="text-xs text-slate-500">Planifica citas, vincula pacientes y abre la consulta clínica.</p>
         </div>
         <div className="flex shrink-0 flex-wrap gap-2">
-          {currentTab === 'calendario' && subTab === 'calendario' && (
-            <div
-              role="tablist"
-              aria-label="Vista de agenda"
-              className="inline-flex rounded-2xl border border-slate-200 bg-white/80 p-1 shadow-sm shrink-0"
-            >
-              {(['dia', 'semana', 'mes'] as VistaAgenda[]).map((v) => (
-                <Button
-                  key={v}
-                  variant={v === vista ? 'primary' : 'ghost'}
-                  size="sm"
-                  onClick={() => setVista(v)}
-                  className="min-w-20"
-                  style={v === vista ? undefined : { border: 'none', boxShadow: 'none' }}
-                >
-                  {v === 'dia' ? 'Día' : v === 'semana' ? 'Semana' : 'Mes'}
-                </Button>
-              ))}
-            </div>
-          )}
           <Button
             variant="primary"
             onClick={() => setIsModalOpen(true)}
@@ -313,14 +312,14 @@ const Agenda: React.FC = () => {
               <div className="grid gap-4 md:grid-cols-3">
                 <KpiCard
                   label="Citas visibles"
-                  value={visibles.length}
+                  value={totalCitas}
                   hint={`${citasProgramadas} programadas`}
                   icon={<CalendarDays className="h-5 w-5" />}
                   accent="info"
                 />
                 <KpiCard
                   label="Pacientes vinculados"
-                  value={`${citasVinculadas}/${visibles.length || 0}`}
+                  value={`${citasVinculadas}/${totalCitas || 0}`}
                   hint="Listas para abrir consulta"
                   icon={<Users className="h-5 w-5" />}
                   accent="success"
@@ -334,91 +333,27 @@ const Agenda: React.FC = () => {
                 />
               </div>
 
-              {/* Main Calendario Card */}
-              <Card padding="lg">
-                <div className="flex justify-between items-center mb-6">
-                  <SectionHeader
-                    title="Calendario operativo"
-                    description="Citas agrupadas por día, estado y siguiente acción clínica."
-                  />
+              {isLoading ? (
+                <div className="grid gap-3">
+                  <Skeleton height={60} />
+                  <Skeleton height={60} />
+                  <Skeleton height={60} />
                 </div>
-
-                {isLoading ? (
+              ) : (
+                <React.Suspense fallback={
                   <div className="grid gap-3">
                     <Skeleton height={60} />
                     <Skeleton height={60} />
                     <Skeleton height={60} />
                   </div>
-                ) : visibles.length === 0 ? (
-                  <EmptyState
-                    titulo="Sin citas en esta vista"
-                    mensaje="Agrega una nueva cita médica o cambia el rango de fechas en la parte superior."
-                    icon={<CalendarDays className="h-6 w-6" />}
+                }>
+                  <CalendarioCitas
+                    citas={data ?? []}
+                    onSelectCita={(cita) => setSelectedCita(cita)}
+                    onSelectSlot={handleSelectSlot}
                   />
-                ) : (
-                  <div className="space-y-6">
-                    {porDia.map(({ fecha, items }) => (
-                      <div key={fecha} className="space-y-3">
-                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100/50 inline-block">
-                          {fecha}
-                        </h3>
-                        <div className="grid gap-3">
-                          {items.map((c) => (
-                            <div
-                              key={c.id}
-                              className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 bg-white border border-slate-200/80 rounded-2xl shadow-[0_2px_8px_-3px_rgba(15,23,42,0.05)] hover:border-[#0F6E56]/30 transition-all duration-200"
-                            >
-                              <div className="flex items-start gap-3">
-                                <div className="p-2.5 bg-[#0F6E56]/5 text-[#0F6E56] rounded-xl shrink-0 mt-0.5">
-                                  <Clock3 className="h-4 w-4" />
-                                </div>
-                                <div className="min-w-0">
-                                  <div className="flex flex-wrap items-center gap-2">
-                                    <strong className="text-slate-800 text-sm">{c.titulo}</strong>
-                                    <Badge estado={c.estado}>{ESTADO_LABEL[c.estado] || c.estado}</Badge>
-                                  </div>
-                                  <p className="text-xs text-slate-500 mt-1 flex items-center gap-1.5">
-                                    <span>🕒 {formatHora(c.fecha)}</span>
-                                    <span>•</span>
-                                    <span>📝 {motivoCita(c)}</span>
-                                  </p>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-2 self-end md:self-center">
-                                {renderAcciones(c)}
-                                <div className="flex gap-1.5">
-                                  {c.estado !== 'realizada' && c.estado !== 'cancelada' && (
-                                    <>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() =>
-                                          cambiarEstado.mutate({ id: c.id, estado: 'realizada' })
-                                        }
-                                      >
-                                        Marcar realizada
-                                      </Button>
-                                      <Button
-                                        variant="danger"
-                                        size="sm"
-                                        onClick={() =>
-                                          cambiarEstado.mutate({ id: c.id, estado: 'cancelada' })
-                                        }
-                                      >
-                                        Cancelar
-                                      </Button>
-                                    </>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </Card>
+                </React.Suspense>
+              )}
             </div>
           ) : (
             /* Citas del Día view */
@@ -560,6 +495,67 @@ const Agenda: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Cita Detail / Actions Modal */}
+      {selectedCita && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 space-y-5 animate-fade-in">
+            <div className="flex justify-between items-center pb-3 border-b border-slate-100">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#0F6E56]">Detalle de la Cita</span>
+                <h2 className="text-lg font-extrabold text-slate-800">{selectedCita.pacienteNombre ?? selectedCita.titulo}</h2>
+              </div>
+              <button
+                onClick={() => setSelectedCita(null)}
+                className="p-1.5 hover:bg-slate-100 rounded-xl text-slate-400 hover:text-slate-700 transition-all"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-sm text-slate-600">
+              <p>
+                <strong>Estado: </strong>
+                <Badge estado={selectedCita.estado}>{ESTADO_LABEL[selectedCita.estado] || selectedCita.estado}</Badge>
+              </p>
+              <p><strong>Fecha y Hora:</strong> {new Date(selectedCita.fecha).toLocaleString('es-ES', { dateStyle: 'long', timeStyle: 'short' })}</p>
+              <p><strong>Motivo:</strong> {motivoCita(selectedCita)}</p>
+              {selectedCita.notas && <p><strong>Notas:</strong> {selectedCita.notas}</p>}
+            </div>
+
+            <div className="border-t border-slate-100 pt-4 flex flex-col gap-2">
+              <div className="flex flex-wrap gap-2">
+                {renderAcciones(selectedCita)}
+              </div>
+              
+              {selectedCita.estado !== 'realizada' && selectedCita.estado !== 'cancelada' && (
+                <div className="flex gap-2 w-full mt-2">
+                  <Button
+                    variant="ghost"
+                    className="flex-1"
+                    onClick={async () => {
+                      await cambiarEstado.mutateAsync({ id: selectedCita.id, estado: 'realizada' });
+                      setSelectedCita(null);
+                    }}
+                  >
+                    Marcar realizada
+                  </Button>
+                  <Button
+                    variant="danger"
+                    className="flex-1"
+                    onClick={async () => {
+                      await cambiarEstado.mutateAsync({ id: selectedCita.id, estado: 'cancelada' });
+                      setSelectedCita(null);
+                    }}
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
