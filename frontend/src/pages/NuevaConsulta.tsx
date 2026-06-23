@@ -6,6 +6,9 @@ import type { Paciente, SignosVitales } from '../types';
 import AudioRecorder from '../components/AudioRecorder';
 import { ArrowLeft, AlertCircle, Sparkles, HelpCircle, FileText } from 'lucide-react';
 import { getErrorMessage } from '../lib/errors';
+import { useAuth } from '../features/auth/hooks';
+import { useBrigadas } from '../hooks/useBrigadas';
+import { registrarAtencionBrigada } from '../features/brigadas/api';
 
 type ManualConsultaForm = {
   motivo: string;
@@ -81,6 +84,8 @@ const NuevaConsulta: React.FC = () => {
 
   const { getPaciente, loading: loadingPaciente } = usePacientes();
   const { crearConsulta, actualizarConsulta, procesarAudioConsulta, error: apiError } = useConsultas();
+  const { user } = useAuth();
+  const { brigadas } = useBrigadas();
 
   const [paciente, setPaciente] = useState<Paciente | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -90,6 +95,22 @@ const NuevaConsulta: React.FC = () => {
   const [progressText, setProgressText] = useState('');
   const [progressPct, setProgressPct] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [brigadaSeleccionadaId, setBrigadaSeleccionadaId] = useState<string>('');
+
+  const hoyStr = (() => {
+    const hoy = new Date();
+    const yyyy = hoy.getFullYear();
+    const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+    const dd = String(hoy.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  })();
+
+  const brigadasDeHoy = brigadas.filter((b) => {
+    const esDeHoy = b.fecha === hoyStr;
+    const esActiva = b.estado !== 'finalizada';
+    const participa = user?.uid ? b.veterinarioIds?.includes(user.uid) : true;
+    return esDeHoy && esActiva && participa;
+  });
 
   useEffect(() => {
     const loadPaciente = async () => {
@@ -110,6 +131,18 @@ const NuevaConsulta: React.FC = () => {
     try {
       const id = await crearConsulta(pacienteId, citaId);
       if (!id) throw new Error('No se pudo crear la consulta.');
+
+      if (brigadaSeleccionadaId) {
+        try {
+          await registrarAtencionBrigada(brigadaSeleccionadaId, {
+            consultaId: id,
+            pacienteId,
+            motivo: 'Atención en brigada',
+          });
+        } catch (err) {
+          console.error('Error al asociar consulta a la brigada:', err);
+        }
+      }
       
       const success = await procesarAudioConsulta(id, audioBlobs, (msg, pct) => {
         setProgressText(msg);
@@ -149,6 +182,18 @@ const NuevaConsulta: React.FC = () => {
     try {
       const id = await crearConsulta(pacienteId, citaId);
       if (!id) throw new Error('No se pudo crear la consulta manual.');
+
+      if (brigadaSeleccionadaId) {
+        try {
+          await registrarAtencionBrigada(brigadaSeleccionadaId, {
+            consultaId: id,
+            pacienteId,
+            motivo: manualForm.motivo.trim() || 'Atención en brigada',
+          });
+        } catch (err) {
+          console.error('Error al asociar consulta a la brigada:', err);
+        }
+      }
 
       const success = await actualizarConsulta(id, {
         motivo: manualForm.motivo.trim(),
@@ -224,6 +269,29 @@ const NuevaConsulta: React.FC = () => {
         <div className="flex items-start gap-2 bg-red-50 text-red-700 text-sm p-4 rounded-xl border border-red-100">
           <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
           <div><span className="font-bold">Error:</span> {error || apiError}</div>
+        </div>
+      )}
+
+      {/* Selector de Brigada */}
+      {brigadasDeHoy.length > 0 && (
+        <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm">
+          <label className="block">
+            <span className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+              ¿Esta consulta pertenece a una brigada? (Opcional)
+            </span>
+            <select
+              value={brigadaSeleccionadaId}
+              onChange={(e) => setBrigadaSeleccionadaId(e.target.value)}
+              className="w-full px-3.5 py-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-xl focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56] outline-none transition-all"
+            >
+              <option value="">Ninguna</option>
+              {brigadasDeHoy.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.nombre} ({b.ubicacion.ciudad})
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
       )}
 

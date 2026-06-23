@@ -171,29 +171,15 @@ describe('Brigadas', () => {
     expect(await screen.findByLabelText(/vet1@clinica\.com/i)).toBeInTheDocument();
   });
 
-  it('veterinario no ve selector global y registra atención con payload propio', async () => {
+  it('veterinario no ve selector global ni formulario de registrar atencion', async () => {
     setup('veterinario');
     expect(screen.queryByRole('button', { name: /nueva brigada/i })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /brigada norte/i }));
     expect(await screen.findByText('Atenciones registradas')).toBeInTheDocument();
     expect(screen.getAllByText('1').length).toBeGreaterThan(0);
-    expect(screen.getByLabelText(/Motivo/)).toBeInTheDocument();
-    expect(screen.queryByLabelText('Sede')).not.toBeInTheDocument();
-
-    fireEvent.change(screen.getByLabelText(/Motivo/), { target: { value: 'Control general' } });
-    fireEvent.change(screen.getByLabelText('Especie'), { target: { value: 'canino' } });
-    fireEvent.click(screen.getByRole('button', { name: /registrar atenci[oó]n/i }));
-
-    await waitFor(() => {
-      expect(mockRegistrarAtencionBrigada).toHaveBeenCalledWith('b1', {
-        motivo: 'Control general',
-        especie: 'canino',
-        notas: undefined,
-        pacienteId: undefined,
-        consultaId: undefined,
-      });
-    });
+    expect(screen.queryByLabelText(/Motivo/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /registrar atenci[oó]n/i })).not.toBeInTheDocument();
   });
 
   it('muestra error de validacion sin pantalla blanca', async () => {

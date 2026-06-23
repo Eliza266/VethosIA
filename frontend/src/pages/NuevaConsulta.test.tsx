@@ -10,6 +10,9 @@ const {
   mockActualizarConsulta,
   mockProcesarAudioConsulta,
   mockGetUserMedia,
+  mockUseAuth,
+  mockUseBrigadas,
+  mockRegistrarAtencionBrigada,
 } = vi.hoisted(() => ({
   mockNavigate: vi.fn(),
   mockGetPaciente: vi.fn(),
@@ -17,6 +20,9 @@ const {
   mockActualizarConsulta: vi.fn(),
   mockProcesarAudioConsulta: vi.fn(),
   mockGetUserMedia: vi.fn(),
+  mockUseAuth: vi.fn(),
+  mockUseBrigadas: vi.fn(),
+  mockRegistrarAtencionBrigada: vi.fn(),
 }));
 
 vi.mock('react-router-dom', async () => {
@@ -41,6 +47,18 @@ vi.mock('../hooks/useConsultas', () => ({
     procesarAudioConsulta: mockProcesarAudioConsulta,
     error: null,
   }),
+}));
+
+vi.mock('../features/auth/hooks', () => ({
+  useAuth: () => mockUseAuth(),
+}));
+
+vi.mock('../hooks/useBrigadas', () => ({
+  useBrigadas: () => mockUseBrigadas(),
+}));
+
+vi.mock('../features/brigadas/api', () => ({
+  registrarAtencionBrigada: mockRegistrarAtencionBrigada,
 }));
 
 import NuevaConsulta from './NuevaConsulta';
@@ -74,6 +92,9 @@ describe('NuevaConsulta manual fallback', () => {
     mockActualizarConsulta.mockResolvedValue(true);
     mockProcesarAudioConsulta.mockResolvedValue(true);
     mockGetUserMedia.mockRejectedValue(new Error('microfono no disponible'));
+    mockUseAuth.mockReturnValue({ user: { uid: 'vet1' } });
+    mockUseBrigadas.mockReturnValue({ brigadas: [] });
+    mockRegistrarAtencionBrigada.mockResolvedValue({});
     Object.defineProperty(navigator, 'mediaDevices', {
       configurable: true,
       value: { getUserMedia: mockGetUserMedia },
@@ -130,5 +151,53 @@ describe('NuevaConsulta manual fallback', () => {
     });
     expect(mockProcesarAudioConsulta).not.toHaveBeenCalled();
     expect(mockNavigate).toHaveBeenCalledWith('/pacientes/p1/consultas/c1');
+  });
+
+  it('muestra selector de brigadas si hay activas hoy y registra atencion al guardar', async () => {
+    const hoyStr = (() => {
+      const hoy = new Date();
+      const yyyy = hoy.getFullYear();
+      const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+      const dd = String(hoy.getDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
+    })();
+
+    mockUseBrigadas.mockReturnValue({
+      brigadas: [
+        {
+          id: 'b1',
+          nombre: 'Brigada del Dia',
+          fecha: hoyStr,
+          estado: 'en_curso',
+          ubicacion: { ciudad: 'Bogota' },
+          veterinarioIds: ['vet1'],
+        },
+      ],
+    });
+
+    renderNuevaConsulta();
+
+    await screen.findByText(/luna/i);
+    expect(await screen.findByLabelText(/¿Esta consulta pertenece a una brigada\?/i)).toBeInTheDocument();
+
+    // Select the brigada
+    fireEvent.change(screen.getByLabelText(/¿Esta consulta pertenece a una brigada\?/i), {
+      target: { value: 'b1' },
+    });
+
+    // Open manual consultation
+    fireEvent.click(screen.getByRole('button', { name: /consulta manual/i }));
+    fireEvent.change(screen.getByLabelText(/^motivo$/i), { target: { value: 'Chequeo rutinario' } });
+    fireEvent.click(screen.getByRole('button', { name: /guardar borrador manual/i }));
+
+    await waitFor(() => {
+      expect(mockCrearConsulta).toHaveBeenCalledWith('p1', undefined);
+      expect(mockRegistrarAtencionBrigada).toHaveBeenCalledWith('b1', {
+        consultaId: 'c1',
+        pacienteId: 'p1',
+        motivo: 'Chequeo rutinario',
+      });
+      expect(mockNavigate).toHaveBeenCalledWith('/pacientes/p1/consultas/c1');
+    });
   });
 });

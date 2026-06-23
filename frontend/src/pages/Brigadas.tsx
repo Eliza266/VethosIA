@@ -10,7 +10,6 @@ import type { Brigada, BrigadaAtencion, BrigadaConsolidado } from '../types';
 import {
   listarAtencionesBrigada,
   obtenerConsolidadoBrigada,
-  registrarAtencionBrigada,
 } from '../features/brigadas/api';
 import {
   listarMiembrosBackoffice,
@@ -27,17 +26,7 @@ interface BrigadaForm {
   ciudad: string;
   veterinariaId: string;
   veterinarioIds: string[];
-}
-
-interface AtencionForm {
-  motivo: string;
-  especie: string;
-  notas: string;
-  pacienteId: string;
-  consultaId: string;
-}
-
-const EMPTY_FORM: BrigadaForm = {
+}const EMPTY_FORM: BrigadaForm = {
   nombre: '',
   descripcion: '',
   fecha: '',
@@ -46,15 +35,6 @@ const EMPTY_FORM: BrigadaForm = {
   veterinariaId: '',
   veterinarioIds: [],
 };
-
-const EMPTY_ATENCION: AtencionForm = {
-  motivo: '',
-  especie: '',
-  notas: '',
-  pacienteId: '',
-  consultaId: '',
-};
-
 const ESTADO_CONFIG = {
   planificada: { label: 'Planificada', classes: 'bg-slate-100 text-slate-600 border-slate-200', dot: 'bg-slate-400' },
   en_curso: { label: 'En curso', classes: 'bg-emerald-50 text-emerald-700 border-emerald-200', dot: 'bg-emerald-500' },
@@ -80,12 +60,9 @@ const Brigadas: React.FC = () => {
   const [atenciones, setAtenciones] = useState<BrigadaAtencion[]>([]);
   const [consolidado, setConsolidado] = useState<BrigadaConsolidado | null>(null);
   const [detailError, setDetailError] = useState<string | null>(null);
-  const [atencionForm, setAtencionForm] = useState<AtencionForm>(EMPTY_ATENCION);
-  const [atencionSubmitting, setAtencionSubmitting] = useState(false);
 
   const canManage = rol === 'admin_entidad' || rol === 'admin_veterinaria';
   const canChooseSede = rol === 'admin_entidad';
-  const canRegisterAtencion = rol === 'veterinario';
 
   useEffect(() => {
     let active = true;
@@ -220,31 +197,7 @@ const Brigadas: React.FC = () => {
     }
   };
 
-  const handleRegistrarAtencion = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selected?.id) return;
-    if (!atencionForm.motivo.trim()) {
-      setDetailError('El motivo de atención es obligatorio.');
-      return;
-    }
-    setAtencionSubmitting(true);
-    setDetailError(null);
-    try {
-      await registrarAtencionBrigada(selected.id, {
-        motivo: atencionForm.motivo.trim(),
-        especie: atencionForm.especie.trim() || undefined,
-        notas: atencionForm.notas.trim() || undefined,
-        pacienteId: atencionForm.pacienteId.trim() || undefined,
-        consultaId: atencionForm.consultaId.trim() || undefined,
-      });
-      setAtencionForm(EMPTY_ATENCION);
-      await loadDetail(selected);
-    } catch (err) {
-      setDetailError(getErrorMessage(err, 'No se pudo registrar la atención.'));
-    } finally {
-      setAtencionSubmitting(false);
-    }
-  };
+
 
   const estadoSiguiente = (brigada: Brigada): Brigada['estado'] | null => {
     if (brigada.estado === 'planificada') return 'en_curso';
@@ -616,31 +569,6 @@ const Brigadas: React.FC = () => {
               )}
             </div>
 
-            {canRegisterAtencion && selected.veterinarioIds.includes(me?.uid ?? '') && selected.estado !== 'finalizada' && (
-              <form onSubmit={handleRegistrarAtencion} className="rounded-2xl border border-slate-100 bg-slate-50 p-4 space-y-3">
-                <h3 className="text-sm font-extrabold text-slate-800">Registrar atención</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <Field label="Motivo" required>
-                    <input className={inputClasses} value={atencionForm.motivo} onChange={(e) => setAtencionForm({ ...atencionForm, motivo: e.target.value })} />
-                  </Field>
-                  <Field label="Especie">
-                    <input className={inputClasses} value={atencionForm.especie} onChange={(e) => setAtencionForm({ ...atencionForm, especie: e.target.value })} />
-                  </Field>
-                  <Field label="Paciente ID">
-                    <input className={inputClasses} value={atencionForm.pacienteId} onChange={(e) => setAtencionForm({ ...atencionForm, pacienteId: e.target.value })} />
-                  </Field>
-                  <Field label="Consulta ID">
-                    <input className={inputClasses} value={atencionForm.consultaId} onChange={(e) => setAtencionForm({ ...atencionForm, consultaId: e.target.value })} />
-                  </Field>
-                </div>
-                <Field label="Notas">
-                  <textarea className={inputClasses} rows={3} value={atencionForm.notas} onChange={(e) => setAtencionForm({ ...atencionForm, notas: e.target.value })} />
-                </Field>
-                <button type="submit" disabled={atencionSubmitting} className="rounded-xl bg-[#0F6E56] px-4 py-2 text-xs font-bold text-white disabled:opacity-50">
-                  {atencionSubmitting ? 'Registrando...' : 'Registrar atención'}
-                </button>
-              </form>
-            )}
 
             <div>
               <h3 className="text-sm font-extrabold text-slate-800 mb-3">Atenciones registradas</h3>
