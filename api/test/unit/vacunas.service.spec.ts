@@ -65,6 +65,40 @@ class FakeRepo {
   async listarPorTenant(): Promise<VacunaDoc[]> {
     return [...this.store.values()].filter((v) => !v.eliminadaEn);
   }
+
+  catalogStore = new Map<string, any>();
+  private catalogSeq = 0;
+
+  async getCatalogoById(id: string): Promise<any> {
+    const doc = this.catalogStore.get(id);
+    if (!doc) throw new NotFoundException(`Entrada de catálogo ${id} no existe.`);
+    return { ...doc };
+  }
+
+  async listarCatalogoCustom(tenant: any): Promise<any[]> {
+    return [...this.catalogStore.values()].filter((item) => !item.archivada);
+  }
+
+  async crearCatalogo(scope: any, data: any): Promise<any> {
+    const id = `c${++this.catalogSeq}`;
+    const doc = { ...data, ...scope, id, origen: 'custom', archivada: false, creadoEn: new Date().toISOString() };
+    this.catalogStore.set(id, doc);
+    return doc;
+  }
+
+  async actualizarCatalogo(id: string, scope: any, data: any): Promise<void> {
+    const prev = this.catalogStore.get(id);
+    if (prev) {
+      this.catalogStore.set(id, { ...prev, ...data });
+    }
+  }
+
+  async archivarCatalogo(id: string, scope: any): Promise<void> {
+    const prev = this.catalogStore.get(id);
+    if (prev) {
+      this.catalogStore.set(id, { ...prev, archivada: true });
+    }
+  }
 }
 
 class FakePacientes {
@@ -279,5 +313,39 @@ describe('VacunasService', () => {
     dto.nombre = 'Rabia reforzada';
     const upd = await svc.actualizarPorPaciente('p1', v.id, dto, user);
     expect(upd.nombre).toBe('Rabia reforzada');
+  });
+
+  it('catalogoCompleto devuelve base + custom del tenant', async () => {
+    const { svc, repo } = build();
+    await repo.crearCatalogo(
+      { orgId: 'orgA', veterinarioId: 'u1' },
+      { especie: 'perro', nombre: 'Vacuna Custom', intervaloDias: 180, descripcion: 'Custom desc' }
+    );
+    const cat = await svc.catalogoCompleto(user);
+    expect(cat.length).toBeGreaterThan(svc.catalogoBase().length);
+    const customItem = cat.find(item => item.nombre === 'Vacuna Custom');
+    expect(customItem).toBeDefined();
+    expect(customItem.origen).toBe('custom');
+  });
+
+  it('crear, actualizar y archivar entrada de catalogo custom', async () => {
+    const { svc } = build();
+    const created = await svc.crearEntradaCatalogo(
+      { nombre: 'Vacuna Custom 2', especie: 'gato', intervaloDias: 90, descripcion: 'Gato custom' },
+      user
+    );
+    expect(created.nombre).toBe('Vacuna Custom 2');
+    expect(created.origen).toBe('custom');
+
+    const updated = await svc.actualizarEntradaCatalogo(
+      created.id,
+      { nombre: 'Vacuna Custom 2 Modificada' },
+      user
+    );
+    expect(updated.nombre).toBe('Vacuna Custom 2 Modificada');
+
+    await svc.archivarEntradaCatalogo(created.id, user);
+    const cat = await svc.catalogoCompleto(user);
+    expect(cat.find(item => item.id === created.id)).toBeUndefined();
   });
 });

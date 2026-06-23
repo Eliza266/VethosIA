@@ -11,6 +11,15 @@ vi.mock('../tenant/hooks', () => ({
 
 vi.mock('./api', () => ({
   listarVacunasPaciente: vi.fn(),
+  listarCatalogo: vi.fn(() => Promise.resolve([
+    {
+      codigo: 'gato-triple-felina',
+      especie: 'gato',
+      nombre: 'Triple felina',
+      intervaloDias: 365,
+      descripcion: 'Triple felina base'
+    }
+  ])),
   crearVacuna: vi.fn(),
   actualizarVacuna: vi.fn(),
   marcarVacunaAplicada: vi.fn(),
@@ -25,6 +34,7 @@ import VacunasPanel from './VacunasPanel';
 import { UIProviders } from '../../components/ui/Primitives';
 import {
   listarVacunasPaciente,
+  listarCatalogo,
   crearVacuna,
   actualizarVacuna,
   marcarVacunaAplicada,
@@ -33,6 +43,7 @@ import {
 
 const vacunasMock = vi.mocked({
   listarVacunasPaciente,
+  listarCatalogo,
   crearVacuna,
   actualizarVacuna,
   marcarVacunaAplicada,

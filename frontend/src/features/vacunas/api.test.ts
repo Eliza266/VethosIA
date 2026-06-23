@@ -9,6 +9,10 @@ import {
   listarVacunasPaciente,
   listarVacunas,
   obtenerCatalogoVacunas,
+  listarCatalogo,
+  crearCatalogo,
+  actualizarCatalogo,
+  eliminarCatalogo,
   crearVacuna,
   actualizarVacuna,
   marcarVacunaAplicada,
@@ -76,6 +80,23 @@ describe('features/vacunas/api', () => {
     expect(await resumenVacunasPendientes()).toEqual({ proximas: 2, vencidas: 1 });
     expect(await vacunasPendientes()).toBe(2);
     expect(api.get).toHaveBeenCalledWith('/v1/vacunas/pendientes');
+  });
+
+  it('crud del catalogo personalizado', async () => {
+    api.get.mockResolvedValue({ data: [] });
+    api.post.mockResolvedValue({ data: {} });
+    api.patch.mockResolvedValue({ data: {} });
+    api.delete.mockResolvedValue({ data: {} });
+
+    await listarCatalogo();
+    await crearCatalogo({ nombre: 'X', especie: 'perro' });
+    await actualizarCatalogo('c1', { nombre: 'Y' });
+    await eliminarCatalogo('c1');
+
+    expect(api.get).toHaveBeenCalledWith('/v1/vacunas/catalogo');
+    expect(api.post).toHaveBeenCalledWith('/v1/vacunas/catalogo', { nombre: 'X', especie: 'perro' });
+    expect(api.patch).toHaveBeenCalledWith('/v1/vacunas/catalogo/c1', { nombre: 'Y' });
+    expect(api.delete).toHaveBeenCalledWith('/v1/vacunas/catalogo/c1');
   });
 
   it('helpers de presentacion', () => {

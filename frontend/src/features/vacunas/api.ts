@@ -19,11 +19,13 @@ export interface Vacuna {
 }
 
 export interface VacunaCatalogoItem {
-  codigo: string;
+  codigo?: string;
+  id?: string;
   especie: string;
   nombre: string;
   intervaloDias?: number;
   descripcion: string;
+  origen?: 'base' | 'custom';
 }
 
 export interface VacunasPendientesResumen {
@@ -66,6 +68,38 @@ export const listarVacunas = async (filtros: FiltrosVacunas = {}): Promise<Vacun
 export const obtenerCatalogoVacunas = async (): Promise<VacunaCatalogoItem[]> => {
   const res = await apiClient.get<VacunaCatalogoItem[]>('/v1/vacunas/catalogo');
   return res.data ?? [];
+};
+
+export const listarCatalogo = async (): Promise<VacunaCatalogoItem[]> => {
+  const res = await apiClient.get<VacunaCatalogoItem[]>('/v1/vacunas/catalogo');
+  return res.data ?? [];
+};
+
+export const crearCatalogo = async (data: {
+  nombre: string;
+  especie: string;
+  intervaloDias?: number;
+  descripcion?: string;
+}): Promise<VacunaCatalogoItem> => {
+  const res = await apiClient.post<VacunaCatalogoItem>('/v1/vacunas/catalogo', data);
+  return res.data;
+};
+
+export const actualizarCatalogo = async (
+  id: string,
+  data: {
+    nombre?: string;
+    especie?: string;
+    intervaloDias?: number;
+    descripcion?: string;
+  },
+): Promise<VacunaCatalogoItem> => {
+  const res = await apiClient.patch<VacunaCatalogoItem>(`/v1/vacunas/catalogo/${id}`, data);
+  return res.data;
+};
+
+export const eliminarCatalogo = async (id: string): Promise<void> => {
+  await apiClient.delete(`/v1/vacunas/catalogo/${id}`);
 };
 
 export const crearVacuna = async (input: {

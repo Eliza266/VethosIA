@@ -5,6 +5,8 @@ import {
   ActualizarVacunaDto,
   AplicarVacunaDto,
   FiltrarVacunasDto,
+  CrearCatalogoVacunaDto,
+  ActualizarCatalogoVacunaDto,
 } from './dto/vacuna.dto';
 import { VacunaDoc } from './vacuna.types';
 import { CurrentUser } from '../../common/auth/current-user.decorator';
@@ -16,8 +18,36 @@ export class VacunasController {
   constructor(private readonly vacunas: VacunasService) {}
 
   @Get('catalogo')
-  catalogo() {
-    return this.vacunas.catalogoBase();
+  catalogo(@CurrentUser() user: AuthUser) {
+    return this.vacunas.catalogoCompleto(user);
+  }
+
+  @Roles('admin', 'vet')
+  @Post('catalogo')
+  crearCatalogo(
+    @Body() dto: CrearCatalogoVacunaDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.vacunas.crearEntradaCatalogo(dto, user);
+  }
+
+  @Roles('admin', 'vet')
+  @Patch('catalogo/:id')
+  actualizarCatalogo(
+    @Param('id') id: string,
+    @Body() dto: ActualizarCatalogoVacunaDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.vacunas.actualizarEntradaCatalogo(id, dto, user);
+  }
+
+  @Roles('admin', 'vet')
+  @Delete('catalogo/:id')
+  eliminarCatalogo(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.vacunas.archivarEntradaCatalogo(id, user);
   }
 
   // GET /v1/vacunas?pacienteId=...&estado=...&especie=...&tipo=...

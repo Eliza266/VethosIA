@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { VacunasRepository } from './vacunas.repository';
 import {
   VacunaDoc,
+  VacunaCatalogoCustomDoc,
   calcularEstadoVacuna,
   fechaIsoDia,
   parseFechaVacuna,
@@ -69,6 +70,74 @@ export class VacunasService {
 
   catalogoBase(): typeof CATALOGO_VACUNAS_BASE {
     return CATALOGO_VACUNAS_BASE;
+  }
+
+  async catalogoCompleto(user: AuthUser): Promise<any[]> {
+    const baseMapped = this.catalogoBase().map((b) => ({ ...b, origen: 'base' }));
+    const tenant = filtroTenantRuntime(user);
+    const custom = await this.repo.listarCatalogoCustom(tenant);
+    return [...baseMapped, ...custom];
+  }
+
+  async crearEntradaCatalogo(
+    data: { nombre: string; especie: string; intervaloDias?: number; descripcion?: string },
+    user: AuthUser,
+  ): Promise<VacunaCatalogoCustomDoc> {
+    assertOperacionClinica(user);
+    const scope = scopeClinicoParaCrearV2(user);
+    const payload = stripUndefinedFields({
+      nombre: data.nombre,
+      especie: data.especie,
+      intervaloDias: data.intervaloDias,
+      descripcion: data.descripcion,
+    }) as Omit<VacunaCatalogoCustomDoc, 'id' | 'origen' | 'archivada' | 'creadoEn'>;
+
+    const created = await this.repo.crearCatalogo(
+      {
+        orgId: user.orgId,
+        veterinarioId: user.uid,
+        ...scope,
+      },
+      payload,
+    );
+    return created;
+  }
+
+  async actualizarEntradaCatalogo(
+    id: string,
+    data: { nombre?: string; especie?: string; intervaloDias?: number; descripcion?: string },
+    user: AuthUser,
+  ): Promise<VacunaCatalogoCustomDoc> {
+    const actual = await this.repo.getCatalogoById(id);
+    assertAcceso(user, actual);
+    assertOperacionClinica(user, actual);
+
+    if (actual.origen !== 'custom') {
+      throw new BadRequestException('Las entradas base del catálogo son inmutables.');
+    }
+
+    const payload = stripUndefinedFields({
+      nombre: data.nombre,
+      especie: data.especie,
+      intervaloDias: data.intervaloDias,
+      descripcion: data.descripcion,
+    });
+
+    await this.repo.actualizarCatalogo(id, filtroTenantRuntime(user), payload);
+    return { ...actual, ...payload };
+  }
+
+  async archivarEntradaCatalogo(id: string, user: AuthUser): Promise<{ archivado: true }> {
+    const actual = await this.repo.getCatalogoById(id);
+    assertAcceso(user, actual);
+    assertOperacionClinica(user, actual);
+
+    if (actual.origen !== 'custom') {
+      throw new BadRequestException('Las entradas base del catálogo no se pueden archivar.');
+    }
+
+    await this.repo.archivarCatalogo(id, filtroTenantRuntime(user));
+    return { archivado: true };
   }
 
   async crear(input: CrearVacunaInput, user: AuthUser): Promise<VacunaDoc> {

@@ -51,3 +51,17 @@ export class FiltrarVacunasDto {
   @IsOptional() @IsString() vencidas?: string;
   @IsOptional() @IsString() tipo?: string;
 }
+
+export class CrearCatalogoVacunaDto {
+  @IsString() @MinLength(1) @MaxLength(120) nombre!: string;
+  @IsIn(['perro', 'gato', 'ave', 'reptil', 'otro']) especie!: string;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(3650) intervaloDias?: number;
+  @IsOptional() @IsString() @MaxLength(2000) descripcion?: string;
+}
+
+export class ActualizarCatalogoVacunaDto {
+  @IsOptional() @IsString() @MinLength(1) @MaxLength(120) nombre?: string;
+  @IsOptional() @IsIn(['perro', 'gato', 'ave', 'reptil', 'otro']) especie?: string;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(3650) intervaloDias?: number;
+  @IsOptional() @IsString() @MaxLength(2000) descripcion?: string;
+}

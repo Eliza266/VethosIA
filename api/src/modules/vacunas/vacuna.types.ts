@@ -72,3 +72,24 @@ export interface VacunaDoc {
   eliminadaEn?: string;
   creadoEn?: unknown;
 }
+
+export interface VacunaCatalogoCustomDoc {
+  id: string;
+  orgId?: string;
+  veterinarioId?: string;
+  accountType?: AccountTypeV2;
+  accountId?: string;
+  entidadId?: string;
+  veterinariaId?: string;
+  planOwnerType?: PlanOwnerTypeV2;
+  planOwnerId?: string;
+  membershipId?: string;
+  legacyOrgId?: string;
+  especie: string;
+  nombre: string;
+  intervaloDias?: number;
+  descripcion?: string;
+  origen: 'custom';
+  archivada?: boolean;
+  creadoEn?: string;
+}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   listarVacunasPaciente,
@@ -9,13 +9,14 @@ import {
   etiquetaEstadoVacuna,
   fechaVacuna,
   toDateInput,
+  listarCatalogo,
   type Vacuna,
 } from './api';
 import { useMe } from '../tenant/hooks';
 import { puedeEliminar } from '../../lib/rbac';
 import { Card, Button, Badge, Skeleton, useConfirm } from '../../components/ui/Primitives';
 import type { Paciente } from '../../types';
-import { etiquetaIntervalo, vacunasCatalogoPorEspecie } from './catalogo';
+import { etiquetaIntervalo } from './catalogo';
 
 const inputStyle: React.CSSProperties = {
   padding: 8,
@@ -41,7 +42,16 @@ const VacunasPanel: React.FC<{
   const [editId, setEditId] = useState<string | null>(null);
   const [editNombre, setEditNombre] = useState('');
   const [editProxima, setEditProxima] = useState('');
-  const catalogo = vacunasCatalogoPorEspecie(pacienteEspecie);
+  const catalogoQuery = useQuery({
+    queryKey: ['catalogoVacunas'],
+    queryFn: () => listarCatalogo(),
+  });
+
+  const catalogoCompleto = catalogoQuery.data ?? [];
+  const catalogo = useMemo(() => {
+    if (!pacienteEspecie || pacienteEspecie === 'otro') return [];
+    return catalogoCompleto.filter((item) => item.especie === pacienteEspecie);
+  }, [catalogoCompleto, pacienteEspecie]);
 
   const vacunas = useQuery({
     queryKey: ['vacunas', pacienteId],
@@ -104,9 +114,9 @@ const VacunasPanel: React.FC<{
     setEditProxima('');
   };
 
-  const seleccionarCatalogo = (codigo: string) => {
-    setCatalogoCodigo(codigo);
-    const item = catalogo.find((v) => v.codigo === codigo);
+  const seleccionarCatalogo = (codigoOrId: string) => {
+    setCatalogoCodigo(codigoOrId);
+    const item = catalogo.find((v) => v.codigo === codigoOrId || v.id === codigoOrId);
     if (!item) return;
     setNombre(item.nombre);
     setIntervaloDias(item.intervaloDias);
@@ -165,20 +175,26 @@ const VacunasPanel: React.FC<{
               style={{ ...inputStyle, minWidth: 220, background: 'white' }}
             >
               <option value="">Usar vacuna del catalogo</option>
-              {catalogo.map((item) => (
-                <option key={item.codigo} value={item.codigo}>
-                  {item.nombre} - {etiquetaIntervalo(item.intervaloDias)}
-                </option>
-              ))}
+              {catalogo.map((item) => {
+                const val = item.codigo || item.id || '';
+                return (
+                  <option key={val} value={val}>
+                    {item.nombre} - {etiquetaIntervalo(item.intervaloDias)}
+                  </option>
+                );
+              })}
             </select>
           </div>
           <ul style={{ listStyle: 'none', padding: 0, margin: '10px 0 0', display: 'grid', gap: 6 }}>
-            {catalogo.slice(0, 5).map((item) => (
-              <li key={item.codigo} style={{ fontSize: 13, color: 'var(--muted)' }}>
-                <strong style={{ color: 'var(--text)' }}>{item.nombre}</strong> -{' '}
-                {etiquetaIntervalo(item.intervaloDias)}
-              </li>
-            ))}
+            {catalogo.slice(0, 5).map((item) => {
+              const val = item.codigo || item.id || '';
+              return (
+                <li key={val} style={{ fontSize: 13, color: 'var(--muted)' }}>
+                  <strong style={{ color: 'var(--text)' }}>{item.nombre}</strong> -{' '}
+                  {etiquetaIntervalo(item.intervaloDias)}
+                </li>
+              );
+            })}
           </ul>
         </div>
       )}

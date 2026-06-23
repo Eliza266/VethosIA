@@ -17,6 +17,13 @@ import { Button, Card, EmptyState, SectionHeader } from '../components/ui/Primit
 import { puedeVerSuscripcion, rolLabel } from '../lib/rbac';
 import { getErrorMessage } from '../lib/errors';
 import { DEMO_ACTION_HINT, isDemoSession } from '../lib/demoSession';
+import {
+  listarCatalogo,
+  crearCatalogo,
+  actualizarCatalogo,
+  eliminarCatalogo,
+  type VacunaCatalogoItem,
+} from '../features/vacunas/api';
 
 const acciones = [
   {
@@ -66,6 +73,57 @@ const AdminVeterinaria: React.FC = () => {
   const [error, setError] = useState('');
   const [formVeterinaria, setFormVeterinaria] = useState(veterinariaFormInicial);
   const scopeListo = Boolean(me?.orgId || me?.veterinariaId || me?.accountId);
+  const puedeGestionarCatalogo = rol === 'admin_veterinaria' || rol === 'admin_entidad' || rol === 'veterinario' || rol === 'admin' || rol === 'vet' || rol === 'superadmin';
+
+  // Catalog queries and mutations
+  const catalogoQuery = useQuery({
+    queryKey: ['catalogoVacunas'],
+    queryFn: () => listarCatalogo(),
+    enabled: scopeListo,
+  });
+
+  const [nuevoNombre, setNuevoNombre] = useState('');
+  const [nuevaEspecie, setNuevaEspecie] = useState('perro');
+  const [nuevoIntervalo, setNuevoIntervalo] = useState<number | undefined>();
+  const [nuevaDescripcion, setNuevaDescripcion] = useState('');
+
+  const [editCatalogoId, setEditCatalogoId] = useState<string | null>(null);
+  const [editCatalogoNombre, setEditCatalogoNombre] = useState('');
+  const [editCatalogoEspecie, setEditCatalogoEspecie] = useState('perro');
+  const [editCatalogoIntervalo, setEditCatalogoIntervalo] = useState<number | undefined>();
+  const [editCatalogoDescripcion, setEditCatalogoDescripcion] = useState('');
+
+  const crearCatalogoMut = useMutation({
+    mutationFn: () =>
+      crearCatalogo({
+        nombre: nuevoNombre,
+        especie: nuevaEspecie,
+        intervaloDias: nuevoIntervalo,
+        descripcion: nuevaDescripcion || undefined,
+      }),
+    onSuccess: () => {
+      setNuevoNombre('');
+      setNuevoIntervalo(undefined);
+      setNuevaDescripcion('');
+      qc.invalidateQueries({ queryKey: ['catalogoVacunas'] });
+    },
+  });
+
+  const actualizarCatalogoMut = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<VacunaCatalogoItem> }) =>
+      actualizarCatalogo(id, data),
+    onSuccess: () => {
+      setEditCatalogoId(null);
+      qc.invalidateQueries({ queryKey: ['catalogoVacunas'] });
+    },
+  });
+
+  const eliminarCatalogoMut = useMutation({
+    mutationFn: (id: string) => eliminarCatalogo(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['catalogoVacunas'] });
+    },
+  });
 
   const veterinaria = useQuery({
     queryKey: ['backoffice-veterinaria', me?.veterinariaId ?? me?.accountId],
@@ -450,6 +508,225 @@ const AdminVeterinaria: React.FC = () => {
         </div>
       </Card>
       </section>
+
+      <Card className="premium-card">
+        <SectionHeader
+          title="Catálogo de vacunas personalizado"
+          description="Administra el catálogo de vacunas custom de tu clínica. Las vacunas base provistas por el sistema son de sólo lectura."
+        />
+        <div className="mt-4 grid gap-6 md:grid-cols-[1.2fr_0.8fr]">
+          <div>
+            <h3 className="text-sm font-bold text-slate-800 mb-3">Vacunas registradas</h3>
+            {catalogoQuery.isLoading && <p className="text-sm text-slate-500">Cargando catálogo...</p>}
+            {(!catalogoQuery.data || catalogoQuery.data.length === 0) && !catalogoQuery.isLoading && (
+              <p className="text-sm text-slate-500">No hay vacunas en el catálogo.</p>
+            )}
+            <div className="max-h-[400px] overflow-y-auto border border-slate-200 rounded-xl divide-y divide-slate-100 bg-white">
+              {(catalogoQuery.data ?? []).map((item) => {
+                const isCustom = item.origen === 'custom';
+                const isEditing = editCatalogoId === item.id;
+
+                if (isEditing) {
+                  return (
+                    <div key={item.id} className="p-3 bg-slate-50 grid gap-2">
+                      <div className="grid grid-cols-2 gap-2">
+                        <label className="text-xs font-semibold text-slate-600">
+                          Nombre
+                          <input
+                            type="text"
+                            value={editCatalogoNombre}
+                            onChange={(e) => setEditCatalogoNombre(e.target.value)}
+                            className="w-full mt-1 min-h-8 rounded border border-slate-200 px-2 text-xs outline-none focus:border-[#0F6E56]"
+                          />
+                        </label>
+                        <label className="text-xs font-semibold text-slate-600">
+                          Especie
+                          <select
+                            value={editCatalogoEspecie}
+                            onChange={(e) => setEditCatalogoEspecie(e.target.value)}
+                            className="w-full mt-1 min-h-8 rounded border border-slate-200 px-2 text-xs outline-none focus:border-[#0F6E56] bg-white"
+                          >
+                            <option value="perro">Perro</option>
+                            <option value="gato">Gato</option>
+                            <option value="ave">Ave</option>
+                            <option value="reptil">Reptil</option>
+                            <option value="otro">Otro</option>
+                          </select>
+                        </label>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <label className="text-xs font-semibold text-slate-600">
+                          Intervalo (días)
+                          <input
+                            type="number"
+                            value={editCatalogoIntervalo ?? ''}
+                            onChange={(e) => setEditCatalogoIntervalo(e.target.value ? parseInt(e.target.value) : undefined)}
+                            className="w-full mt-1 min-h-8 rounded border border-slate-200 px-2 text-xs outline-none focus:border-[#0F6E56]"
+                          />
+                        </label>
+                        <label className="text-xs font-semibold text-slate-600">
+                          Descripción
+                          <input
+                            type="text"
+                            value={editCatalogoDescripcion}
+                            onChange={(e) => setEditCatalogoDescripcion(e.target.value)}
+                            className="w-full mt-1 min-h-8 rounded border border-slate-200 px-2 text-xs outline-none focus:border-[#0F6E56]"
+                          />
+                        </label>
+                      </div>
+                      <div className="flex gap-2 justify-end mt-1">
+                        <Button
+                          variant="ghost"
+                          onClick={() => setEditCatalogoId(null)}
+                          className="px-2 py-1 text-xs"
+                        >
+                          Cancelar
+                        </Button>
+                        <Button
+                          disabled={!editCatalogoNombre || actualizarCatalogoMut.isPending}
+                          onClick={() =>
+                            actualizarCatalogoMut.mutate({
+                              id: item.id!,
+                              data: {
+                                nombre: editCatalogoNombre,
+                                especie: editCatalogoEspecie,
+                                intervaloDias: editCatalogoIntervalo,
+                                descripcion: editCatalogoDescripcion || undefined,
+                              },
+                            })
+                          }
+                          className="px-2 py-1 text-xs"
+                        >
+                          Guardar
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div key={item.codigo || item.id} className="p-3 flex items-center justify-between gap-4">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-bold text-sm text-slate-800">{item.nombre}</span>
+                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ${
+                          isCustom ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'
+                        }`}>
+                          {isCustom ? 'Personalizada' : 'Base'}
+                        </span>
+                        <span className="text-xs text-slate-500 bg-slate-50 border border-slate-100 rounded px-1.5 py-0.2 capitalize">
+                          {item.especie}
+                        </span>
+                      </div>
+                      {item.descripcion && (
+                        <p className="text-xs text-slate-500 mt-1 truncate">{item.descripcion}</p>
+                      )}
+                      {item.intervaloDias && (
+                        <p className="text-[11px] text-slate-400 mt-0.5">
+                          Intervalo: {item.intervaloDias} días
+                        </p>
+                      )}
+                    </div>
+                    {isCustom && puedeGestionarCatalogo && (
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Button
+                          variant="ghost"
+                          className="px-2 py-1 text-xs"
+                          onClick={() => {
+                            setEditCatalogoId(item.id!);
+                            setEditCatalogoNombre(item.nombre);
+                            setEditCatalogoEspecie(item.especie);
+                            setEditCatalogoIntervalo(item.intervaloDias);
+                            setEditCatalogoDescripcion(item.descripcion ?? '');
+                          }}
+                        >
+                          Editar
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          className="px-2 py-1 text-xs text-red-600 hover:text-red-700"
+                          disabled={eliminarCatalogoMut.isPending}
+                          onClick={() => {
+                            if (window.confirm(`¿Seguro que deseas archivar la vacuna "${item.nombre}" del catálogo?`)) {
+                              eliminarCatalogoMut.mutate(item.id!);
+                            }
+                          }}
+                        >
+                          Archivar
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {puedeGestionarCatalogo ? (
+            <div className="rounded-xl border border-slate-200 p-4 bg-slate-50">
+              <h3 className="text-sm font-bold text-slate-800 mb-3">Agregar al catálogo</h3>
+              <div className="grid gap-3">
+                <label className="grid gap-1 text-xs font-semibold text-slate-700">
+                  Nombre de la vacuna *
+                  <input
+                    type="text"
+                    required
+                    placeholder="Ej. Parvovirus"
+                    value={nuevoNombre}
+                    onChange={(e) => setNuevoNombre(e.target.value)}
+                    className="min-h-9 rounded-lg border border-slate-200 px-3 text-xs outline-none bg-white focus:border-[#0F6E56]"
+                  />
+                </label>
+                <label className="grid gap-1 text-xs font-semibold text-slate-700">
+                  Especie *
+                  <select
+                    value={nuevaEspecie}
+                    onChange={(e) => setNuevaEspecie(e.target.value)}
+                    className="min-h-9 rounded-lg border border-slate-200 px-3 text-xs outline-none bg-white focus:border-[#0F6E56]"
+                  >
+                    <option value="perro">Perro</option>
+                    <option value="gato">Gato</option>
+                    <option value="ave">Ave</option>
+                    <option value="reptil">Reptil</option>
+                    <option value="otro">Otro</option>
+                  </select>
+                </label>
+                <label className="grid gap-1 text-xs font-semibold text-slate-700">
+                  Intervalo sugerido (días)
+                  <input
+                    type="number"
+                    placeholder="Ej. 365"
+                    value={nuevoIntervalo ?? ''}
+                    onChange={(e) => setNuevoIntervalo(e.target.value ? parseInt(e.target.value) : undefined)}
+                    className="min-h-9 rounded-lg border border-slate-200 px-3 text-xs outline-none bg-white focus:border-[#0F6E56]"
+                  />
+                </label>
+                <label className="grid gap-1 text-xs font-semibold text-slate-700">
+                  Descripción
+                  <input
+                    type="text"
+                    placeholder="Opcional"
+                    value={nuevaDescripcion}
+                    onChange={(e) => setNuevaDescripcion(e.target.value)}
+                    className="min-h-9 rounded-lg border border-slate-200 px-3 text-xs outline-none bg-white focus:border-[#0F6E56]"
+                  />
+                </label>
+                <Button
+                  disabled={!nuevoNombre || crearCatalogoMut.isPending}
+                  onClick={() => crearCatalogoMut.mutate()}
+                  className="mt-2 w-full justify-center"
+                >
+                  {crearCatalogoMut.isPending ? 'Agregando...' : 'Agregar vacuna'}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-xl border border-dashed border-slate-200 p-4 text-center text-slate-500">
+              No tienes permisos para agregar o editar el catálogo de vacunas.
+            </div>
+          )}
+        </div>
+      </Card>
 
       <section aria-label="Gestión de veterinaria" className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {accionesVisibles.map((accion) => {

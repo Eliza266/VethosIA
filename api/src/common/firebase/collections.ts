@@ -10,6 +10,7 @@ export const COLLECTIONS = {
   enmiendas: 'enmiendas',
   citas: 'citas',
   vacunas: 'vacunas',
+  catalogoVacunas: 'catalogoVacunas',
   brigadas: 'brigadas',
   brigadaAtenciones: 'brigadaAtenciones',
   planes: 'planes',

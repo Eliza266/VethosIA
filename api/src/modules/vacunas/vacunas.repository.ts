@@ -2,8 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import * as admin from 'firebase-admin';
 import { FirebaseService } from '../../common/firebase/firebase.service';
 import { COLLECTIONS } from '../../common/firebase/collections';
-import { VacunaDoc } from './vacuna.types';
-import { runtimeScopeFromRecord, type RuntimeTenantFilter } from '../../common/auth/runtime-v2';
+import { VacunaDoc, VacunaCatalogoCustomDoc } from './vacuna.types';
+import { runtimeScopeFromRecord, type RuntimeTenantFilter, type RuntimeResourceScope } from '../../common/auth/runtime-v2';
 
 @Injectable()
 export class VacunasRepository {
@@ -128,6 +128,128 @@ export class VacunasRepository {
       proximaDosis: str(d.proximaDosis),
       notas: str(d.notas),
       eliminadaEn: asDateString(d.eliminadaEn),
+    };
+  }
+
+  private get catalogoCol(): admin.firestore.CollectionReference {
+    return this.firebase.firestore.collection(COLLECTIONS.catalogoVacunas);
+  }
+
+  catalogoRef(id: string): admin.firestore.DocumentReference {
+    return this.catalogoCol.doc(id);
+  }
+
+  async getCatalogoById(id: string): Promise<VacunaCatalogoCustomDoc> {
+    const snap = await this.catalogoRef(id).get();
+    if (!snap.exists) throw new NotFoundException(`Entrada de catálogo ${id} no existe.`);
+    return this.fromSnapCatalogo(snap);
+  }
+
+  async listarCatalogoCustom(tenant: RuntimeTenantFilter): Promise<VacunaCatalogoCustomDoc[]> {
+    const byId = new Map<string, VacunaCatalogoCustomDoc>();
+    for (const q of this.queriesTenantForCol(this.catalogoCol, tenant)) {
+      const snap = await q.get();
+      for (const d of snap.docs) {
+        const item = this.fromSnapCatalogo(d);
+        if (!item.archivada && !byId.has(d.id)) byId.set(d.id, item);
+      }
+    }
+    return [...byId.values()];
+  }
+
+  async crearCatalogo(
+    scope: Partial<RuntimeResourceScope> & { orgId?: string; veterinarioId?: string },
+    data: Omit<VacunaCatalogoCustomDoc, 'id' | 'origen' | 'archivada' | 'creadoEn'>,
+  ): Promise<VacunaCatalogoCustomDoc> {
+    const ref = this.catalogoCol.doc();
+    const payload = {
+      ...data,
+      ...scope,
+      origen: 'custom',
+      archivada: false,
+      creadoEn: admin.firestore.FieldValue.serverTimestamp(),
+    };
+    await ref.set(payload);
+    return {
+      ...payload,
+      id: ref.id,
+      creadoEn: new Date().toISOString(),
+    } as any;
+  }
+
+  async actualizarCatalogo(
+    id: string,
+    scope: RuntimeTenantFilter,
+    data: Partial<Omit<VacunaCatalogoCustomDoc, 'id'>>,
+  ): Promise<void> {
+    await this.catalogoRef(id).set(data, { merge: true });
+  }
+
+  async archivarCatalogo(id: string, scope: RuntimeTenantFilter): Promise<void> {
+    await this.catalogoRef(id).set({ archivada: true }, { merge: true });
+  }
+
+  private queriesTenantForCol(col: admin.firestore.CollectionReference, tenant: RuntimeTenantFilter): admin.firestore.Query[] {
+    const queries: admin.firestore.Query[] = [];
+    const v2 = tenant.entidadId
+      ? col.where('entidadId', '==', tenant.entidadId)
+      : tenant.veterinariaId
+        ? col.where('veterinariaId', '==', tenant.veterinariaId)
+        : tenant.accountId
+          ? col.where('accountId', '==', tenant.accountId)
+          : null;
+    if (v2) queries.push(v2);
+    if (tenant.orgId) queries.push(col.where('orgId', '==', tenant.orgId));
+    else if (tenant.uid) queries.push(col.where('veterinarioId', '==', tenant.uid));
+    return queries;
+  }
+
+  fromSnapCatalogo(
+    snap: admin.firestore.DocumentSnapshot | admin.firestore.QueryDocumentSnapshot,
+  ): VacunaCatalogoCustomDoc {
+    const d = (snap.data() ?? {}) as Record<string, unknown>;
+    const scope = runtimeScopeFromRecord(d);
+    const str = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined);
+    const num = (v: unknown): number | undefined => (typeof v === 'number' ? v : undefined);
+    const bool = (v: unknown): boolean | undefined => (typeof v === 'boolean' ? v : undefined);
+    const asDateString = (v: unknown): string | undefined => {
+      if (typeof v === 'string') return v;
+      if (v && typeof v === 'object') {
+        const obj = v as Record<string, unknown>;
+        if ('toDate' in obj && typeof obj.toDate === 'function') {
+          try {
+            const d = (obj.toDate as () => Date).call(v);
+            if (d instanceof Date && !Number.isNaN(d.getTime())) return d.toISOString();
+          } catch {}
+        }
+        const seconds = obj._seconds ?? obj.seconds;
+        if (typeof seconds === 'number') {
+          const nanos = (obj._nanoseconds ?? obj.nanoseconds ?? 0) as number;
+          const d = new Date(seconds * 1000 + nanos / 1e6);
+          if (!Number.isNaN(d.getTime())) return d.toISOString();
+        }
+      }
+      return undefined;
+    };
+    return {
+      id: snap.id,
+      orgId: str(d.orgId),
+      veterinarioId: str(d.veterinarioId),
+      accountType: scope.accountType,
+      accountId: scope.accountId,
+      entidadId: scope.entidadId,
+      veterinariaId: scope.veterinariaId,
+      planOwnerType: scope.planOwnerType,
+      planOwnerId: scope.planOwnerId,
+      membershipId: scope.membershipId,
+      legacyOrgId: scope.legacyOrgId,
+      especie: str(d.especie) ?? '',
+      nombre: str(d.nombre) ?? '',
+      intervaloDias: num(d.intervaloDias),
+      descripcion: str(d.descripcion),
+      origen: 'custom',
+      archivada: bool(d.archivada) ?? false,
+      creadoEn: asDateString(d.creadoEn),
     };
   }
 }
