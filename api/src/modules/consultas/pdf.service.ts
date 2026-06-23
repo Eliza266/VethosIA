@@ -311,7 +311,6 @@ export class PdfService {
 
     const observacionesPartes: string[] = [];
     const transcripcion = str(consulta.transcripcion, '');
-    if (transcripcion) observacionesPartes.push(`Transcripción original:\n${transcripcion}`);
     const notasPaciente = str(paciente.notas, '');
     if (notasPaciente && notasPaciente !== ND) {
       observacionesPartes.push(`Notas del paciente:\n${notasPaciente}`);
@@ -618,12 +617,7 @@ class PdfLayout {
       });
     }
 
-    // 8) Transcripción original (anexo)
-    if (m.transcripcion && m.transcripcion !== ND) {
-      this.drawSection('Transcripción original (anexo)', () => {
-        this.drawParagraph(m.transcripcion);
-      });
-    }
+
 
     // 9) Firma del profesional
     this.drawSignatureSection(m);

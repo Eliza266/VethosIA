@@ -119,6 +119,32 @@ const DetalleConsulta: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [consultaId, pacienteId]);
 
+  useEffect(() => {
+    if (!consultaId || consulta?.estado !== 'procesando') return;
+
+    const interval = setInterval(async () => {
+      try {
+        const consData = await getConsulta(consultaId);
+        if (consData) {
+          setConsulta(consData);
+          if (consData.estado !== 'procesando') {
+            setEditData({
+              motivo: consData.motivo || '',
+              prioridad: consData.prioridad || 'rutina',
+              signosVitales: consData.signosVitales || {},
+            });
+            clearInterval(interval);
+          }
+        }
+      } catch (err) {
+        console.error('Error polling consulta:', err);
+      }
+    }, 4000);
+
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [consultaId, consulta?.estado]);
+
   const handleSaveSoap = async (updatedSoap: SOAP) => {
     if (!consultaId) return;
     try {

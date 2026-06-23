@@ -58,6 +58,13 @@ INSTRUCCIONES:
   "frecuencia cardíaca 90" → frecuenciaCardiaca: 90; "respira a 24" → frecuenciaRespiratoria: 24;
   "condición corporal 4 de 5" o "4/5" → condicionCorporal: 4.
   Usa solo el número (sin unidades ni texto). Deja null SOLO si de verdad no se menciona.
+- DIAGNÓSTICOS (IMPORTANTE): además de escribir el análisis en texto, SIEMPRE llena
+  "diagnosticoEstructurado" con uno o más diagnósticos derivados de tu análisis. El más
+  probable va con tipo "principal" y el resto como "diferencial". Ejemplo: si el análisis
+  es "gastroenteritis, descartar parvovirus", devuelve un item principal "Gastroenteritis"
+  y uno diferencial "Parvovirus". Solo déjalo vacío si la transcripción no permite ningún
+  diagnóstico. Cada item: nombre, tipo (principal|diferencial|secundario),
+  estado (presuntivo|confirmado|descartado), origen "ia".
 
 Devuelve ÚNICAMENTE un objeto JSON válido sin comentarios ni backticks:
 {

@@ -77,7 +77,7 @@ export class GeminiService {
       if (parsed) return this.normalizar(parsed, transcripcion);
 
       // reintento con prompt minimalista (mismo approach del front).
-      const simple = `Extrae esta transcripción en un objeto JSON con este formato estricto sin texto adicional: {"motivo":"","prioridad":"rutina","signosVitales":{},"subjetivo":"","objetivo":"","analisis":"","plan":"","medicamentosSugeridos":[]}. Transcripción: "${transcripcion}"`;
+      const simple = `Extrae esta transcripción en un objeto JSON con este formato estricto sin texto adicional: {"motivo":"","prioridad":"rutina","signosVitales":{},"subjetivo":"","objetivo":"","analisis":"","plan":"","diagnosticoEstructurado":[],"medicamentosSugeridos":[]}. Transcripción: "${transcripcion}"`;
       const retry = await this.generate({
         contents: [{ parts: [{ text: simple }] }],
         generationConfig: { responseMimeType: 'application/json' },

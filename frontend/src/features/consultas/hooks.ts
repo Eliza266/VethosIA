@@ -183,8 +183,7 @@ export const useConsultas = () => {
 
       await actualizarConsultaDoc(consultaId, { 
         audioUrl: downloadUrl,
-        audioUrls: audioUrls,
-      } as Partial<Consulta>);
+      });
 
       // 1. Determinar si usamos la API asíncrona de IA (Fase 5) o el camino síncrono/legacy
       const flags = getFeatureFlags();

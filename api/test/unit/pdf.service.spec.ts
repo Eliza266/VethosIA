@@ -235,7 +235,7 @@ describe('PdfService', () => {
     expect(modelo.diagnostico).toContain('Traqueobronquitis infecciosa canina');
     expect(modelo.diagnostico).toContain('Sistema: respiratorio');
     expect(modelo.medicamentos).toHaveLength(1);
-    expect(modelo.observaciones).toContain('Transcripción original');
+
     expect(modelo.examenesComplementarios).toBe('No documentado');
     expect(modelo.evolucion).toBe('No documentado');
   });

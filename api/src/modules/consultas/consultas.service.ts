@@ -126,7 +126,9 @@ export class ConsultasService {
       try {
         payload.diagnosticoEstructurado = normalizarDiagnosticosEstructurados(
           dto.diagnosticoEstructurado,
-          { origenDefault: 'manual' },
+          // strict:false = rellena defaults (tipo/estado/id) y salta vacios en vez de
+          // tirar 400 cuando el vet edita un diagnostico parcial. Coherente con lectura/PDF.
+          { origenDefault: 'manual', strict: false },
         );
       } catch (err) {
         if (err instanceof DiagnosticoEstructuradoValidationError) {
@@ -251,7 +253,7 @@ export class ConsultasService {
       try {
         contenidoNormalizado.diagnosticoEstructurado = normalizarDiagnosticosEstructurados(
           contenido.diagnosticoEstructurado,
-          { origenDefault: 'manual' },
+          { origenDefault: 'manual', strict: false },
         );
       } catch (err) {
         if (err instanceof DiagnosticoEstructuradoValidationError) {

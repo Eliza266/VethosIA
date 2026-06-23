@@ -5,9 +5,9 @@ import { spawnSync } from 'node:child_process';
 import { afterEach, describe, expect, it } from 'vitest';
 
 const SCRIPT_PATH = join(process.cwd(), 'scripts', 'verify-prod-build.mjs');
-const PROJECT_ID = 'vethosia-production';
-const LIVE_API = 'https://vetia-api-cwepwj6irq-uc.a.run.app';
-const TAGGED_API = 'https://p19-ab8fe87---vetia-api-cwepwj6irq-uc.a.run.app';
+const PROJECT_ID = 'vethosia-5895b';
+const LIVE_API = 'https://vetia-api-awdlgzrxkq-uc.a.run.app';
+const TAGGED_API = 'https://p19-ab8fe87---vetia-api-awdlgzrxkq-uc.a.run.app';
 const OLD_API = 'https://vetia-api-306398232425.us-central1.run.app';
 
 const tempDirs = [];

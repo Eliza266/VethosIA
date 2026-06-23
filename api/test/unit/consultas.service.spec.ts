@@ -329,20 +329,27 @@ describe('ConsultasService.actualizar', () => {
     expect(repoState.diagnosticoEstructurado?.[0]).not.toHaveProperty('extra');
   });
 
-  it('rechaza diagnostico estructurado con tipo invalido', async () => {
-    const { svc, repoState } = buildCrud();
+  it('normaliza diagnostico con tipo invalido a default (no rechaza, evita 400 al editar)', async () => {
+    const { svc, repo, repoState } = buildCrud();
     repoState.id = 'c-new';
-    await expect(
-      svc.actualizar(
-        'c-new',
-        {
-          diagnosticoEstructurado: [
-            { id: 'd1', nombre: 'Otitis', tipo: 'raro', estado: 'presuntivo', origen: 'manual', creadoEn: 'x' },
-          ],
-        },
-        user,
-      ),
-    ).rejects.toBeInstanceOf(BadRequestException);
+    await svc.actualizar(
+      'c-new',
+      {
+        diagnosticoEstructurado: [
+          { id: 'd1', nombre: 'Otitis', tipo: 'raro', estado: 'presuntivo', origen: 'manual', creadoEn: 'x' },
+        ],
+      },
+      user,
+    );
+    // strict:false rellena defaults en vez de tirar 400: tipo invalido -> 'principal'.
+    expect(repo.mergeRaw).toHaveBeenCalledWith(
+      'c-new',
+      expect.objectContaining({
+        diagnosticoEstructurado: [
+          expect.objectContaining({ nombre: 'Otitis', tipo: 'principal', estado: 'presuntivo' }),
+        ],
+      }),
+    );
   });
 
   it('rechaza estado aprobada: debe usar POST /aprobar', async () => {

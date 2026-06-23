@@ -143,6 +143,7 @@ export class IaService implements IaProcessor, OnModuleInit {
         analisis: soap.analisis,
         plan: soap.plan,
         medicamentosSugeridos: soap.medicamentosSugeridos,
+        generadoPorIA: true,
       },
       diagnosticoEstructurado: soap.diagnosticoEstructurado,
     };

@@ -80,6 +80,25 @@ export class VacunasRepository {
     const scope = runtimeScopeFromRecord(d);
     const str = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined);
     const num = (v: unknown): number | undefined => (typeof v === 'number' ? v : undefined);
+    const asDateString = (v: unknown): string | undefined => {
+      if (typeof v === 'string') return v;
+      if (v && typeof v === 'object') {
+        const obj = v as Record<string, unknown>;
+        if ('toDate' in obj && typeof obj.toDate === 'function') {
+          try {
+            const d = (obj.toDate as () => Date).call(v);
+            if (d instanceof Date && !Number.isNaN(d.getTime())) return d.toISOString();
+          } catch {}
+        }
+        const seconds = obj._seconds ?? obj.seconds;
+        if (typeof seconds === 'number') {
+          const nanos = (obj._nanoseconds ?? obj.nanoseconds ?? 0) as number;
+          const d = new Date(seconds * 1000 + nanos / 1e6);
+          if (!Number.isNaN(d.getTime())) return d.toISOString();
+        }
+      }
+      return undefined;
+    };
     const aplicaciones = Array.isArray(d.aplicaciones)
       ? d.aplicaciones.filter((v): v is string => typeof v === 'string')
       : undefined;
@@ -108,7 +127,7 @@ export class VacunasRepository {
       aplicaciones,
       proximaDosis: str(d.proximaDosis),
       notas: str(d.notas),
-      eliminadaEn: str(d.eliminadaEn),
+      eliminadaEn: asDateString(d.eliminadaEn),
     };
   }
 }
