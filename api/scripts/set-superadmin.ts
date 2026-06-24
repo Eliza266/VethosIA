@@ -3,14 +3,13 @@
  * Asigna el custom claim { rol: 'superadmin' } a un usuario de Firebase Auth.
  * Idempotente: si ya tiene rol superadmin, no hace nada.
  *
- * Uso (contra PROD vethosia-production):
- *   $env:GCLOUD_PROJECT="vethosia-production"
- *   $env:GOOGLE_APPLICATION_CREDENTIALS="ruta/a/service-account.json"
+ * Uso (contra el proyecto activo vethosia-5895b; usa ADC, no archivo de llave):
+ *   $env:GCLOUD_PROJECT="vethosia-5895b"
  *   npm run set-superadmin -- --email=alguien@dominio.com
  *   npm run set-superadmin -- --uid=abc123
  *
- * Inspeccionar claims sin modificar (alias de prueba):
- *   npm run set-superadmin -- --inspect --email=gerencia+admin@nextvoiceia.com
+ * Inspeccionar claims sin modificar:
+ *   npm run set-superadmin -- --inspect --email=alguien@dominio.com
  *
  * Tras ejecutar, el usuario debe cerrar sesion y volver a entrar, o forzar
  * getIdToken(true) en el cliente para que el ID token incluya el nuevo claim.
