@@ -19,6 +19,9 @@ node_modules/
 # Claves filtradas de otros proyectos (no deben volver al repo)
 dossier-forge-keys.env.txt
 
+# Documento de entrega con credenciales — NO va a git (solo en el zip de handoff)
+ENTREGA-ANDRES.md
+
 # Build / artefactos
 dist/
 **/dist/

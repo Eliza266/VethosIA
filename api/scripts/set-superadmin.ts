@@ -15,16 +15,15 @@
  * Tras ejecutar, el usuario debe cerrar sesion y volver a entrar, o forzar
  * getIdToken(true) en el cliente para que el ID token incluya el nuevo claim.
  *
- * RIESGO — gerencia@nextvoiceia.com:
- *   Es el admin bootstrap de la org Vethosia (rol admin, org GT1BZbIdWWS7fANv3EUW).
- *   NO convertirlo a superadmin sin decision explicita: perderia el contexto de
- *   "Admin Entidad" y ganaria acceso cross-tenant. Usar un usuario dedicado para
- *   superadmin (p. ej. gerencia+superadmin@...) o mantener admin en la cuenta principal.
+ * GUARD opcional: si defines SUPERADMIN_BOOTSTRAP_GUARD con el email del admin
+ *   bootstrap de tu org, el script avisa antes de convertir esa cuenta a superadmin
+ *   (perderia su contexto de "Admin Entidad" y ganaria acceso cross-tenant). Por
+ *   defecto no hay cuenta protegida.
  */
 import * as admin from 'firebase-admin';
 
 const PROYECTO = process.env.GCLOUD_PROJECT ?? process.env.FIREBASE_PROJECT_ID ?? 'vethosia-5895b';
-const CUENTA_BOOTSTRAP = 'gerencia@nextvoiceia.com';
+const CUENTA_BOOTSTRAP = process.env.SUPERADMIN_BOOTSTRAP_GUARD ?? '';
 
 type Args = {
   email?: string;
