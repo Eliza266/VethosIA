@@ -1,7 +1,7 @@
 import type { AccountTypeV2, PlanOwnerTypeV2 } from '../../common/auth/auth-user.interface';
 
 export type Sexo = 'macho' | 'hembra' | 'desconocido';
-export type EstadoReproductivo = 'entero' | 'castrado' | 'desconocido';
+export type EstadoReproductivo = 'entero' | 'castrado' | 'esterilizado' | 'desconocido';
 
 export interface Propietario {
   nombre?: string;

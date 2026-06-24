@@ -58,7 +58,10 @@ export const crearPaciente = async (
   nuevoPaciente: Omit<Paciente, 'veterinarioId' | 'creadoEn'>
 ): Promise<Paciente> => {
   if (getFeatureFlags().useApiCRUD) {
-    const res = await apiClient.post<Paciente>('/v1/pacientes', nuevoPaciente);
+    // el backend usa `notas`; el front usa `notasGenerales`. Mapeamos para no perderlas.
+    const { notasGenerales, ...resto } = nuevoPaciente;
+    const payload = notasGenerales ? { ...resto, notas: notasGenerales } : resto;
+    const res = await apiClient.post<Paciente>('/v1/pacientes', payload);
     return res.data;
   }
   const pacienteDoc: Omit<Paciente, 'id'> = {
@@ -76,7 +79,9 @@ export const actualizarPacienteDoc = async (
   campos: Partial<Paciente>
 ): Promise<void> => {
   if (getFeatureFlags().useApiCRUD) {
-    await apiClient.patch(`/v1/pacientes/${id}`, campos);
+    const { notasGenerales, ...resto } = campos;
+    const payload = notasGenerales !== undefined ? { ...resto, notas: notasGenerales } : resto;
+    await apiClient.patch(`/v1/pacientes/${id}`, payload);
     return;
   }
   await updateDoc(doc(db, 'pacientes', id), stripUndefinedFields(campos));

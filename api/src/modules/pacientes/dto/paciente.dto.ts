@@ -27,8 +27,8 @@ export class CrearPacienteDto {
   @IsOptional() @IsString() edad?: string;
   @IsOptional() @IsIn(['macho', 'hembra', 'desconocido']) sexo?: 'macho' | 'hembra' | 'desconocido';
   @IsOptional()
-  @IsIn(['entero', 'castrado', 'desconocido'])
-  estadoReproductivo?: 'entero' | 'castrado' | 'desconocido';
+  @IsIn(['entero', 'castrado', 'esterilizado', 'desconocido'])
+  estadoReproductivo?: 'entero' | 'castrado' | 'esterilizado' | 'desconocido';
   @IsOptional() @IsString() @MaxLength(60) color?: string;
   @IsOptional() @IsString() @MaxLength(60) chip?: string;
   @IsOptional() @IsString() @MaxLength(2048) foto?: string;
@@ -47,8 +47,8 @@ export class ActualizarPacienteDto {
   @IsOptional() @IsString() edad?: string;
   @IsOptional() @IsIn(['macho', 'hembra', 'desconocido']) sexo?: 'macho' | 'hembra' | 'desconocido';
   @IsOptional()
-  @IsIn(['entero', 'castrado', 'desconocido'])
-  estadoReproductivo?: 'entero' | 'castrado' | 'desconocido';
+  @IsIn(['entero', 'castrado', 'esterilizado', 'desconocido'])
+  estadoReproductivo?: 'entero' | 'castrado' | 'esterilizado' | 'desconocido';
   @IsOptional() @IsString() @MaxLength(60) color?: string;
   @IsOptional() @IsString() @MaxLength(60) chip?: string;
   @IsOptional() @IsString() @MaxLength(2048) foto?: string;
