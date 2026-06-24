@@ -299,8 +299,7 @@ const NuevosPaciente: React.FC = () => {
                   onChange={handleChange}
                   className="w-full px-3 py-2.5 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56] focus:bg-white outline-none transition-all"
                 >
-                  <option value="entero">Entero</option>
-                  <option value="castrado">Castrado</option>
+                  <option value="entero">Fértil</option>
                   <option value="esterilizado">Esterilizado</option>
                 </select>
               </div>

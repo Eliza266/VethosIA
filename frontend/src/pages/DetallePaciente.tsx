@@ -750,8 +750,7 @@ const DetallePaciente: React.FC = () => {
                       onChange={e => setEditForm({ ...editForm, estadoReproductivo: e.target.value as Paciente['estadoReproductivo'] })}
                       className="w-full px-3 py-2 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#0F6E56] focus:bg-white outline-none"
                     >
-                      <option value="entero">Entero</option>
-                      <option value="castrado">Castrado</option>
+                      <option value="entero">Fértil</option>
                       <option value="esterilizado">Esterilizado</option>
                     </select>
                   </div>
