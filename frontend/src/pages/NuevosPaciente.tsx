@@ -282,17 +282,17 @@ const NuevosPaciente: React.FC = () => {
 
               <div>
                 <label htmlFor="estadoReproductivo" className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                  Estado Reproductivo
+                  ¿Castrado?
                 </label>
                 <select
                   id="estadoReproductivo"
                   name="estadoReproductivo"
-                  value={form.estadoReproductivo}
+                  value={form.estadoReproductivo === 'entero' ? 'entero' : 'esterilizado'}
                   onChange={handleChange}
                   className="w-full px-3 py-2.5 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-accent focus:ring-1 focus:ring-accent focus:bg-white outline-none transition-all"
                 >
-                  <option value="entero">Fértil</option>
-                  <option value="esterilizado">Esterilizado</option>
+                  <option value="esterilizado">Sí</option>
+                  <option value="entero">No</option>
                 </select>
               </div>
             </div>
