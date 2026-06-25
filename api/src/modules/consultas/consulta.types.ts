@@ -37,6 +37,8 @@ export interface ConsultaDoc {
   citaId?: string;
   estado?: 'procesando' | 'borrador' | 'aprobada' | 'error';
   audioUrl?: string;
+  /** URLs de cada bloque de audio (consultas grabadas en varias tomas). audioUrl = audioUrls[0]. */
+  audioUrls?: string[];
   audioPath?: string;
   transcripcion?: string;
   motivo?: string;

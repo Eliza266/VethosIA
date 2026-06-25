@@ -103,6 +103,8 @@ export class ConsultasRepository {
     const d = (snap.data() ?? {}) as Record<string, unknown>;
     const scope = runtimeScopeFromRecord(d);
     const str = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined);
+    const strArr = (v: unknown): string[] | undefined =>
+      Array.isArray(v) && v.every((x) => typeof x === 'string') ? (v as string[]) : undefined;
     const soapRaw = d.soap;
     const soap =
       soapRaw && typeof soapRaw === 'object'
@@ -134,6 +136,7 @@ export class ConsultasRepository {
       citaId: str(d.citaId),
       estado: str(d.estado) as ConsultaDoc['estado'],
       audioUrl: str(d.audioUrl),
+      audioUrls: strArr(d.audioUrls),
       audioPath: str(d.audioPath),
       transcripcion: str(d.transcripcion),
       motivo: str(d.motivo),

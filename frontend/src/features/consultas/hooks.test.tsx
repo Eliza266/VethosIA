@@ -92,6 +92,23 @@ describe('useConsultas.procesarAudioConsulta', () => {
     expect(onProgress).toHaveBeenCalledWith(expect.any(String), 100);
   });
 
+  it('persiste audioUrls con todos los bloques grabados (reproductor multi-bloque)', async () => {
+    const { result } = renderHook(() => useConsultas());
+    const blobs = [
+      new Blob(['a'], { type: 'audio/webm' }),
+      new Blob(['b'], { type: 'audio/webm' }),
+      new Blob(['c'], { type: 'audio/webm' }),
+    ];
+    await act(async () => {
+      await result.current.procesarAudioConsulta('c1', blobs);
+    });
+    const llamadaAudio = (actualizarConsultaDoc as unknown as ReturnType<typeof vi.fn>).mock.calls
+      .map((c: unknown[]) => c[1] as { audioUrl?: string; audioUrls?: string[] })
+      .find((campos) => campos.audioUrls);
+    expect(llamadaAudio?.audioUrls).toHaveLength(3);
+    expect(llamadaAudio?.audioUrl).toBe(llamadaAudio?.audioUrls?.[0]);
+  });
+
   it('persiste el flag generadoPorIA en el SOAP guardado', async () => {
     const { result } = renderHook(() => useConsultas());
     const blobs = [new Blob(['x'], { type: 'audio/webm' })];

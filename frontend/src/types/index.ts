@@ -140,6 +140,8 @@ export interface Consulta {
   prioridad?: 'urgente' | 'rutina' | 'seguimiento' | 'brigada';
   signosVitales?: SignosVitales;
   audioUrl?: string;
+  // URLs de cada bloque grabado. audioUrl conserva el primero por compatibilidad.
+  audioUrls?: string[];
   transcripcion?: string;
   soap?: SOAP;
   diagnosticoEstructurado?: DiagnosticoEstructurado[];

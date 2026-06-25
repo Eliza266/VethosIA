@@ -181,8 +181,10 @@ export const useConsultas = () => {
       const audioUrls = uploadResults.map(r => r.downloadUrl);
       const downloadUrl = audioUrls[0] || '';
 
-      await actualizarConsultaDoc(consultaId, { 
+      await actualizarConsultaDoc(consultaId, {
+        // audioUrl = primer bloque (compat); audioUrls = todos los bloques (reproductor multi-bloque).
         audioUrl: downloadUrl,
+        audioUrls,
       });
 
       // 1. Determinar si usamos la API asíncrona de IA (Fase 5) o el camino síncrono/legacy

@@ -68,17 +68,41 @@ const ColumnaIzquierda: React.FC<Props> = ({ consulta, editData, onChangeEditDat
       onChange={(signosVitales) => onChangeEditData({ ...editData, signosVitales })}
     />
 
-    {consulta.audioUrl && (
-      <div className={panelClass}>
-        <h3 className={panelTitleClass}>
-          <span className="flex items-center gap-2">
-            <FileAudio className="h-4 w-4 text-[var(--accent)]" />
-            Grabación de Audio
-          </span>
-        </h3>
-        <audio src={consulta.audioUrl} controls className="h-10 w-full focus:outline-none" />
-      </div>
-    )}
+    {(() => {
+      // Reproductor multi-bloque: usa audioUrls (todas las tomas) y cae a audioUrl (legacy).
+      const bloques =
+        consulta.audioUrls && consulta.audioUrls.length > 0
+          ? consulta.audioUrls
+          : consulta.audioUrl
+            ? [consulta.audioUrl]
+            : [];
+      if (bloques.length === 0) return null;
+      return (
+        <div className={panelClass}>
+          <h3 className={panelTitleClass}>
+            <span className="flex items-center gap-2">
+              <FileAudio className="h-4 w-4 text-[var(--accent)]" />
+              {bloques.length > 1 ? `Grabación de Audio (${bloques.length} bloques)` : 'Grabación de Audio'}
+            </span>
+          </h3>
+          <div className="space-y-2">
+            {bloques.map((url, i) => (
+              <div key={url}>
+                {bloques.length > 1 && (
+                  <p className="mb-1 text-xs font-semibold text-[var(--muted)]">Bloque {i + 1}</p>
+                )}
+                <audio
+                  src={url}
+                  controls
+                  aria-label={`Reproducir audio bloque ${i + 1}`}
+                  className="h-10 w-full focus:outline-none"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    })()}
 
     <div className={panelClass}>
       <h3 className={panelTitleClass}>

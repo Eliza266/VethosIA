@@ -13,6 +13,8 @@ export class ActualizarConsultaDto {
   prioridad?: 'urgente' | 'rutina' | 'seguimiento' | 'brigada';
 
   @IsOptional() @IsString() @MaxLength(2048) audioUrl?: string;
+  @IsOptional() @IsArray() @IsString({ each: true }) @MaxLength(2048, { each: true })
+  audioUrls?: string[];
   @IsOptional() @IsString() @MaxLength(512) audioPath?: string;
 
   @IsOptional() @IsObject() soap?: Record<string, unknown>;
