@@ -15,6 +15,7 @@ export interface GeminiContent {
 
 export interface GeminiGenerationConfig {
   responseMimeType?: string;
+  maxOutputTokens?: number;
 }
 
 export interface GeminiRequest {

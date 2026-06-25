@@ -20,7 +20,9 @@ export class ClaudeLlmProvider implements LlmProvider {
       'https://api.anthropic.com/v1/messages',
       {
         model: this.model,
-        max_tokens: 2048,
+        // Consultas largas (15-45 min) generan un SOAP grande; con 2048 el JSON se
+        // truncaba y caia al fallback (todo en subjetivo). 8192 da margen de sobra.
+        max_tokens: Number(process.env.ANTHROPIC_MAX_TOKENS ?? 8192),
         messages: [{ role: 'user', content: prompt }],
       },
       {
