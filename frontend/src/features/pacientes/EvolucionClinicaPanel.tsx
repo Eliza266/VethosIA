@@ -21,7 +21,7 @@ const EvolucionClinicaPanel: React.FC<{ consultas: Consulta[] }> = ({ consultas 
       <section className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-[0_14px_35px_-30px_rgba(15,23,42,0.45)]">
         <div className="mb-4 flex flex-col gap-1 border-b border-slate-100 pb-3">
           <h3 className="flex items-center gap-2 text-sm font-bold text-slate-800">
-            <Activity className="h-4 w-4 text-[#0F6E56]" />
+            <Activity className="h-4 w-4 text-accent" />
             Constantes y signos
           </h3>
           <p className="text-xs text-slate-500">Evolución clínica basada solo en registros existentes.</p>
@@ -52,7 +52,7 @@ const EvolucionClinicaPanel: React.FC<{ consultas: Consulta[] }> = ({ consultas 
     <section className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-[0_14px_35px_-30px_rgba(15,23,42,0.45)]">
       <div className="flex flex-col gap-1 border-b border-slate-100 pb-3 mb-4">
         <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2">
-          <Activity className="h-4 w-4 text-[#0F6E56]" />
+          <Activity className="h-4 w-4 text-accent" />
           Constantes y signos
         </h3>
         <p className="text-xs text-slate-500">
@@ -67,7 +67,7 @@ const EvolucionClinicaPanel: React.FC<{ consultas: Consulta[] }> = ({ consultas 
           return (
             <div key={card.label} className="rounded-2xl border border-slate-100 bg-slate-50/70 p-3.5">
               <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-slate-400">
-                <Icon className="h-3.5 w-3.5 text-[#0F6E56]" />
+                <Icon className="h-3.5 w-3.5 text-accent" />
                 {card.label}
               </div>
               <p className="mt-1 text-lg font-black text-slate-800">{card.value}</p>
@@ -79,7 +79,7 @@ const EvolucionClinicaPanel: React.FC<{ consultas: Consulta[] }> = ({ consultas 
       {evolucion.tendenciaPeso && (
         <div className="mt-4 rounded-2xl border border-emerald-100 bg-emerald-50/50 p-3.5 text-sm text-slate-700">
           <div className="flex items-center gap-2 font-bold">
-            <TrendIcon className="h-4 w-4 text-[#0F6E56]" />
+            <TrendIcon className="h-4 w-4 text-accent" />
             Tendencia peso: {tendenciaLabel(evolucion.tendenciaPeso.estado)}
           </div>
           <p className="mt-1 text-xs text-slate-500">

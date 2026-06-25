@@ -1,58 +1,95 @@
-/* Contenedor del calendario */
+/* Calendario (react-big-calendar) — Dirección C (Clinical Calendar).
+   Tokenizado: usa var(--accent) y semánticos. Sin colores de marca hardcodeados. */
+
 .rbc-calendar {
-  border-radius: 12px;
+  border-radius: var(--radius);
   overflow: hidden;
   font-family: inherit;
+  color: var(--text);
 }
 
-/* Acento verde #0F6E56 para el botón de vista activo y botones al pasar el cursor */
-.rbc-toolbar button.rbc-active {
-  background-color: #0F6E56 !important;
-  color: white !important;
-  border-color: #0F6E56 !important;
+/* Botones de toolbar */
+.rbc-toolbar button {
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  padding: 6px 12px;
+  font-weight: 500;
+  background-color: var(--surface);
+  transition: background-color var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
 }
 
 .rbc-toolbar button:hover {
-  background-color: rgba(15, 110, 86, 0.1) !important;
-  color: #0F6E56 !important;
-  border-color: #0F6E56 !important;
+  background-color: var(--accent-soft) !important;
+  color: var(--accent-strong) !important;
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border)) !important;
+}
+
+.rbc-toolbar button.rbc-active {
+  background-color: var(--accent) !important;
+  color: #fff !important;
+  border-color: var(--accent) !important;
 }
 
 .rbc-toolbar button:active,
 .rbc-toolbar button:focus {
-  background-color: #0c5945 !important;
-  color: white !important;
-  border-color: #0c5945 !important;
+  background-color: var(--accent-strong) !important;
+  color: #fff !important;
+  border-color: var(--accent-strong) !important;
 }
 
-/* Estilo para los botones en general */
-.rbc-toolbar button {
-  color: var(--text, #1e293b);
-  border: 1px solid var(--border, #e2e8f0);
-  border-radius: 6px;
-  padding: 6px 12px;
-  font-weight: 500;
-  transition: all 0.2s ease;
+.rbc-toolbar-label {
+  font-weight: 700;
+  color: var(--text);
 }
 
 /* Indicador de "hoy" en la cuadrícula */
 .rbc-today {
-  background-color: rgba(15, 110, 86, 0.04) !important;
+  background-color: color-mix(in srgb, var(--accent) 6%, transparent) !important;
 }
 
-/* Cabecera del día de hoy en vista semana/mes */
+/* Cabecera del día de hoy */
 .rbc-header.rbc-today {
-  background-color: #0F6E56 !important;
-  color: white !important;
+  background-color: var(--accent) !important;
+  color: #fff !important;
 }
 
-/* Línea de tiempo actual en vista día/semana */
+/* Línea de tiempo actual */
 .rbc-current-time-indicator {
-  background-color: #0F6E56 !important;
+  background-color: var(--danger) !important;
+  height: 2px !important;
 }
 
-/* Ajustes de bordes y líneas */
-.rbc-time-view, .rbc-month-view, .rbc-agenda-view {
-  border: 1px solid var(--border, #e2e8f0) !important;
-  border-radius: 12px !important;
+/* Eventos: tarjetas redondeadas (color real lo aporta eventPropGetter por tipo) */
+.rbc-event {
+  border-radius: var(--radius-xs) !important;
+  border: none !important;
+  padding: 2px 6px !important;
+  font-weight: 600;
+}
+
+.rbc-event:focus {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* Bordes y líneas de las vistas */
+.rbc-time-view,
+.rbc-month-view,
+.rbc-agenda-view {
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius) !important;
+  background: var(--surface);
+}
+
+.rbc-off-range-bg {
+  background: var(--surface-2);
+}
+
+.rbc-time-content,
+.rbc-time-header-content,
+.rbc-month-row + .rbc-month-row,
+.rbc-day-bg + .rbc-day-bg,
+.rbc-header + .rbc-header {
+  border-color: var(--border) !important;
 }

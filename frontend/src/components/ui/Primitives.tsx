@@ -1,5 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { Link as RouterLink } from 'react-router-dom';
 import { AlertTriangle, CheckCircle2, Info, X, XCircle } from 'lucide-react';
 import { estadoBadgeVariant, type BadgeVariant } from '../../shared/status';
 
@@ -314,21 +315,46 @@ export const SectionHeader: React.FC<{
   </div>
 );
 
+export interface BreadcrumbItem {
+  label: string;
+  to?: string;
+}
+
 export const PageHeader: React.FC<{
   badge?: string;
   title: string;
   description?: string;
   action?: React.ReactNode;
+  breadcrumbs?: BreadcrumbItem[];
+  tabs?: React.ReactNode;
   className?: string;
-}> = ({ badge, title, description, action, className = '' }) => (
+}> = ({ badge, title, description, action, breadcrumbs, tabs, className = '' }) => (
   <div
-    className={`premium-card animate-fade-in ${className}`}
+    className={`animate-fade-in ${className}`}
     style={{
+      background: 'var(--surface)',
+      border: '1px solid var(--border)',
+      borderRadius: 'var(--radius)',
+      boxShadow: 'var(--shadow-xs)',
       padding: 'var(--space-6)',
-      background:
-        'radial-gradient(circle at 96% 0%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 34%), linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,251,252,0.92))',
     }}
   >
+    {breadcrumbs && breadcrumbs.length > 0 && (
+      <nav aria-label="Ruta" style={{ marginBottom: 10 }}>
+        <ol style={{ display: 'flex', flexWrap: 'wrap', gap: 6, listStyle: 'none', margin: 0, padding: 0, fontSize: 12, color: 'var(--muted)' }}>
+          {breadcrumbs.map((bc, i) => (
+            <li key={`${bc.label}-${i}`} style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+              {bc.to ? (
+                <RouterLink to={bc.to} style={{ color: 'var(--muted)' }}>{bc.label}</RouterLink>
+              ) : (
+                <span style={{ color: 'var(--text-secondary)' }}>{bc.label}</span>
+              )}
+              {i < breadcrumbs.length - 1 && <span aria-hidden>/</span>}
+            </li>
+          ))}
+        </ol>
+      </nav>
+    )}
     <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 20 }}>
       <div style={{ minWidth: 0 }}>
         {badge && (
@@ -338,7 +364,7 @@ export const PageHeader: React.FC<{
               borderRadius: 999,
               padding: '4px 12px',
               fontSize: 11,
-              fontWeight: 800,
+              fontWeight: 700,
               letterSpacing: '0.06em',
               textTransform: 'uppercase',
               color: 'var(--accent)',
@@ -352,8 +378,8 @@ export const PageHeader: React.FC<{
         <h1
           style={{
             marginTop: badge ? 12 : 0,
-            fontSize: 'clamp(1.35rem, 2.5vw, 1.75rem)',
-            fontWeight: 900,
+            fontSize: 'clamp(1.35rem, 2.5vw, 1.65rem)',
+            fontWeight: 800,
             letterSpacing: '-0.02em',
             color: 'var(--text)',
           }}
@@ -368,6 +394,7 @@ export const PageHeader: React.FC<{
       </div>
       {action}
     </div>
+    {tabs && <div style={{ marginTop: 'var(--space-4)' }}>{tabs}</div>}
   </div>
 );
 

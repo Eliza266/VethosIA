@@ -377,7 +377,7 @@ const AdminVeterinaria: React.FC = () => {
             placeholder="veterinario@clinica.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="min-h-10 flex-1 rounded-lg border border-slate-200 px-3 text-sm outline-none transition focus:border-[#0F6E56] focus:ring-2 focus:ring-[#0F6E56]/15"
+            className="min-h-10 flex-1 rounded-lg border border-slate-200 px-3 text-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15"
           />
           <Button
             aria-label="Generar invitacion"
@@ -453,7 +453,7 @@ const AdminVeterinaria: React.FC = () => {
         />
         {consumoItems.length > 0 && (
           <div className="mt-3 rounded-xl border border-emerald-100 bg-emerald-50 p-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-[#0F6E56]">
+            <p className="text-xs font-semibold uppercase tracking-wide text-accent">
               Consolidado clínica
             </p>
             <strong className="mt-1 block text-lg text-slate-900">
@@ -536,7 +536,7 @@ const AdminVeterinaria: React.FC = () => {
                             type="text"
                             value={editCatalogoNombre}
                             onChange={(e) => setEditCatalogoNombre(e.target.value)}
-                            className="w-full mt-1 min-h-8 rounded border border-slate-200 px-2 text-xs outline-none focus:border-[#0F6E56]"
+                            className="w-full mt-1 min-h-8 rounded border border-slate-200 px-2 text-xs outline-none focus:border-accent"
                           />
                         </label>
                         <label className="text-xs font-semibold text-slate-600">
@@ -544,7 +544,7 @@ const AdminVeterinaria: React.FC = () => {
                           <select
                             value={editCatalogoEspecie}
                             onChange={(e) => setEditCatalogoEspecie(e.target.value)}
-                            className="w-full mt-1 min-h-8 rounded border border-slate-200 px-2 text-xs outline-none focus:border-[#0F6E56] bg-white"
+                            className="w-full mt-1 min-h-8 rounded border border-slate-200 px-2 text-xs outline-none focus:border-accent bg-white"
                           >
                             <option value="perro">Perro</option>
                             <option value="gato">Gato</option>
@@ -561,7 +561,7 @@ const AdminVeterinaria: React.FC = () => {
                             type="number"
                             value={editCatalogoIntervalo ?? ''}
                             onChange={(e) => setEditCatalogoIntervalo(e.target.value ? parseInt(e.target.value) : undefined)}
-                            className="w-full mt-1 min-h-8 rounded border border-slate-200 px-2 text-xs outline-none focus:border-[#0F6E56]"
+                            className="w-full mt-1 min-h-8 rounded border border-slate-200 px-2 text-xs outline-none focus:border-accent"
                           />
                         </label>
                         <label className="text-xs font-semibold text-slate-600">
@@ -570,7 +570,7 @@ const AdminVeterinaria: React.FC = () => {
                             type="text"
                             value={editCatalogoDescripcion}
                             onChange={(e) => setEditCatalogoDescripcion(e.target.value)}
-                            className="w-full mt-1 min-h-8 rounded border border-slate-200 px-2 text-xs outline-none focus:border-[#0F6E56]"
+                            className="w-full mt-1 min-h-8 rounded border border-slate-200 px-2 text-xs outline-none focus:border-accent"
                           />
                         </label>
                       </div>
@@ -674,7 +674,7 @@ const AdminVeterinaria: React.FC = () => {
                     placeholder="Ej. Parvovirus"
                     value={nuevoNombre}
                     onChange={(e) => setNuevoNombre(e.target.value)}
-                    className="min-h-9 rounded-lg border border-slate-200 px-3 text-xs outline-none bg-white focus:border-[#0F6E56]"
+                    className="min-h-9 rounded-lg border border-slate-200 px-3 text-xs outline-none bg-white focus:border-accent"
                   />
                 </label>
                 <label className="grid gap-1 text-xs font-semibold text-slate-700">
@@ -682,7 +682,7 @@ const AdminVeterinaria: React.FC = () => {
                   <select
                     value={nuevaEspecie}
                     onChange={(e) => setNuevaEspecie(e.target.value)}
-                    className="min-h-9 rounded-lg border border-slate-200 px-3 text-xs outline-none bg-white focus:border-[#0F6E56]"
+                    className="min-h-9 rounded-lg border border-slate-200 px-3 text-xs outline-none bg-white focus:border-accent"
                   >
                     <option value="perro">Perro</option>
                     <option value="gato">Gato</option>
@@ -698,7 +698,7 @@ const AdminVeterinaria: React.FC = () => {
                     placeholder="Ej. 365"
                     value={nuevoIntervalo ?? ''}
                     onChange={(e) => setNuevoIntervalo(e.target.value ? parseInt(e.target.value) : undefined)}
-                    className="min-h-9 rounded-lg border border-slate-200 px-3 text-xs outline-none bg-white focus:border-[#0F6E56]"
+                    className="min-h-9 rounded-lg border border-slate-200 px-3 text-xs outline-none bg-white focus:border-accent"
                   />
                 </label>
                 <label className="grid gap-1 text-xs font-semibold text-slate-700">
@@ -708,7 +708,7 @@ const AdminVeterinaria: React.FC = () => {
                     placeholder="Opcional"
                     value={nuevaDescripcion}
                     onChange={(e) => setNuevaDescripcion(e.target.value)}
-                    className="min-h-9 rounded-lg border border-slate-200 px-3 text-xs outline-none bg-white focus:border-[#0F6E56]"
+                    className="min-h-9 rounded-lg border border-slate-200 px-3 text-xs outline-none bg-white focus:border-accent"
                   />
                 </label>
                 <Button
@@ -735,11 +735,11 @@ const AdminVeterinaria: React.FC = () => {
             <Link key={accion.titulo} to={accion.to} className="group">
               <Card className="h-full shadow-[0_14px_35px_-30px_rgba(15,23,42,0.45)] transition-all group-hover:-translate-y-0.5 group-hover:shadow-[0_18px_45px_-32px_rgba(15,110,86,0.55)]">
                 <div className="flex items-start gap-4">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#0F6E56]/10 text-[#0F6E56]">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent/10 text-accent">
                     <Icon className="h-5 w-5" />
                   </div>
                   <div>
-                    <h2 className="text-base font-bold text-slate-900 group-hover:text-[#0F6E56]">
+                    <h2 className="text-base font-bold text-slate-900 group-hover:text-accent">
                       {accion.titulo}
                     </h2>
                     <p className="mt-1 text-sm text-slate-500">{accion.descripcion}</p>
@@ -805,7 +805,7 @@ function CampoClinica({
         value={value}
         required={required}
         onChange={(e) => onChange(e.target.value)}
-        className="min-h-10 rounded-lg border border-slate-200 px-3 text-sm font-normal outline-none transition focus:border-[#0F6E56] focus:ring-2 focus:ring-[#0F6E56]/15"
+        className="min-h-10 rounded-lg border border-slate-200 px-3 text-sm font-normal outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15"
       />
     </label>
   );

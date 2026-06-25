@@ -72,7 +72,7 @@ const pickModules = (modules: RoleModule[], ids: string[]) =>
 const CompactConsultaAction: React.FC<{ to: string; children: React.ReactNode }> = ({ to, children }) => (
   <Link
     to={to}
-    className="inline-flex shrink-0 items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-[#0F6E56] transition-colors hover:bg-slate-50"
+    className="inline-flex shrink-0 items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-accent transition-colors hover:bg-slate-50"
   >
     {children}
   </Link>
@@ -189,13 +189,13 @@ const VeterinarioCommandCenter: React.FC<VeterinarioCommandCenterProps> = ({ me,
       {/* Compact header — replaces the old green banner */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <span className="text-xs font-bold uppercase tracking-wider text-[#0F6E56]">Centro clínico</span>
+          <span className="text-xs font-bold uppercase tracking-wider text-accent">Centro clínico</span>
           <h1 className="mt-1 text-xl font-black text-slate-900 sm:text-2xl">Hola, {nombre}</h1>
         </div>
         <div className="flex shrink-0 flex-wrap gap-2">
           <Link
             to="/pacientes"
-            className="inline-flex items-center gap-1.5 rounded-xl bg-[#0F6E56] px-4 py-2.5 text-sm font-bold text-white shadow-md shadow-[#0F6E56]/10 hover:bg-[#0c5945] transition-all hover:scale-[1.01]"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2.5 text-sm font-bold text-white shadow-md shadow-accent/10 hover:bg-accent-strong transition-all hover:scale-[1.01]"
           >
             <Mic className="h-4 w-4" />
             Nueva consulta
@@ -220,7 +220,7 @@ const VeterinarioCommandCenter: React.FC<VeterinarioCommandCenterProps> = ({ me,
               <Link
                 key={module.id}
                 to={href}
-                className="flex items-center gap-2 px-4 py-2.5 bg-slate-50/70 hover:bg-slate-50 border border-slate-100 hover:border-[#0F6E56]/30 rounded-xl transition-all shrink-0 font-bold text-xs text-slate-700"
+                className="flex items-center gap-2 px-4 py-2.5 bg-slate-50/70 hover:bg-slate-50 border border-slate-100 hover:border-accent/30 rounded-xl transition-all shrink-0 font-bold text-xs text-slate-700"
               >
                 <span>{module.label === 'Pacientes' ? '🐾' : module.label === 'Agenda' ? '📅' : module.label === 'Vacunas' ? '💉' : '✨'}</span>
                 <span>{module.label}</span>
@@ -244,7 +244,7 @@ const VeterinarioCommandCenter: React.FC<VeterinarioCommandCenterProps> = ({ me,
               placeholder="Buscar por nombre o dueño..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-4 py-2.5 text-xs text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#0F6E56] focus:bg-white outline-none transition-all"
+              className="w-full pl-9 pr-4 py-2.5 text-xs text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-accent focus:bg-white outline-none transition-all"
             />
           </div>
         </div>
@@ -257,7 +257,7 @@ const VeterinarioCommandCenter: React.FC<VeterinarioCommandCenterProps> = ({ me,
               <Link
                 key={p.id}
                 to={`/pacientes/${p.id}`}
-                className="flex items-center gap-3 p-3 bg-slate-50/50 hover:bg-slate-50 border border-slate-100 hover:border-[#0F6E56]/30 rounded-xl transition-all"
+                className="flex items-center gap-3 p-3 bg-slate-50/50 hover:bg-slate-50 border border-slate-100 hover:border-accent/30 rounded-xl transition-all"
               >
                 <span className="text-2xl">{getSpeciesEmoji(p.especie)}</span>
                 <div className="min-w-0">
@@ -275,7 +275,7 @@ const VeterinarioCommandCenter: React.FC<VeterinarioCommandCenterProps> = ({ me,
         <InsightPanel
           title="Historial clínico de consultas"
           description="Últimas consultas clínicas realizadas con el borrador SOAP e historial."
-          action={<Link to="/pacientes" className="text-xs font-bold text-[#0F6E56] hover:underline flex items-center">Ver todos <ChevronRight className="h-3 w-3" /></Link>}
+          action={<Link to="/pacientes" className="text-xs font-bold text-accent hover:underline flex items-center">Ver todos <ChevronRight className="h-3 w-3" /></Link>}
         >
           {consultas.length === 0 ? (
             <EmptyState
@@ -299,7 +299,7 @@ const VeterinarioCommandCenter: React.FC<VeterinarioCommandCenterProps> = ({ me,
         <InsightPanel
           title="Próximas citas"
           description="Atenciones programadas para el día de hoy."
-          action={<Link to="/agenda" className="text-xs font-bold text-[#0F6E56] hover:underline flex items-center">Ver agenda <ChevronRight className="h-3 w-3" /></Link>}
+          action={<Link to="/agenda" className="text-xs font-bold text-accent hover:underline flex items-center">Ver agenda <ChevronRight className="h-3 w-3" /></Link>}
         >
           <div className="space-y-3">
             {citasHoy.length === 0 ? (
@@ -316,7 +316,7 @@ const VeterinarioCommandCenter: React.FC<VeterinarioCommandCenterProps> = ({ me,
                     </p>
                     <p className="text-[10px] text-slate-400 truncate">{cita.motivo}</p>
                   </div>
-                  <span className="text-[10px] font-black text-[#0F6E56] bg-[#0F6E56]/5 px-2 py-1 rounded-lg shrink-0">
+                  <span className="text-[10px] font-black text-accent bg-accent/5 px-2 py-1 rounded-lg shrink-0">
                     {cita.horaInicio}
                   </span>
                 </div>

@@ -355,7 +355,7 @@ const DetalleConsulta: React.FC = () => {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#0F6E56] border-t-transparent mx-auto"></div>
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-accent border-t-transparent mx-auto"></div>
           <p className="text-sm font-semibold text-slate-500 animate-pulse">Cargando consulta...</p>
         </div>
       </div>
@@ -370,7 +370,7 @@ const DetalleConsulta: React.FC = () => {
         <p className="text-sm text-slate-500 mb-6">
           {error || apiError || 'No se encontró el registro clínico.'}
         </p>
-        <Link to="/pacientes" className="px-4 py-2.5 rounded-xl bg-[#0F6E56] text-white text-sm font-bold">
+        <Link to="/pacientes" className="px-4 py-2.5 rounded-xl bg-accent text-white text-sm font-bold">
           Volver a Pacientes
         </Link>
       </div>
@@ -457,7 +457,7 @@ const DetalleConsulta: React.FC = () => {
         <div className="lg:col-span-2 space-y-6">
           {consulta.estado === 'procesando' ? (
             <div className="space-y-4 rounded-2xl border border-slate-200/70 bg-white p-12 text-center shadow-[0_14px_35px_-30px_rgba(15,23,42,0.45)]">
-              <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#0F6E56] border-t-transparent mx-auto"></div>
+              <div className="h-10 w-10 animate-spin rounded-full border-4 border-accent border-t-transparent mx-auto"></div>
               <div>
                 <h3 className="font-bold text-slate-800 text-base">Procesando nota SOAP</h3>
                 <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">

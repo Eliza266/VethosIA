@@ -78,7 +78,7 @@ const PacienteCard: React.FC<PacienteCardProps> = ({ paciente }) => {
             </div>
           )}
           <div className="min-w-0 flex-1">
-            <h3 className="font-extrabold text-slate-800 text-lg group-hover:text-[#0F6E56] transition-colors truncate">
+            <h3 className="font-extrabold text-slate-800 text-lg group-hover:text-accent transition-colors truncate">
               {nombre}
             </h3>
             {raza ? (
@@ -128,7 +128,7 @@ const PacienteCard: React.FC<PacienteCardProps> = ({ paciente }) => {
             <a 
               href={`tel:${propietario.telefono}`}
               onClick={(e) => e.stopPropagation()}
-              className="font-semibold text-[#0F6E56] hover:underline flex items-center gap-1.5"
+              className="font-semibold text-accent hover:underline flex items-center gap-1.5"
             >
               <Phone className="h-3.5 w-3.5 text-slate-400 shrink-0" />
               {propietario.telefono}

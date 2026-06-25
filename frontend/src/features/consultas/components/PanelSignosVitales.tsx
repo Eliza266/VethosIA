@@ -25,7 +25,7 @@ const PanelSignosVitales: React.FC<Props> = ({ consulta, signosVitales, onChange
   return (
     <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-3">
       <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2 border-b border-slate-50 pb-2">
-        <Activity className="h-4 w-4 text-[#0F6E56]" />
+        <Activity className="h-4 w-4 text-accent" />
         Signos Vitales
       </h3>
 
@@ -44,7 +44,7 @@ const PanelSignosVitales: React.FC<Props> = ({ consulta, signosVitales, onChange
                     [field]: e.target.value === '' ? undefined : Number(e.target.value),
                   })
                 }
-                className="w-full px-2.5 py-1.5 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-lg focus:border-[#0F6E56] outline-none"
+                className="w-full px-2.5 py-1.5 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-lg focus:border-accent outline-none"
               />
             </div>
           ))}

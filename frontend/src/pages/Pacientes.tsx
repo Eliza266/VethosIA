@@ -5,7 +5,7 @@ import { listarCitas, type Cita as CitaApi } from '../features/citas/api';
 import PacienteCard from '../components/PacienteCard';
 import { Search, Plus, Filter, AlertCircle, LayoutGrid, List, Users, Scale, Activity } from 'lucide-react';
 import type { Cita } from '../types';
-import { KpiCard, Card, SectionHeader } from '../components/ui/Primitives';
+import { KpiCard, Card, SectionHeader, PageHeader } from '../components/ui/Primitives';
 
 const SPECIES_EMOJI: Record<string, string> = {
   perro: '🐶', gato: '🐱', ave: '🦜', reptil: '🦎', otro: '🐾'
@@ -98,21 +98,20 @@ const Pacientes: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-fade-in py-4">
-      {/* Compact Page Header — replaces old green banner */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0">
-          <span className="text-xs font-bold uppercase tracking-wider text-[#0F6E56]">Expedientes clínicos</span>
-          <h1 className="mt-1 text-xl font-black text-slate-900 sm:text-2xl">Pacientes</h1>
-          <p className="text-xs text-slate-500">Gestiona los expedientes clínicos de todas las mascotas registradas.</p>
-        </div>
-        <Link
-          to="/pacientes/nuevo"
-          className="inline-flex items-center gap-1.5 rounded-xl bg-[#0F6E56] px-4 py-2.5 text-sm font-bold text-white shadow-md shadow-[#0F6E56]/10 hover:bg-[#0c5945] transition-all hover:scale-[1.01]"
-        >
-          <Plus className="h-4 w-4" />
-          Nuevo Paciente
-        </Link>
-      </div>
+      <PageHeader
+        badge="Expedientes clínicos"
+        title="Pacientes"
+        description="Gestiona los expedientes clínicos de todas las mascotas registradas."
+        action={
+          <Link
+            to="/pacientes/nuevo"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2.5 text-sm font-bold text-white shadow-md shadow-accent/10 hover:bg-accent-strong transition-all hover:scale-[1.01]"
+          >
+            <Plus className="h-4 w-4" />
+            Nuevo Paciente
+          </Link>
+        }
+      />
 
       {error && (
         <div className="flex items-start gap-2 bg-red-50 text-red-700 text-sm p-4 rounded-xl border border-red-100">
@@ -171,7 +170,7 @@ const Pacientes: React.FC = () => {
                       </div>
                       <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-[#0F6E56] rounded-full transition-all"
+                          className="h-full bg-accent rounded-full transition-all"
                           style={{ width: `${pct}%` }}
                         />
                       </div>
@@ -193,12 +192,12 @@ const Pacientes: React.FC = () => {
                     Mantener el peso actualizado permite dosificar correctamente los tratamientos y medicamentos en la consulta SOAP. El sistema recomienda actualizar el peso cada 3 meses.
                   </p>
                 </div>
-                <div className="flex items-center justify-between p-4 bg-[#0F6E56]/5 border border-[#0F6E56]/10 rounded-2xl">
+                <div className="flex items-center justify-between p-4 bg-accent/5 border border-accent/10 rounded-2xl">
                   <div>
-                    <h5 className="text-xs font-extrabold text-[#0F6E56] uppercase tracking-wider">Vacunación Completa</h5>
+                    <h5 className="text-xs font-extrabold text-accent uppercase tracking-wider">Vacunación Completa</h5>
                     <p className="text-[10px] text-slate-500 mt-0.5">Pacientes con controles al día</p>
                   </div>
-                  <span className="text-lg font-black text-[#0F6E56] bg-white px-3 py-1 rounded-xl shadow-sm border border-[#0F6E56]/10">100%</span>
+                  <span className="text-lg font-black text-accent bg-white px-3 py-1 rounded-xl shadow-sm border border-accent/10">100%</span>
                 </div>
               </div>
             </Card>
@@ -216,7 +215,7 @@ const Pacientes: React.FC = () => {
                 placeholder="Buscar por nombre de mascota, propietario o raza..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full rounded-2xl border border-slate-200 bg-white/80 py-3 pl-10 pr-4 text-sm text-slate-700 outline-none transition-all placeholder:text-slate-400 focus:border-[#0F6E56] focus:bg-white focus:ring-2 focus:ring-[#0F6E56]/12"
+                className="w-full rounded-2xl border border-slate-200 bg-white/80 py-3 pl-10 pr-4 text-sm text-slate-700 outline-none transition-all placeholder:text-slate-400 focus:border-accent focus:bg-white focus:ring-2 focus:ring-accent/12"
               />
             </div>
 
@@ -229,7 +228,7 @@ const Pacientes: React.FC = () => {
                     onClick={() => setSelectedEspecie(esp.value)}
                     className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-bold border transition-all ${
                       selectedEspecie === esp.value
-                        ? 'bg-[#0F6E56] text-white border-[#0F6E56] shadow-sm'
+                        ? 'bg-accent text-white border-accent shadow-sm'
                         : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                     }`}
                   >
@@ -243,14 +242,14 @@ const Pacientes: React.FC = () => {
               <div className="flex items-center bg-slate-100 rounded-full p-1 gap-1">
                 <button
                   onClick={() => setViewMode('card')}
-                  className={`p-1.5 rounded-full transition-all ${viewMode === 'card' ? 'bg-white shadow-sm text-[#0F6E56]' : 'text-slate-400 hover:text-slate-600'}`}
+                  className={`p-1.5 rounded-full transition-all ${viewMode === 'card' ? 'bg-white shadow-sm text-accent' : 'text-slate-400 hover:text-slate-600'}`}
                   title="Vista tarjeta"
                 >
                   <LayoutGrid className="h-4 w-4" />
                 </button>
                 <button
                   onClick={() => setViewMode('list')}
-                  className={`p-1.5 rounded-full transition-all ${viewMode === 'list' ? 'bg-white shadow-sm text-[#0F6E56]' : 'text-slate-400 hover:text-slate-600'}`}
+                  className={`p-1.5 rounded-full transition-all ${viewMode === 'list' ? 'bg-white shadow-sm text-accent' : 'text-slate-400 hover:text-slate-600'}`}
                   title="Vista lista"
                 >
                   <List className="h-4 w-4" />
@@ -263,7 +262,7 @@ const Pacientes: React.FC = () => {
           {loading ? (
             <div className="flex h-40 items-center justify-center">
               <div className="flex flex-col items-center gap-3">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#0F6E56] border-t-transparent"></div>
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent"></div>
                 <p className="text-xs text-slate-400 font-medium animate-pulse">Buscando expedientes...</p>
               </div>
             </div>
@@ -281,7 +280,7 @@ const Pacientes: React.FC = () => {
               {!searchTerm && selectedEspecie === 'todos' && (
                 <Link
                   to="/pacientes/nuevo"
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-[#0F6E56] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#0c5945] transition-colors shadow-md shadow-[#0F6E56]/15"
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2.5 text-xs font-bold text-white hover:bg-accent-strong transition-colors shadow-md shadow-accent/15"
                 >
                   <Plus className="h-4 w-4" />
                   Crear Ficha Médica
@@ -328,7 +327,7 @@ const Pacientes: React.FC = () => {
                             {paciente.foto ? (
                               <img src={paciente.foto} alt={paciente.nombre} className="h-9 w-9 rounded-full object-cover border border-slate-100 shrink-0" />
                             ) : (
-                              <div className="h-9 w-9 rounded-full bg-[#0F6E56]/10 flex items-center justify-center text-lg shrink-0">
+                              <div className="h-9 w-9 rounded-full bg-accent/10 flex items-center justify-center text-lg shrink-0">
                                 {SPECIES_EMOJI[paciente.especie] || '🐾'}
                               </div>
                             )}
@@ -364,7 +363,7 @@ const Pacientes: React.FC = () => {
                         <td className="px-4 py-3.5 text-right">
                           <Link
                             to={`/pacientes/${paciente.id}`}
-                            className="text-xs font-bold text-[#0F6E56] hover:text-[#0c5945] hover:underline transition-colors"
+                            className="text-xs font-bold text-accent hover:text-accent-strong hover:underline transition-colors"
                           >
                             Ver expediente →
                           </Link>

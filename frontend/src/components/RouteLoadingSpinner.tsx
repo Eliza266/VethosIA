@@ -6,7 +6,7 @@ const RouteLoadingSpinner: React.FC<{ message?: string }> = ({
 }) => (
   <div className="flex min-h-[40vh] items-center justify-center">
     <div className="flex flex-col items-center gap-3">
-      <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#0F6E56] border-t-transparent" />
+      <div className="h-10 w-10 animate-spin rounded-full border-4 border-accent border-t-transparent" />
       <p className="text-sm font-semibold text-slate-500">{message}</p>
     </div>
   </div>

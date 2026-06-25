@@ -5,7 +5,7 @@ import { useBrigadas } from '../hooks/useBrigadas';
 import { useMe } from '../features/tenant/hooks';
 import { normalizarRol } from '../lib/rbac';
 import { getErrorMessage } from '../lib/errors';
-import { KpiCard, Card, SectionHeader } from '../components/ui/Primitives';
+import { KpiCard, Card, SectionHeader, PageHeader } from '../components/ui/Primitives';
 import type { Brigada, BrigadaAtencion, BrigadaConsolidado } from '../types';
 import {
   listarAtencionesBrigada,
@@ -215,23 +215,22 @@ const Brigadas: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-fade-in py-6">
-      {/* Compact Page Header — replaces old green hero banner */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-5">
-        <div className="min-w-0">
-          <span className="text-xs font-bold uppercase tracking-wider text-[#0F6E56]">Operación territorial</span>
-          <h1 className="mt-1 text-xl font-black text-slate-900 sm:text-2xl">Brigadas de Salud</h1>
-          <p className="text-xs text-slate-500">Jornadas operativas, participantes y atenciones agrupadas por campaña o sede.</p>
-        </div>
-        {canManage && (
-          <button
-            onClick={openCreate}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-[#0F6E56] px-4 py-2.5 text-sm font-bold text-white shadow-md shadow-[#0F6E56]/10 hover:bg-[#0c5945] transition-all hover:scale-[1.01] shrink-0"
-          >
-            <Plus className="h-4 w-4" />
-            Nueva brigada
-          </button>
-        )}
-      </div>
+      <PageHeader
+        badge="Operación territorial"
+        title="Brigadas de Salud"
+        description="Jornadas operativas, participantes y atenciones agrupadas por campaña o sede."
+        action={
+          canManage ? (
+            <button
+              onClick={openCreate}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2.5 text-sm font-bold text-white shadow-md shadow-accent/10 hover:bg-accent-strong transition-all hover:scale-[1.01] shrink-0"
+            >
+              <Plus className="h-4 w-4" />
+              Nueva brigada
+            </button>
+          ) : undefined
+        }
+      />
 
       {/* KPI strip — only shown on list view */}
       {currentTab === 'listar' && !selected && (
@@ -320,12 +319,12 @@ const Brigadas: React.FC = () => {
                     Las brigadas de salud permiten descentralizar la atención médica veterinaria hacia comunidades rurales y sectores vulnerables. La trazabilidad de atenciones garantiza la continuidad de la salud pública regional.
                   </p>
                 </div>
-                <div className="flex items-center justify-between p-4 bg-[#0F6E56]/5 border border-[#0F6E56]/10 rounded-2xl">
+                <div className="flex items-center justify-between p-4 bg-accent/5 border border-accent/10 rounded-2xl">
                   <div>
-                    <h5 className="text-xs font-extrabold text-[#0F6E56] uppercase tracking-wider">Atenciones consolidadas</h5>
+                    <h5 className="text-xs font-extrabold text-accent uppercase tracking-wider">Atenciones consolidadas</h5>
                     <p className="text-[10px] text-slate-500 mt-0.5">Mascotas atendidas en brigada</p>
                   </div>
-                  <span className="text-lg font-black text-[#0F6E56] bg-white px-3 py-1 rounded-xl shadow-sm border border-[#0F6E56]/10">100%</span>
+                  <span className="text-lg font-black text-accent bg-white px-3 py-1 rounded-xl shadow-sm border border-accent/10">100%</span>
                 </div>
               </div>
             </Card>
@@ -343,7 +342,7 @@ const Brigadas: React.FC = () => {
 
       {loading ? (
         <div className="flex h-40 items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#0F6E56] border-t-transparent" />
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" />
         </div>
       ) : brigadas.length === 0 ? (
         <div className="premium-card grid gap-5 p-8 text-center md:grid-cols-[0.85fr_1.15fr] md:text-left">
@@ -358,7 +357,7 @@ const Brigadas: React.FC = () => {
             {canManage && (
               <button
                 onClick={openCreate}
-                className="inline-flex items-center gap-1.5 rounded-full bg-[#0F6E56] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#0c5945] transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-full bg-accent px-4 py-2.5 text-xs font-bold text-white hover:bg-accent-strong transition-colors"
               >
                 <Plus className="h-4 w-4" />
                 Crear brigada
@@ -379,8 +378,8 @@ const Brigadas: React.FC = () => {
                 className="premium-card premium-card-hover text-left p-5"
               >
                 <div className="flex items-start justify-between gap-3 mb-4">
-                  <div className="h-10 w-10 rounded-xl bg-[#0F6E56]/10 flex items-center justify-center shrink-0">
-                    <Activity className="h-5 w-5 text-[#0F6E56]" />
+                  <div className="h-10 w-10 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
+                    <Activity className="h-5 w-5 text-accent" />
                   </div>
                   <span className={`inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-lg border ${estado.classes}`}>
                     <span className={`h-1.5 w-1.5 rounded-full ${estado.dot}`} />
@@ -514,7 +513,7 @@ const Brigadas: React.FC = () => {
                 <button type="button" onClick={closeForm} className="flex-1 py-2.5 text-sm font-bold text-slate-500 border border-slate-200 bg-white hover:bg-slate-50 rounded-xl">
                   Cancelar
                 </button>
-                <button type="submit" disabled={submitting} className="flex-1 py-2.5 text-sm font-bold text-white bg-[#0F6E56] hover:bg-[#0c5945] rounded-xl disabled:opacity-50">
+                <button type="submit" disabled={submitting} className="flex-1 py-2.5 text-sm font-bold text-white bg-accent hover:bg-accent-strong rounded-xl disabled:opacity-50">
                   {submitting ? 'Guardando...' : editing ? 'Guardar brigada' : 'Crear brigada'}
                 </button>
               </div>
@@ -603,7 +602,7 @@ const Brigadas: React.FC = () => {
 };
 
 const inputClasses =
-  'w-full px-3.5 py-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-xl focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56] outline-none transition-all';
+  'w-full min-h-11 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3.5 py-2.5 text-sm text-[var(--text)] outline-none transition-all placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--accent)_18%,transparent)]';
 
 function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
   return (

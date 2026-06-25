@@ -14,7 +14,7 @@ import { BillingSummary } from '../features/saas/BillingSummary';
 import { WompiConfigPanel } from '../features/saas/WompiConfigPanel';
 import { checkoutHabilitado } from '../features/saas/business';
 import { useMe } from '../features/tenant/hooks';
-import { Card, Button, Skeleton } from '../components/ui/Primitives';
+import { Card, Button, Skeleton, PageHeader } from '../components/ui/Primitives';
 import { getErrorMessage } from '../lib/errors';
 import { puedeGestionarSuscripcion } from '../lib/rbac';
 
@@ -58,13 +58,11 @@ const Suscripcion: React.FC = () => {
 
   return (
     <div className="mx-auto grid max-w-5xl gap-5">
-      <div className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-[0_18px_45px_-32px_rgba(15,23,42,0.45)]">
-        <p className="text-xs font-bold uppercase tracking-wider text-[#0F6E56]">Cuenta y plan</p>
-        <h1 className="mt-2 text-2xl font-black tracking-tight text-slate-950">Suscripción</h1>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-          Plan, consumo, estado de cuenta y checkout seguro para la cuenta activa.
-        </p>
-      </div>
+      <PageHeader
+        badge="Cuenta y plan"
+        title="Suscripción"
+        description="Plan, consumo, estado de cuenta y checkout seguro para la cuenta activa."
+      />
 
       <BusinessOverview rol={me?.role ?? me?.rol} profile={me ?? null} />
       <BillingSummary
@@ -112,7 +110,7 @@ const Suscripcion: React.FC = () => {
                     setPlanId(e.target.value);
                     setCheckout(null);
                   }}
-                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition-colors focus:border-[#0F6E56] focus:ring-2 focus:ring-[#0F6E56]/10"
+                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/10"
                 >
                   <option value="">Seleccionar plan...</option>
                   {activos.map((p) => (
@@ -131,7 +129,7 @@ const Suscripcion: React.FC = () => {
                     setCiclo(e.target.value as CicloFacturacion);
                     setCheckout(null);
                   }}
-                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition-colors focus:border-[#0F6E56] focus:ring-2 focus:ring-[#0F6E56]/10"
+                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/10"
                 >
                   <option value="mensual">Mensual</option>
                   <option value="anual">Anual</option>
@@ -159,7 +157,7 @@ const Suscripcion: React.FC = () => {
             </p>
           )}
           {checkout && (
-            <div className="rounded-xl border border-[#0F6E56]/15 bg-[#0F6E56]/5 p-4 text-sm text-slate-600">
+            <div className="rounded-xl border border-accent/15 bg-accent/5 p-4 text-sm text-slate-600">
               <p>
                 Checkout listo (referencia <code>{checkout.reference}</code>).
               </p>

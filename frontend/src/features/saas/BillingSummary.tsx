@@ -79,7 +79,7 @@ const BillingSummary: React.FC<BillingSummaryProps> = ({
               {pagosConfig && (
                 <p
                   className={`mt-2 text-xs font-semibold ${
-                    pagosConfig.checkoutDisponible ? 'text-[#0F6E56]' : 'text-amber-700'
+                    pagosConfig.checkoutDisponible ? 'text-accent' : 'text-amber-700'
                   }`}
                 >
                   {pagosLabel}

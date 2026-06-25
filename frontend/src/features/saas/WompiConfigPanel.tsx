@@ -65,7 +65,7 @@ const WompiConfigPanel: React.FC<WompiConfigPanelProps> = ({ config }) => {
               aria-label={label}
               value={form[field]}
               onChange={(e) => setForm((prev) => ({ ...prev, [field]: e.target.value }))}
-              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-[#0F6E56] focus:ring-2 focus:ring-[#0F6E56]/10"
+              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/10"
             />
           </label>
         ))}
@@ -81,7 +81,7 @@ const WompiConfigPanel: React.FC<WompiConfigPanelProps> = ({ config }) => {
         </p>
       )}
       {ok && (
-        <p role="status" className="mt-3 text-sm font-medium text-[#0F6E56]">
+        <p role="status" className="mt-3 text-sm font-medium text-accent">
           {ok}
         </p>
       )}

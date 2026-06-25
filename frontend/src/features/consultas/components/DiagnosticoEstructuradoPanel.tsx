@@ -58,7 +58,7 @@ const DiagnosticoEstructuradoPanel: React.FC<Props> = ({
             type="button"
             onClick={add}
             disabled={diagnosticos.length >= 10}
-            className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-[#0F6E56]/20 bg-white px-3 py-2 text-xs font-bold text-[#0F6E56] transition-colors hover:bg-[#0F6E56]/5 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-accent/20 bg-white px-3 py-2 text-xs font-bold text-accent transition-colors hover:bg-accent/5 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Plus className="h-3.5 w-3.5" />
             Agregar
@@ -85,7 +85,7 @@ const DiagnosticoEstructuradoPanel: React.FC<Props> = ({
                     aria-label={`Nombre diagnostico ${index + 1}`}
                     value={diagnostico.nombre}
                     onChange={(e) => updateAt(index, { nombre: e.target.value.slice(0, 120) })}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition-colors focus:border-[#0F6E56] focus:ring-2 focus:ring-[#0F6E56]/10"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/10"
                     placeholder="Ej. Gastroenteritis"
                   />
                 </div>
@@ -100,7 +100,7 @@ const DiagnosticoEstructuradoPanel: React.FC<Props> = ({
                     onChange={(e) =>
                       updateAt(index, { tipo: e.target.value as DiagnosticoEstructurado['tipo'] })
                     }
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition-colors focus:border-[#0F6E56] focus:ring-2 focus:ring-[#0F6E56]/10"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/10"
                   >
                     {DIAGNOSTICO_TIPOS.map((tipo) => (
                       <option key={tipo.value} value={tipo.value}>
@@ -120,7 +120,7 @@ const DiagnosticoEstructuradoPanel: React.FC<Props> = ({
                     onChange={(e) =>
                       updateAt(index, { estado: e.target.value as DiagnosticoEstructurado['estado'] })
                     }
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition-colors focus:border-[#0F6E56] focus:ring-2 focus:ring-[#0F6E56]/10"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/10"
                   >
                     {DIAGNOSTICO_ESTADOS.map((estado) => (
                       <option key={estado.value} value={estado.value}>
@@ -145,21 +145,21 @@ const DiagnosticoEstructuradoPanel: React.FC<Props> = ({
                   aria-label={`Sistema diagnostico ${index + 1}`}
                   value={diagnostico.sistema ?? ''}
                   onChange={(e) => updateAt(index, { sistema: e.target.value.slice(0, 80) || undefined })}
-                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-[#0F6E56]"
+                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-accent"
                   placeholder="Sistema"
                 />
                 <input
                   aria-label={`Codigo diagnostico ${index + 1}`}
                   value={diagnostico.codigo ?? ''}
                   onChange={(e) => updateAt(index, { codigo: e.target.value.slice(0, 64) || undefined })}
-                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-[#0F6E56]"
+                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-accent"
                   placeholder="Codigo"
                 />
                 <input
                   aria-label={`Especie diagnostico ${index + 1}`}
                   value={diagnostico.especie ?? ''}
                   onChange={(e) => updateAt(index, { especie: e.target.value.slice(0, 80) || undefined })}
-                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-[#0F6E56]"
+                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-accent"
                   placeholder="Especie"
                 />
               </div>
@@ -169,7 +169,7 @@ const DiagnosticoEstructuradoPanel: React.FC<Props> = ({
                 value={diagnostico.notas ?? ''}
                 onChange={(e) => updateAt(index, { notas: e.target.value.slice(0, 500) || undefined })}
                 rows={2}
-                className="mt-3 w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-[#0F6E56]"
+                className="mt-3 w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-accent"
                 placeholder="Notas clinicas breves"
               />
             </div>
@@ -182,7 +182,7 @@ const DiagnosticoEstructuradoPanel: React.FC<Props> = ({
               <div key={diagnostico.id} className="rounded-2xl border border-white/80 bg-white/80 p-3 shadow-sm">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-sm font-bold text-slate-800">{diagnostico.nombre}</span>
-                  <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase text-[#0F6E56]">
+                  <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase text-accent">
                     {diagnostico.tipo}
                   </span>
                   <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase text-slate-600">

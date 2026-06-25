@@ -7,7 +7,8 @@ import { storage } from '../services/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { buildPatientPhotoStoragePath } from '../lib/patientPhotoStorage';
 import type { Paciente, Propietario } from '../types';
-import { ArrowLeft, Save, AlertCircle } from 'lucide-react';
+import { Save, AlertCircle } from 'lucide-react';
+import { PageHeader } from '../components/ui/Primitives';
 
 const NuevosPaciente: React.FC = () => {
   const { agregarPaciente, actualizarPaciente, error: apiError } = usePacientes();
@@ -131,20 +132,11 @@ const NuevosPaciente: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-fade-in">
-      {/* Navigation and Title */}
-      <div className="flex items-center gap-4">
-        <Link
-          to="/pacientes"
-          className="p-2 bg-white rounded-xl border border-slate-100 hover:border-slate-200 text-slate-500 hover:text-[#0F6E56] transition-colors"
-          title="Volver"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Link>
-        <div>
-          <h1 className="text-xl font-extrabold text-slate-800">Nuevo Paciente</h1>
-          <p className="text-xs text-slate-500">Crea el expediente clínico de un nuevo paciente.</p>
-        </div>
-      </div>
+      <PageHeader
+        breadcrumbs={[{ label: 'Pacientes', to: '/pacientes' }, { label: 'Nuevo paciente' }]}
+        title="Nuevo Paciente"
+        description="Crea el expediente clínico de un nuevo paciente."
+      />
 
       {/* Error Displays */}
       {(formError || apiError) && (
@@ -159,14 +151,14 @@ const NuevosPaciente: React.FC = () => {
         {/* Left Side: Pet Profile */}
         <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-5">
           <h2 className="text-base font-bold text-slate-800 border-b border-slate-50 pb-2 flex items-center gap-2">
-            <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-teal-50 text-xs text-[#0F6E56]">🐾</span>
+            <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-teal-50 text-xs text-accent">🐾</span>
             Datos del Paciente
           </h2>
 
           <div className="space-y-4">
             {/* Photo upload */}
             <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
-              <div className="h-16 w-16 rounded-full bg-[#0F6E56]/5 border border-[#0F6E56]/10 flex items-center justify-center overflow-hidden shrink-0">
+              <div className="h-16 w-16 rounded-full bg-accent/5 border border-accent/10 flex items-center justify-center overflow-hidden shrink-0">
                 {fotoPreview ? (
                   <img src={fotoPreview} alt="Mascota" className="h-full w-full object-cover" />
                 ) : (
@@ -198,7 +190,7 @@ const NuevosPaciente: React.FC = () => {
                 value={form.nombre}
                 onChange={handleChange}
                 placeholder="Ej. Firulais, Lola"
-                className="w-full px-3.5 py-2.5 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56] focus:bg-white outline-none transition-all"
+                className="w-full px-3.5 py-2.5 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-accent focus:ring-1 focus:ring-accent focus:bg-white outline-none transition-all"
                 required
               />
             </div>
@@ -213,7 +205,7 @@ const NuevosPaciente: React.FC = () => {
                   name="especie"
                   value={form.especie}
                   onChange={handleChange}
-                  className="w-full px-3 py-2.5 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56] focus:bg-white outline-none transition-all"
+                  className="w-full px-3 py-2.5 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-accent focus:ring-1 focus:ring-accent focus:bg-white outline-none transition-all"
                 >
                   <option value="perro">🐶 Perro</option>
                   <option value="gato">🐱 Gato</option>
@@ -234,7 +226,7 @@ const NuevosPaciente: React.FC = () => {
                   value={form.raza}
                   onChange={handleChange}
                   placeholder="Ej. Golden, Mestizo"
-                  className="w-full px-3.5 py-2.5 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56] focus:bg-white outline-none transition-all"
+                  className="w-full px-3.5 py-2.5 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-accent focus:ring-1 focus:ring-accent focus:bg-white outline-none transition-all"
                 />
               </div>
             </div>
@@ -251,7 +243,7 @@ const NuevosPaciente: React.FC = () => {
                   value={form.color}
                   onChange={handleChange}
                   placeholder="Ej. Blanco y negro, Atigrado"
-                  className="w-full px-3.5 py-2.5 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56] focus:bg-white outline-none transition-all"
+                  className="w-full px-3.5 py-2.5 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-accent focus:ring-1 focus:ring-accent focus:bg-white outline-none transition-all"
                 />
               </div>
 
@@ -266,7 +258,7 @@ const NuevosPaciente: React.FC = () => {
                   value={form.chip}
                   onChange={handleChange}
                   placeholder="Ej. 981020000..."
-                  className="w-full px-3.5 py-2.5 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56] focus:bg-white outline-none transition-all"
+                  className="w-full px-3.5 py-2.5 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-accent focus:ring-1 focus:ring-accent focus:bg-white outline-none transition-all"
                 />
               </div>
             </div>
@@ -281,7 +273,7 @@ const NuevosPaciente: React.FC = () => {
                   name="sexo"
                   value={form.sexo}
                   onChange={handleChange}
-                  className="w-full px-3 py-2.5 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56] focus:bg-white outline-none transition-all"
+                  className="w-full px-3 py-2.5 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-accent focus:ring-1 focus:ring-accent focus:bg-white outline-none transition-all"
                 >
                   <option value="macho">Macho</option>
                   <option value="hembra">Hembra</option>
@@ -297,7 +289,7 @@ const NuevosPaciente: React.FC = () => {
                   name="estadoReproductivo"
                   value={form.estadoReproductivo}
                   onChange={handleChange}
-                  className="w-full px-3 py-2.5 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56] focus:bg-white outline-none transition-all"
+                  className="w-full px-3 py-2.5 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-accent focus:ring-1 focus:ring-accent focus:bg-white outline-none transition-all"
                 >
                   <option value="entero">Fértil</option>
                   <option value="esterilizado">Esterilizado</option>
@@ -315,7 +307,7 @@ const NuevosPaciente: React.FC = () => {
                 name="fechaNacimiento"
                 value={form.fechaNacimiento}
                 onChange={handleChange}
-                className="w-full px-3.5 py-2.5 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56] focus:bg-white outline-none transition-all"
+                className="w-full px-3.5 py-2.5 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-accent focus:ring-1 focus:ring-accent focus:bg-white outline-none transition-all"
               />
             </div>
 
@@ -330,7 +322,7 @@ const NuevosPaciente: React.FC = () => {
                 onChange={handleChange}
                 rows={3}
                 placeholder="Alergias conocidas, condiciones previas, etc."
-                className="w-full px-3.5 py-2.5 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56] focus:bg-white outline-none transition-all resize-none"
+                className="w-full px-3.5 py-2.5 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-accent focus:ring-1 focus:ring-accent focus:bg-white outline-none transition-all resize-none"
               />
             </div>
           </div>
@@ -356,7 +348,7 @@ const NuevosPaciente: React.FC = () => {
                   value={form.propietarioNombre}
                   onChange={handleChange}
                   placeholder="Ej. Juan Pérez"
-                  className="w-full px-3.5 py-2.5 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56] focus:bg-white outline-none transition-all"
+                  className="w-full px-3.5 py-2.5 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-accent focus:ring-1 focus:ring-accent focus:bg-white outline-none transition-all"
                   required
                 />
               </div>
@@ -373,7 +365,7 @@ const NuevosPaciente: React.FC = () => {
                     value={form.propietarioTelefono}
                     onChange={handleChange}
                     placeholder="Ej. 3001234567"
-                    className="w-full px-3.5 py-2.5 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56] focus:bg-white outline-none transition-all"
+                    className="w-full px-3.5 py-2.5 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-accent focus:ring-1 focus:ring-accent focus:bg-white outline-none transition-all"
                     required
                   />
                 </div>
@@ -389,7 +381,7 @@ const NuevosPaciente: React.FC = () => {
                     value={form.propietarioWhatsapp}
                     onChange={handleChange}
                     placeholder="Ej. 3001234567"
-                    className="w-full px-3.5 py-2.5 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56] focus:bg-white outline-none transition-all"
+                    className="w-full px-3.5 py-2.5 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-accent focus:ring-1 focus:ring-accent focus:bg-white outline-none transition-all"
                   />
                 </div>
               </div>
@@ -405,7 +397,7 @@ const NuevosPaciente: React.FC = () => {
                   value={form.propietarioEmail}
                   onChange={handleChange}
                   placeholder="Ej. juan.perez@email.com"
-                  className="w-full px-3.5 py-2.5 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56] focus:bg-white outline-none transition-all"
+                  className="w-full px-3.5 py-2.5 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-accent focus:ring-1 focus:ring-accent focus:bg-white outline-none transition-all"
                 />
               </div>
             </div>
@@ -422,7 +414,7 @@ const NuevosPaciente: React.FC = () => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 flex items-center justify-center gap-2 py-3 text-sm font-bold text-white bg-[#0F6E56] hover:bg-[#0c5945] rounded-xl shadow-md shadow-[#0F6E56]/10 transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
+              className="flex-1 flex items-center justify-center gap-2 py-3 text-sm font-bold text-white bg-accent hover:bg-accent-strong rounded-xl shadow-md shadow-accent/10 transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
             >
               <Save className="h-4 w-4" />
               {isSubmitting ? 'Guardando...' : 'Guardar Paciente'}

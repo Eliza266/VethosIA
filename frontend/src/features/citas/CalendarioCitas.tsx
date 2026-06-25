@@ -65,22 +65,23 @@ export const CalendarioCitas: React.FC<CalendarioCitasProps> = ({
 
   const eventPropGetter = (event: CalendarEvent) => {
     const estado = event.resource.estado;
-    let backgroundColor = '#2563eb'; // programada
+    // Color por estado desde tokens semánticos (coherente con los Badge de estado).
+    let backgroundColor = 'var(--info)'; // programada
     switch (estado) {
       case 'programada':
-        backgroundColor = '#2563eb';
+        backgroundColor = 'var(--info)';
         break;
       case 'en_atencion':
-        backgroundColor = '#d97706';
+        backgroundColor = 'var(--warn)';
         break;
       case 'realizada':
-        backgroundColor = '#059669';
+        backgroundColor = 'var(--success)';
         break;
       case 'cancelada':
-        backgroundColor = '#64748b';
+        backgroundColor = 'var(--muted)';
         break;
       case 'no_asistio':
-        backgroundColor = '#dc2626';
+        backgroundColor = 'var(--danger)';
         break;
     }
 
@@ -88,7 +89,7 @@ export const CalendarioCitas: React.FC<CalendarioCitasProps> = ({
       style: {
         backgroundColor,
         color: '#ffffff',
-        borderRadius: '6px',
+        borderRadius: 'var(--radius-xs)',
         border: 'none',
         display: 'block',
       },

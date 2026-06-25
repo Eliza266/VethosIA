@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Bell, CheckCheck } from 'lucide-react';
 import { useNotificaciones } from '../features/notificaciones/hooks';
 import { etiquetaNotificacion, rutaNotificacion } from '../features/notificaciones/routing';
-import { Button, Card, EmptyState } from '../components/ui/Primitives';
+import { Button, Card, EmptyState, PageHeader } from '../components/ui/Primitives';
 
 const Notificaciones: React.FC = () => {
   const navigate = useNavigate();
@@ -20,21 +20,19 @@ const Notificaciones: React.FC = () => {
 
   return (
     <div className="mx-auto grid max-w-4xl gap-6">
-      <div className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-[0_18px_45px_-32px_rgba(15,23,42,0.45)]">
-        <p className="text-xs font-bold uppercase tracking-wider text-[#0F6E56]">Centro operativo</p>
-        <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-black text-slate-900">Notificaciones</h1>
-            <p className="mt-1 text-sm text-slate-500">{noLeidas} sin leer</p>
-          </div>
+      <PageHeader
+        badge="Centro operativo"
+        title="Notificaciones"
+        description={`${noLeidas} sin leer`}
+        action={
           <Button onClick={() => marcarTodas.mutate()} disabled={noLeidas === 0 || marcarTodas.isPending}>
             <span className="inline-flex items-center gap-2">
               <CheckCheck className="h-4 w-4" />
               Marcar todas
             </span>
           </Button>
-        </div>
-      </div>
+        }
+      />
 
       <Card>
         {isLoading && <p className="text-sm text-slate-500">Cargando notificaciones...</p>}
@@ -51,8 +49,8 @@ const Notificaciones: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => abrir(n.id)}
-                  className={`flex w-full items-start gap-3 rounded-xl border p-3 text-left transition hover:border-[#0F6E56]/30 ${
-                    n.leida ? 'border-slate-200 bg-white' : 'border-[#0F6E56]/20 bg-[#0F6E56]/5'
+                  className={`flex w-full items-start gap-3 rounded-xl border p-3 text-left transition hover:border-accent/30 ${
+                    n.leida ? 'border-slate-200 bg-white' : 'border-accent/20 bg-accent/5'
                   }`}
                 >
                   <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600">

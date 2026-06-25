@@ -104,7 +104,7 @@ describe('NuevaConsulta manual fallback', () => {
   it('muestra consulta manual si falla el acceso al microfono', async () => {
     renderNuevaConsulta();
 
-    await screen.findByText(/luna/i);
+    await screen.findAllByText(/luna/i);
     fireEvent.click(screen.getByTitle(/iniciar/i));
 
     expect(mockGetUserMedia).toHaveBeenCalledWith({
@@ -116,7 +116,7 @@ describe('NuevaConsulta manual fallback', () => {
   it('guarda borrador SOAP manual sin procesar audio ni aprobar consumo', async () => {
     renderNuevaConsulta();
 
-    await screen.findByText(/luna/i);
+    await screen.findAllByText(/luna/i);
     fireEvent.click(screen.getByRole('button', { name: /consulta manual/i }));
     fireEvent.change(screen.getByLabelText(/^motivo$/i), { target: { value: 'Control general' } });
     fireEvent.change(screen.getByLabelText(/^peso kg$/i), { target: { value: '12,5' } });
@@ -177,7 +177,7 @@ describe('NuevaConsulta manual fallback', () => {
 
     renderNuevaConsulta();
 
-    await screen.findByText(/luna/i);
+    await screen.findAllByText(/luna/i);
     expect(await screen.findByLabelText(/¿Esta consulta pertenece a una brigada\?/i)).toBeInTheDocument();
 
     // Select the brigada

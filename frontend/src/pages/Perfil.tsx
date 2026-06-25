@@ -218,7 +218,7 @@ const Perfil: React.FC = () => {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#0F6E56] border-t-transparent"></div>
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-accent border-t-transparent"></div>
           <p className="text-sm font-semibold text-slate-500 animate-pulse">Cargando perfil...</p>
         </div>
       </div>
@@ -239,7 +239,7 @@ const Perfil: React.FC = () => {
     <div className="max-w-2xl mx-auto space-y-6 animate-fade-in py-6">
       <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
         {/* Header background decoration */}
-        <div className="h-32 bg-gradient-to-r from-[#0F6E56] to-[#148F70]"></div>
+        <div className="h-32 bg-gradient-to-r from-accent to-[#148F70]"></div>
         
         <div className="p-8 pt-0 relative">
           {/* Avatar positioning */}
@@ -277,7 +277,7 @@ const Perfil: React.FC = () => {
             </div>
             <div className="text-center sm:text-left pb-1">
               <h1 className="text-2xl font-extrabold text-slate-800">{fields.nombre || user.nombre}</h1>
-              <p className="text-sm font-semibold text-[#0F6E56]">
+              <p className="text-sm font-semibold text-accent">
                 {isSuperAdmin ? 'Super Administrador' : 'Médico Veterinario'}
               </p>
               {!isSuperAdmin && fields.matriculaProfesional && (
@@ -313,7 +313,7 @@ const Perfil: React.FC = () => {
                     className={`block w-full pl-10 pr-3 py-2.5 border rounded-xl text-sm outline-none transition-shadow ${
                       isSuperAdmin
                         ? 'bg-slate-50 border border-slate-200 text-slate-500 cursor-not-allowed'
-                        : 'border-slate-200 text-slate-800 focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56]'
+                        : 'border-slate-200 text-slate-800 focus:border-accent focus:ring-1 focus:ring-accent'
                     }`}
                   />
                 </div>
@@ -342,7 +342,7 @@ const Perfil: React.FC = () => {
                       placeholder="Mínimo 6 caracteres"
                       value={nuevaContrasena}
                       onChange={(e) => setNuevaContrasena(e.target.value)}
-                      className="block w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56] outline-none transition-shadow"
+                      className="block w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-shadow"
                     />
                   </div>
                   <div>
@@ -352,7 +352,7 @@ const Perfil: React.FC = () => {
                       placeholder="Repite la contraseña"
                       value={confirmarContrasena}
                       onChange={(e) => setConfirmarContrasena(e.target.value)}
-                      className="block w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56] outline-none transition-shadow"
+                      className="block w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-shadow"
                     />
                   </div>
                 </div>
@@ -375,7 +375,7 @@ const Perfil: React.FC = () => {
                             placeholder={placeholder}
                             value={fields[field]}
                             onChange={(e) => handleChange(field as keyof VetFields, e.target.value)}
-                            className="block w-full pl-10 pr-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56] outline-none transition-shadow"
+                            className="block w-full pl-10 pr-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-shadow"
                           />
                         </div>
                       </div>
@@ -399,7 +399,7 @@ const Perfil: React.FC = () => {
                             placeholder={placeholder}
                             value={fields[field]}
                             onChange={(e) => handleChange(field as keyof VetFields, e.target.value)}
-                            className="block w-full pl-10 pr-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56] outline-none transition-shadow"
+                            className="block w-full pl-10 pr-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-shadow"
                           />
                         </div>
                       </div>
@@ -413,7 +413,7 @@ const Perfil: React.FC = () => {
               <button
                 type="submit"
                 disabled={saving}
-                className="flex items-center gap-2 rounded-xl bg-[#0F6E56] hover:bg-[#0c5945] px-5 py-3 text-sm font-bold text-white shadow-md shadow-[#0F6E56]/10 transition-all disabled:opacity-50"
+                className="flex items-center gap-2 rounded-xl bg-accent hover:bg-accent-strong px-5 py-3 text-sm font-bold text-white shadow-md shadow-accent/10 transition-all disabled:opacity-50"
               >
                 <Save className="h-4 w-4" />
                 {saving ? 'Guardando cambios...' : 'Guardar cambios'}

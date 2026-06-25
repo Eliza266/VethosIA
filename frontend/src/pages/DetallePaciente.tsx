@@ -9,6 +9,7 @@ import type { Paciente, Consulta } from '../types';
 import { storage } from '../services/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { buildPatientPhotoStoragePath } from '../lib/patientPhotoStorage';
+import { BRAND } from '../lib/theme';
 import { useMe } from '../features/tenant/hooks';
 import {
   LineChart,
@@ -170,7 +171,7 @@ const DetallePaciente: React.FC = () => {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#0F6E56] border-t-transparent mx-auto"></div>
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-accent border-t-transparent mx-auto"></div>
           <p className="text-sm font-semibold text-slate-500 animate-pulse">Cargando expediente clínico...</p>
         </div>
       </div>
@@ -183,7 +184,7 @@ const DetallePaciente: React.FC = () => {
         <ShieldAlert className="h-12 w-12 text-amber-500 mx-auto mb-4" />
         <h3 className="text-lg font-bold text-slate-800 mb-2">Expediente no encontrado</h3>
         <p className="text-sm text-slate-500 mb-6">El paciente solicitado no existe o no tienes los permisos para visualizarlo.</p>
-        <Link to="/pacientes" className="px-4 py-2.5 rounded-xl bg-[#0F6E56] text-white text-sm font-bold">
+        <Link to="/pacientes" className="px-4 py-2.5 rounded-xl bg-accent text-white text-sm font-bold">
           Volver a Pacientes
         </Link>
       </div>
@@ -319,7 +320,7 @@ const DetallePaciente: React.FC = () => {
           {/* Dashboard de Métricas */}
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             <div className="metric-tile p-4 flex items-start gap-3 bg-white border border-slate-100 rounded-2xl shadow-sm">
-              <div className="p-2 bg-teal-50 text-[#0F6E56] rounded-xl shrink-0">
+              <div className="p-2 bg-teal-50 text-accent rounded-xl shrink-0">
                 <Scale className="h-5 w-5" />
               </div>
               <div>
@@ -362,7 +363,7 @@ const DetallePaciente: React.FC = () => {
           {hasPesoData && (
             <div className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-sm">
               <h3 className="font-bold text-slate-800 text-sm border-b border-slate-100 pb-3 mb-6 flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 text-[#0F6E56]" />
+                <TrendingUp className="h-4 w-4 text-accent" />
                 Evolución de Peso
               </h3>
               <div style={{ width: '100%', height: 220 }}>
@@ -376,7 +377,7 @@ const DetallePaciente: React.FC = () => {
                       formatter={formatPesoTooltip}
                       labelStyle={{ fontWeight: 'bold', color: '#334155' }}
                     />
-                    <Line type="monotone" dataKey="peso" stroke="#0F6E56" strokeWidth={3} dot={{ fill: '#0F6E56', strokeWidth: 2, r: 4 }} activeDot={{ r: 6 }} connectNulls />
+                    <Line type="monotone" dataKey="peso" stroke={BRAND.accent} strokeWidth={3} dot={{ fill: BRAND.accent, strokeWidth: 2, r: 4 }} activeDot={{ r: 6 }} connectNulls />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -392,7 +393,7 @@ const DetallePaciente: React.FC = () => {
                 <h3 className="font-bold text-slate-800 text-sm">Datos Fisiológicos</h3>
                 <button
                   onClick={handleOpenEdit}
-                  className="inline-flex items-center gap-1 text-xs font-bold text-[#0F6E56] hover:underline"
+                  className="inline-flex items-center gap-1 text-xs font-bold text-accent hover:underline"
                 >
                   <Edit2 className="h-3.5 w-3.5" />
                   Editar
@@ -439,7 +440,7 @@ const DetallePaciente: React.FC = () => {
                 {paciente.ultimaTalla && (
                   <div className="flex justify-between items-center py-1 border-b border-slate-50/50">
                     <span className="text-slate-400 font-medium">Última Talla</span>
-                    <span className="bg-[#0F6E56]/10 text-[#0F6E56] font-bold px-2 py-0.5 rounded-lg">{paciente.ultimaTalla} cm</span>
+                    <span className="bg-accent/10 text-accent font-bold px-2 py-0.5 rounded-lg">{paciente.ultimaTalla} cm</span>
                   </div>
                 )}
               </div>
@@ -461,12 +462,12 @@ const DetallePaciente: React.FC = () => {
                   </div>
 
                   <div className="flex items-start gap-3">
-                    <div className="p-2 bg-[#0F6E56]/5 rounded-xl text-[#0F6E56]">
+                    <div className="p-2 bg-accent/5 rounded-xl text-accent">
                       <Phone className="h-4 w-4" />
                     </div>
                     <div>
                       <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Teléfono</div>
-                      <a href={`tel:${paciente.propietario.telefono}`} className="text-sm font-bold text-[#0F6E56] hover:underline">
+                      <a href={`tel:${paciente.propietario.telefono}`} className="text-sm font-bold text-accent hover:underline">
                         {paciente.propietario.telefono}
                       </a>
                       {paciente.propietario.whatsapp && (
@@ -521,7 +522,7 @@ const DetallePaciente: React.FC = () => {
             <h3 className="font-bold text-slate-800 text-sm">Historial de Consultas Clínicas</h3>
             <Link
               to={`/pacientes/${paciente.id}/consultas/nueva`}
-              className="inline-flex items-center gap-2 rounded-xl bg-[#0F6E56] px-4 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:bg-[#0c5945]"
+              className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:bg-accent-strong"
             >
               <Plus className="h-4 w-4" />
               Nueva Consulta
@@ -536,7 +537,7 @@ const DetallePaciente: React.FC = () => {
                   type="date"
                   value={fechaDesde}
                   onChange={(e) => setFechaDesde(e.target.value)}
-                  className="px-3 py-2 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-[#0F6E56] outline-none"
+                  className="px-3 py-2 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-accent outline-none"
                 />
               </div>
               <div>
@@ -545,13 +546,13 @@ const DetallePaciente: React.FC = () => {
                   type="date"
                   value={fechaHasta}
                   onChange={(e) => setFechaHasta(e.target.value)}
-                  className="px-3 py-2 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-[#0F6E56] outline-none"
+                  className="px-3 py-2 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-accent outline-none"
                 />
               </div>
               <div className="flex gap-2">
                 <button
                   onClick={handleFilter}
-                  className="px-4 py-2 bg-[#0F6E56] hover:bg-[#0c5945] text-white text-sm font-bold rounded-lg transition-colors"
+                  className="px-4 py-2 bg-accent hover:bg-accent-strong text-white text-sm font-bold rounded-lg transition-colors"
                 >
                   Filtrar
                 </button>
@@ -604,7 +605,7 @@ const DetallePaciente: React.FC = () => {
                         {consulta.numeroHC && (
                           <>
                             <span className="text-slate-300 text-xs">•</span>
-                            <span className="text-xs font-bold text-[#0F6E56]">#{consulta.numeroHC}</span>
+                            <span className="text-xs font-bold text-accent">#{consulta.numeroHC}</span>
                           </>
                         )}
                       </div>
@@ -640,7 +641,7 @@ const DetallePaciente: React.FC = () => {
                     <div className="flex justify-end mt-4 pt-3 border-t border-slate-100/50">
                       <Link
                         to={`/pacientes/${paciente.id}/consultas/${consulta.id}`}
-                        className="inline-flex items-center gap-1 text-xs font-bold text-[#0F6E56] hover:underline"
+                        className="inline-flex items-center gap-1 text-xs font-bold text-accent hover:underline"
                       >
                         Ver Consulta
                         <ChevronRight className="h-3.5 w-3.5" />
@@ -663,7 +664,7 @@ const DetallePaciente: React.FC = () => {
               <Link
                 key={p.id}
                 to={`/pacientes/${p.id}`}
-                className="flex items-center gap-3 px-4 py-3 bg-slate-50/50 hover:bg-slate-50 border border-slate-100 hover:border-[#0F6E56]/30 rounded-xl transition-all shrink-0 min-w-[180px]"
+                className="flex items-center gap-3 px-4 py-3 bg-slate-50/50 hover:bg-slate-50 border border-slate-100 hover:border-accent/30 rounded-xl transition-all shrink-0 min-w-[180px]"
               >
                 <span className="text-xl">{getSpeciesEmoji(p.especie)}</span>
                 <div className="min-w-0">
@@ -715,7 +716,7 @@ const DetallePaciente: React.FC = () => {
                       type="file"
                       accept="image/*"
                       onChange={handleFotoChange}
-                      className="text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#0F6E56]/10 file:text-[#0F6E56] hover:file:bg-[#0F6E56]/20 cursor-pointer"
+                      className="text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-accent/10 file:text-accent hover:file:bg-accent/20 cursor-pointer"
                     />
                   </div>
                 </div>
@@ -727,7 +728,7 @@ const DetallePaciente: React.FC = () => {
                     required
                     value={editForm.nombre}
                     onChange={e => setEditForm({ ...editForm, nombre: e.target.value })}
-                    className="w-full px-3 py-2 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#0F6E56] focus:bg-white outline-none"
+                    className="w-full px-3 py-2 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-accent focus:bg-white outline-none"
                   />
                 </div>
 
@@ -737,7 +738,7 @@ const DetallePaciente: React.FC = () => {
                     <select
                       value={editForm.sexo}
                       onChange={e => setEditForm({ ...editForm, sexo: e.target.value as Paciente['sexo'] })}
-                      className="w-full px-3 py-2 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#0F6E56] focus:bg-white outline-none"
+                      className="w-full px-3 py-2 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-accent focus:bg-white outline-none"
                     >
                       <option value="macho">Macho</option>
                       <option value="hembra">Hembra</option>
@@ -748,7 +749,7 @@ const DetallePaciente: React.FC = () => {
                     <select
                       value={editForm.estadoReproductivo}
                       onChange={e => setEditForm({ ...editForm, estadoReproductivo: e.target.value as Paciente['estadoReproductivo'] })}
-                      className="w-full px-3 py-2 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#0F6E56] focus:bg-white outline-none"
+                      className="w-full px-3 py-2 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-accent focus:bg-white outline-none"
                     >
                       <option value="entero">Fértil</option>
                       <option value="esterilizado">Esterilizado</option>
@@ -763,7 +764,7 @@ const DetallePaciente: React.FC = () => {
                       type="date"
                       value={editForm.fechaNacimiento}
                       onChange={e => setEditForm({ ...editForm, fechaNacimiento: e.target.value })}
-                      className="w-full px-3 py-2 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#0F6E56] focus:bg-white outline-none"
+                      className="w-full px-3 py-2 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-accent focus:bg-white outline-none"
                     />
                   </div>
                   <div>
@@ -772,7 +773,7 @@ const DetallePaciente: React.FC = () => {
                       type="text"
                       value={editForm.color}
                       onChange={e => setEditForm({ ...editForm, color: e.target.value })}
-                      className="w-full px-3 py-2 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#0F6E56] focus:bg-white outline-none"
+                      className="w-full px-3 py-2 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-accent focus:bg-white outline-none"
                     />
                   </div>
                 </div>
@@ -784,7 +785,7 @@ const DetallePaciente: React.FC = () => {
                       type="text"
                       value={editForm.chip}
                       onChange={e => setEditForm({ ...editForm, chip: e.target.value })}
-                      className="w-full px-3 py-2 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#0F6E56] focus:bg-white outline-none"
+                      className="w-full px-3 py-2 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-accent focus:bg-white outline-none"
                     />
                   </div>
                   <div>
@@ -793,7 +794,7 @@ const DetallePaciente: React.FC = () => {
                       type="text"
                       value={editForm.origen}
                       onChange={e => setEditForm({ ...editForm, origen: e.target.value })}
-                      className="w-full px-3 py-2 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#0F6E56] focus:bg-white outline-none"
+                      className="w-full px-3 py-2 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-accent focus:bg-white outline-none"
                     />
                   </div>
                 </div>
@@ -804,7 +805,7 @@ const DetallePaciente: React.FC = () => {
                     rows={2}
                     value={editForm.notasGenerales}
                     onChange={e => setEditForm({ ...editForm, notasGenerales: e.target.value })}
-                    className="w-full px-3 py-2 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#0F6E56] focus:bg-white outline-none resize-none"
+                    className="w-full px-3 py-2 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-accent focus:bg-white outline-none resize-none"
                   />
                 </div>
               </div>
@@ -820,7 +821,7 @@ const DetallePaciente: React.FC = () => {
                     required
                     value={editForm.propietarioNombre}
                     onChange={e => setEditForm({ ...editForm, propietarioNombre: e.target.value })}
-                    className="w-full px-3 py-2 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#0F6E56] focus:bg-white outline-none"
+                    className="w-full px-3 py-2 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-accent focus:bg-white outline-none"
                   />
                 </div>
 
@@ -832,7 +833,7 @@ const DetallePaciente: React.FC = () => {
                       required
                       value={editForm.propietarioTelefono}
                       onChange={e => setEditForm({ ...editForm, propietarioTelefono: e.target.value })}
-                      className="w-full px-3 py-2 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#0F6E56] focus:bg-white outline-none"
+                      className="w-full px-3 py-2 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-accent focus:bg-white outline-none"
                     />
                   </div>
                   <div>
@@ -841,7 +842,7 @@ const DetallePaciente: React.FC = () => {
                       type="tel"
                       value={editForm.propietarioWhatsapp}
                       onChange={e => setEditForm({ ...editForm, propietarioWhatsapp: e.target.value })}
-                      className="w-full px-3 py-2 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#0F6E56] focus:bg-white outline-none"
+                      className="w-full px-3 py-2 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-accent focus:bg-white outline-none"
                     />
                   </div>
                 </div>
@@ -852,7 +853,7 @@ const DetallePaciente: React.FC = () => {
                     type="email"
                     value={editForm.propietarioEmail}
                     onChange={e => setEditForm({ ...editForm, propietarioEmail: e.target.value })}
-                    className="w-full px-3 py-2 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#0F6E56] focus:bg-white outline-none"
+                    className="w-full px-3 py-2 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-accent focus:bg-white outline-none"
                   />
                 </div>
               </div>
@@ -868,7 +869,7 @@ const DetallePaciente: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-bold text-white bg-[#0F6E56] hover:bg-[#0c5945] rounded-xl transition-all shadow-md shadow-[#0F6E56]/15"
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-bold text-white bg-accent hover:bg-accent-strong rounded-xl transition-all shadow-md shadow-accent/15"
                 >
                   <Save className="h-4 w-4" />
                   Guardar

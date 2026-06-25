@@ -53,7 +53,7 @@ const BusinessOverview: React.FC<BusinessOverviewProps> = ({ rol, profile, compa
       <section aria-label="Resumen de negocio" className="space-y-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-start gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#0F6E56]/10 text-[#0F6E56] ring-1 ring-[#0F6E56]/10">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent/10 text-accent ring-1 ring-accent/10">
               <CreditCard className="h-5 w-5" />
             </div>
             <div>
@@ -86,7 +86,7 @@ const BusinessOverview: React.FC<BusinessOverviewProps> = ({ rol, profile, compa
         <div className="rounded-2xl border border-slate-200/70 bg-slate-50/70 p-4">
           <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2">
-              <Gauge className="h-4 w-4 text-[#0F6E56]" />
+              <Gauge className="h-4 w-4 text-accent" />
               <h3 className="text-sm font-bold text-slate-900">Consumo del período</h3>
             </div>
             {consumo.data?.periodo && (
@@ -111,7 +111,7 @@ const BusinessOverview: React.FC<BusinessOverviewProps> = ({ rol, profile, compa
                 className="h-3 overflow-hidden rounded-full bg-white ring-1 ring-slate-200/80"
               >
                 <div
-                  className={`h-full rounded-full ${consumo.data.bloqueado ? 'bg-red-500' : consumo.data.alcanzo80 ? 'bg-amber-500' : 'bg-[#0F6E56]'}`}
+                  className={`h-full rounded-full ${consumo.data.bloqueado ? 'bg-red-500' : consumo.data.alcanzo80 ? 'bg-amber-500' : 'bg-accent'}`}
                   style={{ width: `${porcentaje}%` }}
                 />
               </div>
@@ -152,7 +152,7 @@ const BusinessOverview: React.FC<BusinessOverviewProps> = ({ rol, profile, compa
           {puedeGestionarPlan && (
             <Link
               to="/suscripcion"
-              className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[#0F6E56]/20 bg-[#0F6E56]/5 px-3 py-2 text-sm font-bold text-[#0F6E56] transition-colors hover:border-[#0F6E56]/40 hover:bg-[#0F6E56]/10 sm:w-auto"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-accent/20 bg-accent/5 px-3 py-2 text-sm font-bold text-accent transition-colors hover:border-accent/40 hover:bg-accent/10 sm:w-auto"
             >
               Gestionar suscripción
               <ArrowRight className="h-4 w-4" />

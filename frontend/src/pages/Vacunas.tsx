@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, CheckCircle2, Filter, ListChecks, Syringe, ShieldAlert } from 'lucide-react';
 import { usePacientes } from '../hooks/usePacientes';
-import { Card, Button, Badge, Skeleton, EmptyState, KpiCard, SectionHeader } from '../components/ui/Primitives';
+import { Card, Button, Badge, Skeleton, EmptyState, KpiCard, SectionHeader, PageHeader } from '../components/ui/Primitives';
 import {
   listarVacunas,
   marcarVacunaAplicada,
@@ -15,7 +15,7 @@ import {
 import type { Paciente } from '../types';
 
 const inputClasses =
-  'min-h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none transition-all placeholder:text-slate-400 focus:border-[#0F6E56] focus:ring-2 focus:ring-[#0F6E56]/12';
+  'w-full min-h-11 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text)] outline-none transition-all placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--accent)_18%,transparent)]';
 
 const ESTADOS: Array<{ value: EstadoVacuna | ''; label: string }> = [
   { value: '', label: 'Todos' },
@@ -79,20 +79,20 @@ const Vacunas: React.FC = () => {
 
   return (
     <div className="mx-auto grid max-w-6xl gap-6 animate-fade-in py-4">
-      {/* Compact Page Header — replaces old header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-5">
-        <div className="min-w-0">
-          <span className="text-xs font-bold uppercase tracking-wider text-[#0F6E56]">Prevención clínica</span>
-          <h1 className="mt-1 text-xl font-black text-slate-900 sm:text-2xl">Vacunación</h1>
-          <p className="text-xs text-slate-500">Seguimiento de próximas dosis, vencimientos y aplicaciones por paciente.</p>
-        </div>
-        <Link
-          to="/pacientes"
-          className="inline-flex items-center gap-1.5 rounded-xl bg-white border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all shrink-0"
-        >
-          Pacientes
-        </Link>
-      </div>
+      <PageHeader
+        badge="Prevención clínica"
+        title="Vacunación"
+        description="Seguimiento de próximas dosis, vencimientos y aplicaciones por paciente."
+        action={
+          <Link
+            to="/pacientes"
+            className="inline-flex items-center gap-1.5 rounded-xl border px-4 py-2.5 text-sm font-bold transition-all shrink-0"
+            style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
+          >
+            Pacientes
+          </Link>
+        }
+      />
 
       {currentTab === 'metricas' ? (
         /* Real Metrics Dashboard view */
@@ -164,12 +164,12 @@ const Vacunas: React.FC = () => {
                     Las vacunas son esenciales para la salud pública y la prevención de epidemias animales. Mantener una cobertura superior al 85% asegura protección colectiva en la comunidad clínica.
                   </p>
                 </div>
-                <div className="flex items-center justify-between p-4 bg-[#0F6E56]/5 border border-[#0F6E56]/10 rounded-2xl">
+                <div className="flex items-center justify-between p-4 bg-accent/5 border border-accent/10 rounded-2xl">
                   <div>
-                    <h5 className="text-xs font-extrabold text-[#0F6E56] uppercase tracking-wider">Vacunación Completa</h5>
+                    <h5 className="text-xs font-extrabold text-accent uppercase tracking-wider">Vacunación Completa</h5>
                     <p className="text-[10px] text-slate-500 mt-0.5">Indicador de salud del hato/sede</p>
                   </div>
-                  <span className="text-lg font-black text-[#0F6E56] bg-white px-3 py-1 rounded-xl shadow-sm border border-[#0F6E56]/10">100%</span>
+                  <span className="text-lg font-black text-accent bg-white px-3 py-1 rounded-xl shadow-sm border border-accent/10">100%</span>
                 </div>
               </div>
             </Card>
@@ -206,7 +206,7 @@ const Vacunas: React.FC = () => {
             <SectionHeader
               title="Control de vacunas"
               description="Filtra por estado, especie, paciente o tipo para priorizar la atención preventiva."
-              action={<Filter className="h-5 w-5 text-[#0F6E56]" />}
+              action={<Filter className="h-5 w-5 text-accent" />}
             />
             <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-[150px_150px_minmax(180px,1fr)_minmax(180px,1fr)_auto]">
               <label className="grid gap-1.5 text-xs font-bold text-slate-500">
@@ -300,7 +300,7 @@ const Vacunas: React.FC = () => {
                 {lista.map((v) => (
                   <div
                     key={v.id}
-                    className="grid gap-4 rounded-2xl border border-slate-200 bg-white/85 p-4 shadow-[0_16px_42px_-36px_rgba(15,23,42,0.55)] transition-all hover:border-[#0F6E56]/30 hover:bg-white lg:grid-cols-[minmax(180px,1fr)_auto]"
+                    className="grid gap-4 rounded-2xl border border-slate-200 bg-white/85 p-4 shadow-[0_16px_42px_-36px_rgba(15,23,42,0.55)] transition-all hover:border-accent/30 hover:bg-white lg:grid-cols-[minmax(180px,1fr)_auto]"
                   >
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
@@ -308,7 +308,7 @@ const Vacunas: React.FC = () => {
                         <Badge estado={v.estado}>{etiquetaEstadoVacuna(v.estado)}</Badge>
                       </div>
                       <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-500">
-                        <Link to={`/pacientes/${v.pacienteId}`} className="font-black text-[#0F6E56] hover:underline">
+                        <Link to={`/pacientes/${v.pacienteId}`} className="font-black text-accent hover:underline">
                           {pacienteNombre(v.pacienteId)}
                         </Link>
                         <span className="text-slate-300">/</span>

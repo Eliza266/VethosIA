@@ -35,27 +35,25 @@ vi.mock('../hooks/usePacientes', () => ({
   }),
 }));
 
-vi.mock('../features/citas/CalendarioCitas', () => ({
-  __esModule: true,
-  default: ({ citas, onSelectCita }: any) => (
+type MockCita = { id: string };
+type MockCalProps = { citas: MockCita[]; onSelectCita: (c: MockCita) => void };
+
+vi.mock('../features/citas/CalendarioCitas', () => {
+  const MockCalendario = ({ citas, onSelectCita }: MockCalProps) => (
     <div data-testid="mock-calendario">
-      {citas.map((c: any) => (
+      {citas.map((c) => (
         <button key={c.id} onClick={() => onSelectCita(c)}>
           Ver Cita {c.id}
         </button>
       ))}
     </div>
-  ),
-  CalendarioCitas: ({ citas, onSelectCita }: any) => (
-    <div data-testid="mock-calendario">
-      {citas.map((c: any) => (
-        <button key={c.id} onClick={() => onSelectCita(c)}>
-          Ver Cita {c.id}
-        </button>
-      ))}
-    </div>
-  ),
-}));
+  );
+  return {
+    __esModule: true,
+    default: MockCalendario,
+    CalendarioCitas: MockCalendario,
+  };
+});
 
 vi.mock('../features/citas/hooks', () => ({
   useCitas: () => {

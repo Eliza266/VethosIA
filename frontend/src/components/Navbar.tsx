@@ -227,7 +227,7 @@ const Navbar: React.FC = () => {
               </span>
               <span className="hidden min-w-0 sm:block">
                 <span className="block text-base font-black leading-none tracking-tight text-slate-900">
-                  Vethos<span className="text-[#0F6E56]"> AI</span>
+                  Vethos<span className="text-accent"> AI</span>
                 </span>
                 <span className="mt-0.5 block text-[9px] font-extrabold uppercase tracking-[0.18em] text-slate-400">
                   Clinical Command
@@ -250,7 +250,7 @@ const Navbar: React.FC = () => {
                       ← Pacientes
                     </Link>
                     <div className="h-4 w-px bg-slate-200 shrink-0" />
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0F6E56]/10 text-[#0F6E56] rounded-full text-xs font-bold shrink-0">
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-accent/10 text-accent rounded-full text-xs font-bold shrink-0">
                       <span>{getSpeciesEmoji(currentPaciente?.especie)}</span>
                       <span>{currentPaciente?.nombre || 'Expediente'}</span>
                     </div>
@@ -269,7 +269,7 @@ const Navbar: React.FC = () => {
                             to={`/pacientes/${patientId}?tab=${tab.val}`}
                             className={`inline-flex items-center rounded-full px-3 py-1.5 text-xs font-bold transition-all ${
                               active
-                                ? 'bg-[#0F6E56] text-white shadow-sm'
+                                ? 'bg-accent text-white shadow-sm'
                                 : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                             }`}
                           >
@@ -299,7 +299,7 @@ const Navbar: React.FC = () => {
                             to={`${activeModule.path}?tab=${sub.tabValue}`}
                             className={`inline-flex items-center rounded-full px-3 py-1.5 text-xs font-bold transition-all ${
                               active
-                                ? 'bg-[#0F6E56] text-white shadow-sm'
+                                ? 'bg-accent text-white shadow-sm'
                                 : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                             }`}
                           >
@@ -322,7 +322,7 @@ const Navbar: React.FC = () => {
                           to={item.path}
                           className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold transition-all ${
                             active
-                              ? 'bg-[#0F6E56] text-white shadow-sm'
+                              ? 'bg-accent text-white shadow-sm'
                               : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                           }`}
                         >
@@ -347,7 +347,7 @@ const Navbar: React.FC = () => {
                         to={item.path}
                         className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold transition-all ${
                           active
-                            ? 'bg-[#0F6E56] text-white shadow-sm'
+                            ? 'bg-accent text-white shadow-sm'
                             : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                         }`}
                       >
@@ -382,7 +382,7 @@ const Navbar: React.FC = () => {
             ) : (
               <Link
                 to="/login"
-                className="rounded-full bg-[#0F6E56] px-4 py-2 text-sm font-bold text-white shadow-md transition-all hover:bg-[#0c5945]"
+                className="rounded-full bg-accent px-4 py-2 text-sm font-bold text-white shadow-md transition-all hover:bg-accent-strong"
               >
                 Iniciar Sesión
               </Link>
@@ -416,7 +416,7 @@ const Navbar: React.FC = () => {
                 >
                   ← Pacientes
                 </Link>
-                <div className="px-3 py-2 bg-[#0F6E56]/10 text-[#0F6E56] rounded-xl text-sm font-black flex items-center gap-2">
+                <div className="px-3 py-2 bg-accent/10 text-accent rounded-xl text-sm font-black flex items-center gap-2">
                   <span>{getSpeciesEmoji(currentPaciente?.especie)}</span>
                   <span>{currentPaciente?.nombre || 'Expediente'}</span>
                 </div>
@@ -435,7 +435,7 @@ const Navbar: React.FC = () => {
                       onClick={() => setIsOpen(false)}
                       className={`flex items-center gap-3 rounded-2xl px-3 py-3 text-base font-bold ${
                         active
-                          ? 'bg-[#0F6E56]/10 text-[#0F6E56]'
+                          ? 'bg-accent/10 text-accent'
                           : 'text-slate-600 hover:bg-slate-50'
                       }`}
                     >
@@ -464,7 +464,7 @@ const Navbar: React.FC = () => {
                       onClick={() => setIsOpen(false)}
                       className={`flex items-center gap-3 rounded-2xl px-3 py-3 text-base font-bold ${
                         active
-                          ? 'bg-[#0F6E56]/10 text-[#0F6E56]'
+                          ? 'bg-accent/10 text-accent'
                           : 'text-slate-600 hover:bg-slate-50'
                       }`}
                     >
@@ -487,7 +487,7 @@ const Navbar: React.FC = () => {
                       onClick={() => setIsOpen(false)}
                       className={`flex items-center gap-3 rounded-2xl px-3 py-3 text-base font-bold ${
                         active
-                          ? 'bg-[#0F6E56]/10 text-[#0F6E56]'
+                          ? 'bg-accent/10 text-accent'
                           : 'text-slate-600 hover:bg-slate-50'
                       }`}
                     >
@@ -511,7 +511,7 @@ const Navbar: React.FC = () => {
                   onClick={() => setIsOpen(false)}
                   className={`flex items-center gap-3 rounded-2xl px-3 py-3 text-base font-bold ${
                     active
-                      ? 'bg-[#0F6E56]/10 text-[#0F6E56]'
+                      ? 'bg-accent/10 text-accent'
                       : 'text-slate-600 hover:bg-slate-50'
                   }`}
                 >

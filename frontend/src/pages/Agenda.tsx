@@ -8,7 +8,7 @@ import {
   type Cita,
 } from '../features/citas/api';
 import { usePacientes } from '../hooks/usePacientes';
-import { Card, Button, Badge, Skeleton, EmptyState, KpiCard, SectionHeader } from '../components/ui/Primitives';
+import { Card, Button, Badge, Skeleton, EmptyState, KpiCard, SectionHeader, PageHeader } from '../components/ui/Primitives';
 
 const CalendarioCitas = React.lazy(() => import('../features/citas/CalendarioCitas'));
 
@@ -21,7 +21,7 @@ const ESTADO_LABEL: Record<Cita['estado'], string> = {
 };
 
 const inputClasses =
-  'min-h-11 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-800 outline-none transition-all placeholder:text-slate-400 focus:border-[#0F6E56] focus:ring-2 focus:ring-[#0F6E56]/12 w-full';
+  'w-full min-h-11 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3.5 py-2 text-sm text-[var(--text)] outline-none transition-all placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--accent)_18%,transparent)]';
 
 const Agenda: React.FC = () => {
   const navigate = useNavigate();
@@ -117,7 +117,7 @@ const Agenda: React.FC = () => {
             aria-label="Vincular paciente"
             value={seleccion}
             onChange={(e) => setVinculoManual((m) => ({ ...m, [c.id]: e.target.value }))}
-            className="min-h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none transition-all placeholder:text-slate-400 focus:border-[#0F6E56] focus:ring-2 focus:ring-[#0F6E56]/12"
+            className="min-h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none transition-all placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/12"
           >
             <option value="">Seleccionar paciente…</option>
             {pacientes.map((p) => (
@@ -173,24 +173,17 @@ const Agenda: React.FC = () => {
   return (
     <div className="mx-auto grid max-w-6xl gap-6 animate-fade-in py-4">
       
-      {/* Compact Page Header — replaces old header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-5">
-        <div className="min-w-0">
-          <span className="text-xs font-bold uppercase tracking-wider text-[#0F6E56]">Operación clínica</span>
-          <h1 className="mt-1 text-xl font-black text-slate-900 sm:text-2xl">Agenda Médica</h1>
-          <p className="text-xs text-slate-500">Planifica citas, vincula pacientes y abre la consulta clínica.</p>
-        </div>
-        <div className="flex shrink-0 flex-wrap gap-2">
-          <Button
-            variant="primary"
-            onClick={() => setIsModalOpen(true)}
-            className="rounded-xl"
-          >
+      <PageHeader
+        badge="Operación clínica"
+        title="Agenda Médica"
+        description="Planifica citas, vincula pacientes y abre la consulta clínica."
+        action={
+          <Button variant="primary" onClick={() => setIsModalOpen(true)} className="rounded-xl">
             <Plus className="h-4 w-4" />
             Nueva Cita
           </Button>
-        </div>
-      </div>
+        }
+      />
 
       {currentTab === 'metricas' ? (
         /* Real Metrics Dashboard view */
@@ -264,12 +257,12 @@ const Agenda: React.FC = () => {
                     Las citas marcadas como "No asistió" o "Cancelada" representan tiempo clínico desaprovechado. Recomendamos enviar confirmaciones automáticas de citas 24h antes para optimizar el flujo.
                   </p>
                 </div>
-                <div className="flex items-center justify-between p-4 bg-[#0F6E56]/5 border border-[#0F6E56]/10 rounded-2xl">
+                <div className="flex items-center justify-between p-4 bg-accent/5 border border-accent/10 rounded-2xl">
                   <div>
-                    <h5 className="text-xs font-extrabold text-[#0F6E56] uppercase tracking-wider">Citas del día programadas</h5>
+                    <h5 className="text-xs font-extrabold text-accent uppercase tracking-wider">Citas del día programadas</h5>
                     <p className="text-[10px] text-slate-500 mt-0.5">Pendientes de atención hoy</p>
                   </div>
-                  <span className="text-lg font-black text-[#0F6E56] bg-white px-3 py-1 rounded-xl shadow-sm border border-[#0F6E56]/10">
+                  <span className="text-lg font-black text-accent bg-white px-3 py-1 rounded-xl shadow-sm border border-accent/10">
                     {hoyCitas.filter(c => c.estado === 'programada').length}
                   </span>
                 </div>
@@ -286,7 +279,7 @@ const Agenda: React.FC = () => {
               onClick={() => setSubTab('calendario')}
               className={`px-6 py-3 font-bold text-sm border-b-2 transition-all ${
                 subTab === 'calendario'
-                  ? 'border-[#0F6E56] text-[#0F6E56]'
+                  ? 'border-accent text-accent'
                   : 'border-transparent text-slate-500 hover:text-slate-700'
               }`}
             >
@@ -296,7 +289,7 @@ const Agenda: React.FC = () => {
               onClick={() => setSubTab('citas_dia')}
               className={`px-6 py-3 font-bold text-sm border-b-2 transition-all ${
                 subTab === 'citas_dia'
-                  ? 'border-[#0F6E56] text-[#0F6E56]'
+                  ? 'border-accent text-accent'
                   : 'border-transparent text-slate-500 hover:text-slate-700'
               }`}
             >
@@ -376,10 +369,10 @@ const Agenda: React.FC = () => {
                   {hoyCitas.map((c) => (
                     <div
                       key={c.id}
-                      className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 bg-white border border-slate-200/80 rounded-2xl shadow-[0_2px_8px_-3px_rgba(15,23,42,0.05)] hover:border-[#0F6E56]/30 transition-all duration-200"
+                      className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 bg-white border border-slate-200/80 rounded-2xl shadow-[0_2px_8px_-3px_rgba(15,23,42,0.05)] hover:border-accent/30 transition-all duration-200"
                     >
                       <div className="flex items-start gap-3">
-                        <div className="p-2.5 bg-[#0F6E56]/5 text-[#0F6E56] rounded-xl shrink-0 mt-0.5">
+                        <div className="p-2.5 bg-accent/5 text-accent rounded-xl shrink-0 mt-0.5">
                           <CalendarClock className="h-4 w-4" />
                         </div>
                         <div className="min-w-0">
@@ -488,7 +481,7 @@ const Agenda: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-bold text-white bg-[#0F6E56] hover:bg-[#0c5945] rounded-xl transition-all shadow-md shadow-[#0F6E56]/15"
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-bold text-white bg-accent hover:bg-accent-strong rounded-xl transition-all shadow-md shadow-accent/15"
                 >
                   <Save className="h-4 w-4" />
                   Agendar
@@ -505,7 +498,7 @@ const Agenda: React.FC = () => {
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 space-y-5 animate-fade-in">
             <div className="flex justify-between items-center pb-3 border-b border-slate-100">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#0F6E56]">Detalle de la Cita</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-accent">Detalle de la Cita</span>
                 <h2 className="text-lg font-extrabold text-slate-800">{selectedCita.pacienteNombre ?? selectedCita.titulo}</h2>
               </div>
               <button

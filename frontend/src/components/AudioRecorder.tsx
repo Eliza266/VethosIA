@@ -190,7 +190,7 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
         </div>
       ) : isProcessing ? (
         <div className="flex flex-col items-center gap-4 py-3">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#0F6E56]/10 text-[#0F6E56]">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-accent/10 text-accent">
             <RefreshCw className="h-8 w-8 animate-spin" />
           </div>
           <div className="text-center">
@@ -221,7 +221,7 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
             </button>
             <button
               onClick={handleFinish}
-              className="w-full inline-flex justify-center items-center gap-2 rounded-lg bg-[#0F6E56] hover:bg-[#0c5945] px-4 py-2.5 text-sm font-bold text-white transition shadow-lg shadow-[#0F6E56]/10"
+              className="w-full inline-flex justify-center items-center gap-2 rounded-lg bg-accent hover:bg-accent-strong px-4 py-2.5 text-sm font-bold text-white transition shadow-lg shadow-accent/10"
             >
               Finalizar y procesar
             </button>
@@ -231,7 +231,7 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
         <button
           onClick={startRecording}
           disabled={isProcessing}
-          className="flex h-16 w-16 items-center justify-center rounded-full bg-[#0F6E56] hover:bg-[#0c5945] text-white shadow-lg shadow-[#0F6E56]/20 transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
+          className="flex h-16 w-16 items-center justify-center rounded-full bg-accent hover:bg-accent-strong text-white shadow-lg shadow-accent/20 transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
           title="Iniciar grabación"
         >
           <Mic className="h-7 w-7" />
@@ -262,7 +262,7 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
             <button
               type="button"
               onClick={onManualFallback}
-              className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 transition hover:border-[#0F6E56] hover:text-[#0F6E56]"
+              className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 transition hover:border-accent hover:text-accent"
             >
               <FileText className="h-4 w-4" />
               Consulta manual

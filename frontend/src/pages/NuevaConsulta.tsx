@@ -4,7 +4,8 @@ import { usePacientes } from '../hooks/usePacientes';
 import { useConsultas } from '../hooks/useConsultas';
 import type { Paciente, SignosVitales } from '../types';
 import AudioRecorder from '../components/AudioRecorder';
-import { ArrowLeft, AlertCircle, Sparkles, HelpCircle, FileText } from 'lucide-react';
+import { AlertCircle, Sparkles, HelpCircle, FileText } from 'lucide-react';
+import { PageHeader } from '../components/ui/Primitives';
 import { getErrorMessage } from '../lib/errors';
 import { useAuth } from '../features/auth/hooks';
 import { useBrigadas } from '../hooks/useBrigadas';
@@ -225,7 +226,7 @@ const NuevaConsulta: React.FC = () => {
     return (
       <div className="flex min-h-[40vh] items-center justify-center">
         <div className="flex flex-col items-center gap-2">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#0F6E56] border-t-transparent"></div>
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent"></div>
           <p className="text-xs text-slate-500 font-medium">Cargando datos del paciente...</p>
         </div>
       </div>
@@ -237,7 +238,7 @@ const NuevaConsulta: React.FC = () => {
       <div className="max-w-md mx-auto text-center py-12 bg-white rounded-2xl border border-slate-100 p-8 shadow-sm">
         <h3 className="text-lg font-bold text-slate-800 mb-2">Paciente no encontrado</h3>
         <p className="text-sm text-slate-500 mb-6">No pudimos cargar la información del paciente para esta consulta.</p>
-        <Link to="/pacientes" className="px-4 py-2.5 rounded-xl bg-[#0F6E56] text-white text-sm font-bold">
+        <Link to="/pacientes" className="px-4 py-2.5 rounded-xl bg-accent text-white text-sm font-bold">
           Volver a Pacientes
         </Link>
       </div>
@@ -246,23 +247,15 @@ const NuevaConsulta: React.FC = () => {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 animate-fade-in">
-      {/* Navigation */}
-      <div className="flex items-center gap-4">
-        <Link
-          to={`/pacientes/${paciente.id}`}
-          className="p-2 bg-white rounded-xl border border-slate-100 hover:border-slate-200 text-slate-500 hover:text-[#0F6E56] transition-colors"
-          title="Volver al expediente"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Link>
-        <div>
-          <h1 className="text-xl font-extrabold text-slate-800">Nueva Consulta Automática</h1>
-          <p className="text-xs text-slate-500">
-            Paciente: <span className="font-semibold text-slate-700">{paciente.nombre}</span>
-            {paciente.especie && <span className="ml-1 text-slate-400">· {paciente.especie}</span>}
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        breadcrumbs={[
+          { label: 'Pacientes', to: '/pacientes' },
+          { label: paciente.nombre, to: `/pacientes/${paciente.id}` },
+          { label: 'Nueva consulta' },
+        ]}
+        title="Nueva Consulta Automática"
+        description={`Paciente: ${paciente.nombre}${paciente.especie ? ` · ${paciente.especie}` : ''}`}
+      />
 
       {/* Error alert */}
       {(error || apiError) && (
@@ -282,7 +275,7 @@ const NuevaConsulta: React.FC = () => {
             <select
               value={brigadaSeleccionadaId}
               onChange={(e) => setBrigadaSeleccionadaId(e.target.value)}
-              className="w-full px-3.5 py-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-xl focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56] outline-none transition-all"
+              className="w-full px-3.5 py-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-xl focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all"
             >
               <option value="">Ninguna</option>
               {brigadasDeHoy.map((b) => (
@@ -304,14 +297,14 @@ const NuevaConsulta: React.FC = () => {
           </div>
           {isProcessing ? (
             <div className="bg-white border border-slate-100 p-8 rounded-2xl shadow-sm text-center space-y-4">
-              <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#0F6E56] border-t-transparent mx-auto"></div>
+              <div className="h-10 w-10 animate-spin rounded-full border-4 border-accent border-t-transparent mx-auto"></div>
               <div>
                 <h3 className="font-bold text-slate-800 text-sm">Procesando Consulta</h3>
                 <p className="text-xs text-slate-500 mt-1">{progressText}</p>
               </div>
               <div className="w-full bg-slate-100 rounded-full h-2.5 mt-4 overflow-hidden">
                 <div 
-                  className="bg-[#0F6E56] h-2.5 rounded-full transition-all duration-500 ease-out" 
+                  className="bg-accent h-2.5 rounded-full transition-all duration-500 ease-out" 
                   style={{ width: `${progressPct}%` }}
                 ></div>
               </div>
@@ -331,7 +324,7 @@ const NuevaConsulta: React.FC = () => {
               className="mt-5 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm"
             >
               <div className="mb-4 flex items-center gap-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#0F6E56]/10 text-[#0F6E56]">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent/10 text-accent">
                   <FileText className="h-4 w-4" />
                 </div>
                 <div>
@@ -346,7 +339,7 @@ const NuevaConsulta: React.FC = () => {
                   <input
                     value={manualForm.motivo}
                     onChange={setManualField('motivo')}
-                    className="min-h-10 rounded-lg border border-slate-200 px-3 text-sm font-normal text-slate-800 outline-none transition focus:border-[#0F6E56] focus:ring-2 focus:ring-[#0F6E56]/15"
+                    className="min-h-10 rounded-lg border border-slate-200 px-3 text-sm font-normal text-slate-800 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15"
                   />
                 </label>
 
@@ -357,7 +350,7 @@ const NuevaConsulta: React.FC = () => {
                       inputMode="decimal"
                       value={manualForm.peso}
                       onChange={setManualField('peso')}
-                      className="min-h-10 rounded-lg border border-slate-200 px-3 text-sm font-normal text-slate-800 outline-none transition focus:border-[#0F6E56] focus:ring-2 focus:ring-[#0F6E56]/15"
+                      className="min-h-10 rounded-lg border border-slate-200 px-3 text-sm font-normal text-slate-800 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15"
                     />
                   </label>
                   <label className="grid gap-1 text-xs font-bold text-slate-600">
@@ -366,7 +359,7 @@ const NuevaConsulta: React.FC = () => {
                       inputMode="decimal"
                       value={manualForm.talla}
                       onChange={setManualField('talla')}
-                      className="min-h-10 rounded-lg border border-slate-200 px-3 text-sm font-normal text-slate-800 outline-none transition focus:border-[#0F6E56] focus:ring-2 focus:ring-[#0F6E56]/15"
+                      className="min-h-10 rounded-lg border border-slate-200 px-3 text-sm font-normal text-slate-800 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15"
                     />
                   </label>
                   <label className="grid gap-1 text-xs font-bold text-slate-600">
@@ -375,7 +368,7 @@ const NuevaConsulta: React.FC = () => {
                       inputMode="decimal"
                       value={manualForm.temperatura}
                       onChange={setManualField('temperatura')}
-                      className="min-h-10 rounded-lg border border-slate-200 px-3 text-sm font-normal text-slate-800 outline-none transition focus:border-[#0F6E56] focus:ring-2 focus:ring-[#0F6E56]/15"
+                      className="min-h-10 rounded-lg border border-slate-200 px-3 text-sm font-normal text-slate-800 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15"
                     />
                   </label>
                   <label className="grid gap-1 text-xs font-bold text-slate-600">
@@ -383,7 +376,7 @@ const NuevaConsulta: React.FC = () => {
                     <select
                       value={manualForm.condicionCorporal}
                       onChange={setManualField('condicionCorporal')}
-                      className="min-h-10 rounded-lg border border-slate-200 px-3 text-sm font-normal text-slate-800 outline-none transition focus:border-[#0F6E56] focus:ring-2 focus:ring-[#0F6E56]/15"
+                      className="min-h-10 rounded-lg border border-slate-200 px-3 text-sm font-normal text-slate-800 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15"
                     >
                       <option value="">Sin dato</option>
                       <option value="1">1</option>
@@ -399,7 +392,7 @@ const NuevaConsulta: React.FC = () => {
                       inputMode="numeric"
                       value={manualForm.frecuenciaCardiaca}
                       onChange={setManualField('frecuenciaCardiaca')}
-                      className="min-h-10 rounded-lg border border-slate-200 px-3 text-sm font-normal text-slate-800 outline-none transition focus:border-[#0F6E56] focus:ring-2 focus:ring-[#0F6E56]/15"
+                      className="min-h-10 rounded-lg border border-slate-200 px-3 text-sm font-normal text-slate-800 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15"
                     />
                   </label>
                   <label className="grid gap-1 text-xs font-bold text-slate-600">
@@ -408,7 +401,7 @@ const NuevaConsulta: React.FC = () => {
                       inputMode="numeric"
                       value={manualForm.frecuenciaRespiratoria}
                       onChange={setManualField('frecuenciaRespiratoria')}
-                      className="min-h-10 rounded-lg border border-slate-200 px-3 text-sm font-normal text-slate-800 outline-none transition focus:border-[#0F6E56] focus:ring-2 focus:ring-[#0F6E56]/15"
+                      className="min-h-10 rounded-lg border border-slate-200 px-3 text-sm font-normal text-slate-800 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15"
                     />
                   </label>
                 </div>
@@ -420,7 +413,7 @@ const NuevaConsulta: React.FC = () => {
                       value={manualForm[field]}
                       onChange={setManualField(field)}
                       rows={3}
-                      className="resize-y rounded-lg border border-slate-200 px-3 py-2 text-sm font-normal text-slate-800 outline-none transition focus:border-[#0F6E56] focus:ring-2 focus:ring-[#0F6E56]/15"
+                      className="resize-y rounded-lg border border-slate-200 px-3 py-2 text-sm font-normal text-slate-800 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15"
                     />
                   </label>
                 ))}
@@ -437,7 +430,7 @@ const NuevaConsulta: React.FC = () => {
                 <button
                   type="submit"
                   disabled={manualSaving}
-                  className="rounded-lg bg-[#0F6E56] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#0c5945] disabled:opacity-50"
+                  className="rounded-lg bg-accent px-4 py-2 text-sm font-bold text-white transition hover:bg-accent-strong disabled:opacity-50"
                 >
                   {manualSaving ? 'Guardando...' : 'Guardar borrador manual'}
                 </button>
@@ -449,20 +442,20 @@ const NuevaConsulta: React.FC = () => {
         {/* Instructions Card */}
         <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm space-y-4">
           <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2 border-b border-slate-50 pb-2">
-            <HelpCircle className="h-4 w-4 text-[#0F6E56]" />
+            <HelpCircle className="h-4 w-4 text-accent" />
             ¿Cómo funciona?
           </h3>
           <ul className="space-y-3.5 text-xs text-slate-500">
             <li className="flex gap-2">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-teal-50 text-[10px] font-bold text-[#0F6E56] shrink-0">1</span>
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-teal-50 text-[10px] font-bold text-accent shrink-0">1</span>
               <span>Presiona el micrófono para iniciar la grabación de audio.</span>
             </li>
             <li className="flex gap-2">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-teal-50 text-[10px] font-bold text-[#0F6E56] shrink-0">2</span>
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-teal-50 text-[10px] font-bold text-accent shrink-0">2</span>
               <span>Menciona el motivo de consulta, prioridad, signos vitales, hallazgos y plan de tratamiento.</span>
             </li>
             <li className="flex gap-2">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-teal-50 text-[10px] font-bold text-[#0F6E56] shrink-0">3</span>
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-teal-50 text-[10px] font-bold text-accent shrink-0">3</span>
               <span>Presiona el botón de detener al terminar.</span>
             </li>
             <li className="flex gap-2 font-medium text-slate-700">
