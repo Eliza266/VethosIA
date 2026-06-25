@@ -6,14 +6,13 @@ import { getErrorMessage } from '../lib/errors';
 import { isFirebaseConfigured, missingFirebaseConfig } from '../lib/firebase';
 
 const Login: React.FC = () => {
-  const { user, loginWithGoogle, loginWithEmail, registerWithEmail, resetPassword, loading, accessDeniedMessage } =
+  const { user, loginWithGoogle, loginWithEmail, resetPassword, loading, accessDeniedMessage } =
     useAuth();
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [modoRegistro, setModoRegistro] = useState(false);
   const navigate = useNavigate();
   const firebaseConfigMessage = isFirebaseConfigured
     ? null
@@ -29,15 +28,10 @@ const Login: React.FC = () => {
     }
     setIsLoggingIn(true);
     try {
-      if (modoRegistro) {
-        await registerWithEmail(email, password);
-        setInfo('Cuenta creada. Te enviamos un correo para verificar tu email.');
-      } else {
-        await loginWithEmail(email, password);
-        navigate('/');
-      }
+      await loginWithEmail(email, password);
+      navigate('/');
     } catch {
-      setError(modoRegistro ? 'No se pudo crear la cuenta.' : 'Email o contraseña incorrectos.');
+      setError('Email o contraseña incorrectos.');
     } finally {
       setIsLoggingIn(false);
     }
@@ -238,12 +232,9 @@ const Login: React.FC = () => {
               disabled={isLoggingIn || loading || !isFirebaseConfigured}
               className="w-full rounded-xl bg-[var(--accent)] px-4 py-3.5 text-sm font-bold text-[var(--accent-contrast)] shadow-[var(--shadow-accent)] transition-all hover:brightness-95 active:scale-[0.99] disabled:opacity-50"
             >
-              {modoRegistro ? 'Crear cuenta' : 'Iniciar sesión'}
+              Iniciar sesión
             </button>
-            <div className="flex justify-between text-xs text-[var(--muted)]">
-              <button type="button" onClick={() => setModoRegistro((v) => !v)} className="font-medium hover:text-[var(--text)]">
-                {modoRegistro ? '¿Ya tienes cuenta? Inicia sesión' : 'Crear una cuenta'}
-              </button>
+            <div className="flex justify-end text-xs text-[var(--muted)]">
               <button
                 type="button"
                 onClick={handleReset}
