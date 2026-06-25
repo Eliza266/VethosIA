@@ -330,9 +330,8 @@ const Perfil: React.FC = () => {
               </div>
             </div>
 
-            {isSuperAdmin ? (
-              /* Cambiar Contraseña */
-              <div className="border-t border-slate-100 pt-5">
+            {/* Cambiar Contraseña (disponible para todos los roles) */}
+            <div className="border-t border-slate-100 pt-5">
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Cambiar Contraseña</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
@@ -357,7 +356,8 @@ const Perfil: React.FC = () => {
                   </div>
                 </div>
               </div>
-            ) : (
+
+            {!isSuperAdmin && (
               <>
                 {/* Divider */}
                 <div className="border-t border-slate-100 pt-5">
