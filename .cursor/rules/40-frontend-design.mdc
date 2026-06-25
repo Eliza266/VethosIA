@@ -1,0 +1,14 @@
+---
+description: Reglas de diseño visual del frontend de VetIA (sidebar, tokens, estética)
+globs: frontend/**
+---
+
+- Fuente de verdad visual: `docs/DESIGN_SYSTEM.md`. Mockups en `docs/design/mockups/`.
+- Layout con **sidebar** izquierdo (no navbar superior). En móvil, drawer con hamburguesa (`aria-expanded`/`aria-controls`). Tema **claro**.
+- Estética plana: minimizar gradientes, glass y `backdrop-filter`; superficies sólidas, bordes 1px sutiles, sombras discretas.
+- Todo color/espaciado sale de tokens CSS (`--accent`, `--surface`, `--border`, `--muted`, `--space-*`, `--radius-*`...). Prohibido `#0F6E56` o `slate-*` hardcodeados; marca unificada en `--accent: #0f6e56`.
+- El verde es acento (activo/foco/acción primaria), no fondo. Neutros para el resto.
+- Un solo `PageHeader` por página (no mezclar hero + headers inline). Subnav de nivel 2/3 del vet como `Tabs` bajo el header, reusando `VET_NAVIGATION` y `getNavbarItemsForProfile` (no reescribir la lógica de navegación).
+- Reusar/crear primitivos en `components/ui/Primitives.tsx` (Input, Select, Modal, Tabs, Sidebar); nada de strings de Tailwind repetidos por página.
+- Accesibilidad AA: `nav` con `aria-label`, controles reales (no `div` clicable), foco visible, contraste suficiente. Cada vista con loading / empty / error.
+- No romper: el rediseño toca solo el chrome (`Layout`, `Sidebar`) y estilos. Cada cambio deja `lint + typecheck + test:run` en verde.
