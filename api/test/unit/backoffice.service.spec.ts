@@ -1,14 +1,16 @@
-import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { validate } from 'class-validator';
 import { AuthUser } from '../../src/common/auth/auth-user.interface';
 import { COLLECTIONS } from '../../src/common/firebase/collections';
 import { AuditoriaService } from '../../src/modules/plataforma/auditoria.service';
 import { NotificacionesService } from '../../src/modules/plataforma/notificaciones.service';
+import { SuscripcionesService } from '../../src/modules/saas/suscripciones.service';
 import { BackofficeService } from '../../src/modules/tenant/backoffice.service';
 import {
   ActualizarEntidadBackofficeDto,
   ActualizarVeterinariaBackofficeDto,
   CrearEntidadBackofficeDto,
+  CrearVeterinarioCredencialesDto,
   CrearVeterinariaBackofficeDto,
 } from '../../src/modules/tenant/dto/backoffice.dto';
 import { TenantService } from '../../src/modules/tenant/tenant.service';
@@ -66,6 +68,12 @@ function build() {
   const { fb, fs } = fakeFirebase();
   const auth = {
     getUser: jest.fn(async () => ({ customClaims: {} })),
+    getUserByEmail: jest.fn(async () => {
+      const err = new Error('user-not-found') as Error & { code?: string };
+      err.code = 'auth/user-not-found';
+      throw err;
+    }),
+    createUser: jest.fn(async () => ({ uid: 'newUid' })),
     setCustomUserClaims: jest.fn(async () => undefined),
     updateUser: jest.fn(async () => undefined),
   };
@@ -226,7 +234,8 @@ function build() {
   const notificaciones = new NotificacionesService(fb);
   const auditoria = new AuditoriaService(fb);
   const tenant = new TenantService(fb, notificaciones);
-  const svc = new BackofficeService(fb, tenant, auditoria, notificaciones);
+  const subs = new SuscripcionesService(fb, auditoria);
+  const svc = new BackofficeService(fb, tenant, auditoria, notificaciones, subs);
   return { svc, fs, auth };
 }
 
@@ -846,5 +855,134 @@ describe('BackofficeService', () => {
 
     expect(consumos).toEqual([expect.objectContaining({ id: 'vet1_2026-06', porcentaje: 80 })]);
     expect(consumos.map((c) => c.id)).not.toContain('vet3_2026-06');
+  });
+
+  it('admin veterinaria crea veterinario con credenciales en su clinica', async () => {
+    const { svc, fs, auth } = build();
+    fs.store.set(`${COLLECTIONS.suscripciones}/sub_ent_1`, {
+      entidadId: 'ent_1',
+      orgId: 'orgA',
+      planOwnerType: 'entidad',
+      planOwnerId: 'ent_1',
+      planId: 'plan_pro',
+      estado: 'activa',
+      asientosMax: 10,
+    });
+
+    const creado = await svc.crearVeterinarioConCredenciales(adminVeterinaria, {
+      nombre: 'Nuevo Vet',
+      email: 'Nuevo.Vet@Clinica.com',
+      password: 'Temporal#1',
+    });
+
+    expect(auth.createUser).toHaveBeenCalledWith(
+      expect.objectContaining({ email: 'nuevo.vet@clinica.com', password: 'Temporal#1', emailVerified: true }),
+    );
+    expect(creado).toMatchObject({
+      uid: 'newUid',
+      email: 'nuevo.vet@clinica.com',
+      role: 'veterinario',
+      rol: 'vet',
+      veterinariaId: 'vetclin_1',
+      accountId: 'vetclin_1',
+      bloqueado: false,
+    });
+    expect(fs.store.get(`${COLLECTIONS.miembros}/m_newUid_veterinario`)).toMatchObject({
+      uid: 'newUid',
+      veterinariaId: 'vetclin_1',
+      role: 'veterinario',
+      estado: 'activo',
+    });
+    expect(fs.store.get(`${COLLECTIONS.veterinarios}/newUid`)).toMatchObject({ uid: 'newUid', email: 'nuevo.vet@clinica.com' });
+    expect(auth.setCustomUserClaims).toHaveBeenCalled();
+    expect([...fs.store.values()].some((v) => v.accion === 'veterinario.crear_credenciales')).toBe(true);
+  });
+
+  it('rechaza crear veterinario con email ya existente sin pisar la cuenta', async () => {
+    const { svc, fs, auth } = build();
+    fs.store.set(`${COLLECTIONS.suscripciones}/sub_ent_1`, {
+      planOwnerType: 'entidad',
+      planOwnerId: 'ent_1',
+      planId: 'plan_pro',
+      estado: 'activa',
+      asientosMax: 10,
+    });
+    auth.getUserByEmail.mockResolvedValueOnce({ uid: 'existing' } as never);
+
+    await expect(
+      svc.crearVeterinarioConCredenciales(adminVeterinaria, {
+        nombre: 'Repetido',
+        email: 'vet1@x.com',
+        password: 'Temporal#1',
+      }),
+    ).rejects.toBeInstanceOf(ConflictException);
+    expect(auth.createUser).not.toHaveBeenCalled();
+  });
+
+  it('rechaza crear veterinario si no hay asientos disponibles', async () => {
+    const { svc, auth } = build();
+
+    await expect(
+      svc.crearVeterinarioConCredenciales(adminVeterinaria, {
+        nombre: 'Sin asiento',
+        email: 'nuevo@x.com',
+        password: 'Temporal#1',
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(auth.createUser).not.toHaveBeenCalled();
+  });
+
+  it('veterinario no puede crear veterinarios con credenciales', async () => {
+    const { svc } = build();
+
+    await expect(
+      svc.crearVeterinarioConCredenciales(veterinario, {
+        nombre: 'No autorizado',
+        email: 'nuevo@x.com',
+        password: 'Temporal#1',
+      }),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+  });
+
+  it('admin veterinaria no crea veterinarios en otra sede', async () => {
+    const { svc, fs } = build();
+    fs.store.set(`${COLLECTIONS.suscripciones}/sub_ent_1`, {
+      planOwnerType: 'entidad',
+      planOwnerId: 'ent_1',
+      planId: 'plan_pro',
+      estado: 'activa',
+      asientosMax: 10,
+    });
+
+    await expect(
+      svc.crearVeterinarioConCredenciales(adminVeterinaria, {
+        nombre: 'Cross sede',
+        email: 'nuevo@x.com',
+        password: 'Temporal#1',
+        veterinariaId: 'vetclin_2',
+      }),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+  });
+
+  it('valida DTO de creacion de veterinario con credenciales', async () => {
+    const invalid = Object.assign(new CrearVeterinarioCredencialesDto(), {
+      nombre: '',
+      email: 'no-email',
+      password: '123',
+    });
+    await expect(validate(invalid)).resolves.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ property: 'nombre' }),
+        expect.objectContaining({ property: 'email' }),
+        expect.objectContaining({ property: 'password' }),
+      ]),
+    );
+
+    const valid = Object.assign(new CrearVeterinarioCredencialesDto(), {
+      nombre: 'Vet',
+      email: 'vet@x.com',
+      password: 'Temporal#1',
+    });
+    await expect(validate(valid)).resolves.toHaveLength(0);
   });
 });

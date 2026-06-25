@@ -1,17 +1,34 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import * as admin from 'firebase-admin';
-import { AuthUser, Rol, RolV2 } from '../../common/auth/auth-user.interface';
+import { AuthUser, PlanOwnerTypeV2, Rol, RolV2 } from '../../common/auth/auth-user.interface';
 import { COLLECTIONS, periodoActual } from '../../common/firebase/collections';
 import { FirebaseService } from '../../common/firebase/firebase.service';
 import { AuditoriaService } from '../plataforma/auditoria.service';
 import { NotificacionesService } from '../plataforma/notificaciones.service';
+import { SuscripcionesService } from '../saas/suscripciones.service';
 import { TenantService, EntidadDoc, MiembroDoc, VeterinariaDoc } from './tenant.service';
 import {
   ActualizarEntidadBackofficeDto,
   ActualizarVeterinariaBackofficeDto,
   CrearEntidadBackofficeDto,
+  CrearVeterinarioCredencialesDto,
   CrearVeterinariaBackofficeDto,
 } from './dto/backoffice.dto';
+
+interface ScopeVeterinario {
+  orgId?: string;
+  accountId: string;
+  veterinariaId: string;
+  entidadId?: string;
+  planOwnerType: PlanOwnerTypeV2;
+  planOwnerId: string;
+}
 
 export type BackofficeRol = 'superadmin' | 'admin_entidad' | 'admin_veterinaria' | 'veterinario';
 
@@ -52,6 +69,7 @@ export class BackofficeService {
     private readonly tenant: TenantService,
     private readonly auditoria: AuditoriaService,
     private readonly notificaciones: NotificacionesService,
+    private readonly subs: SuscripcionesService,
   ) {}
 
   permisos(user: AuthUser): BackofficePermisos {
@@ -289,6 +307,132 @@ export class BackofficeService {
       meta: { entidadId: vet.entidadId ?? null },
     });
     return vet;
+  }
+
+  // Alta de veterinario con credenciales (email + contraseña temporal). A diferencia de las
+  // invitaciones por enlace, el admin crea la cuenta directamente con Admin SDK. El veterinario
+  // luego cambia su contraseña desde su perfil. Restringido a admin_veterinaria/admin_entidad/superadmin.
+  async crearVeterinarioConCredenciales(
+    user: AuthUser,
+    dto: CrearVeterinarioCredencialesDto,
+  ): Promise<BackofficeMiembro> {
+    const rol = this.rolCanonico(user);
+    if (rol !== 'admin_veterinaria' && rol !== 'admin_entidad' && rol !== 'superadmin') {
+      throw new ForbiddenException('Tu rol no permite crear veterinarios.');
+    }
+    const scope = await this.resolverScopeVeterinario(user, dto.veterinariaId);
+
+    const disponibles = await this.subs.asientosDisponibles({
+      ...user,
+      orgId: scope.orgId ?? user.orgId,
+      accountType: 'veterinaria',
+      accountId: scope.accountId,
+      entidadId: scope.entidadId,
+      veterinariaId: scope.veterinariaId,
+      planOwnerType: scope.planOwnerType,
+      planOwnerId: scope.planOwnerId,
+    } as AuthUser);
+    if (disponibles.libres <= 0) {
+      throw new BadRequestException('No hay asientos disponibles en el plan de la veterinaria.');
+    }
+
+    const email = dto.email.trim().toLowerCase();
+    const nombre = dto.nombre.trim();
+    const uid = await this.crearUsuarioAuth(email, dto.password, nombre);
+
+    const miembro = await this.tenant.asignarMiembroV2({
+      uid,
+      email,
+      orgId: scope.orgId,
+      rol: 'vet',
+      role: 'veterinario',
+      accountType: 'veterinaria',
+      accountId: scope.accountId,
+      entidadId: scope.entidadId,
+      veterinariaId: scope.veterinariaId,
+      planOwnerType: scope.planOwnerType,
+      planOwnerId: scope.planOwnerId,
+      vinculoTipo: 'staff',
+    });
+
+    await this.tenant.asegurarPerfilVeterinario(uid, { nombre, email });
+
+    await this.auditoria.registrar({
+      accion: 'veterinario.crear_credenciales',
+      actorUid: user.uid,
+      orgId: scope.orgId ?? user.orgId ?? null,
+      recurso: uid,
+      meta: { email, veterinariaId: scope.veterinariaId },
+    });
+
+    return {
+      id: miembro.membershipId ?? uid,
+      uid,
+      email,
+      orgId: miembro.orgId,
+      rol: miembro.rol,
+      role: miembro.role,
+      accountType: miembro.accountType,
+      accountId: miembro.accountId,
+      entidadId: miembro.entidadId,
+      veterinariaId: miembro.veterinariaId,
+      membershipId: miembro.membershipId,
+      planOwnerType: miembro.planOwnerType,
+      planOwnerId: miembro.planOwnerId,
+      vinculoTipo: miembro.vinculoTipo,
+      estado: miembro.estado,
+      bloqueado: false,
+    };
+  }
+
+  private async crearUsuarioAuth(email: string, password: string, nombre: string): Promise<string> {
+    try {
+      await this.firebase.auth.getUserByEmail(email);
+      throw new ConflictException(`Ya existe un usuario con el email ${email}.`);
+    } catch (e) {
+      if (e instanceof ConflictException) throw e;
+      if ((e as { code?: string }).code !== 'auth/user-not-found') throw e;
+    }
+    const created = await this.firebase.auth.createUser({
+      email,
+      password,
+      displayName: nombre,
+      emailVerified: true,
+    });
+    return created.uid;
+  }
+
+  private async resolverScopeVeterinario(
+    user: AuthUser,
+    veterinariaIdInput?: string,
+  ): Promise<ScopeVeterinario> {
+    const rol = this.rolCanonico(user);
+    let veterinariaId: string | undefined;
+    if (rol === 'admin_veterinaria') {
+      veterinariaId = user.veterinariaId ?? user.accountId;
+      if (veterinariaIdInput && veterinariaIdInput !== veterinariaId) {
+        throw new ForbiddenException('No puedes crear veterinarios en otra sede.');
+      }
+    } else {
+      veterinariaId = veterinariaIdInput;
+      if (!veterinariaId) {
+        throw new BadRequestException('veterinariaId requerido para crear el veterinario.');
+      }
+    }
+    if (!veterinariaId) {
+      throw new ForbiddenException('No hay una veterinaria en tu scope para vincular al veterinario.');
+    }
+    const vet = await this.tenant.obtenerVeterinaria(veterinariaId);
+    if (!vet) throw new NotFoundException('Veterinaria no encontrada.');
+    this.assertPuedeOperarVeterinaria(user, vet);
+    return {
+      orgId: vet.orgId ?? vet.legacyOrgId ?? undefined,
+      accountId: vet.accountId,
+      veterinariaId: vet.id,
+      entidadId: vet.entidadId ?? undefined,
+      planOwnerType: vet.planOwnerType,
+      planOwnerId: vet.planOwnerId,
+    };
   }
 
   async actualizarVeterinaria(

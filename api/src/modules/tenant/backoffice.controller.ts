@@ -6,6 +6,7 @@ import {
   ActualizarEntidadBackofficeDto,
   ActualizarVeterinariaBackofficeDto,
   CrearEntidadBackofficeDto,
+  CrearVeterinarioCredencialesDto,
   CrearVeterinariaBackofficeDto,
 } from './dto/backoffice.dto';
 import { BackofficeService } from './backoffice.service';
@@ -80,6 +81,11 @@ export class BackofficeController {
   @Get('veterinarios')
   listarVeterinarios(@CurrentUser() user: AuthUser) {
     return this.backoffice.listarVeterinarios(user);
+  }
+
+  @Post('veterinarios')
+  crearVeterinario(@Body() dto: CrearVeterinarioCredencialesDto, @CurrentUser() user: AuthUser) {
+    return this.backoffice.crearVeterinarioConCredenciales(user, dto);
   }
 
   @Patch('miembros/:id/bloqueo')

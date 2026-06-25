@@ -186,6 +186,16 @@ export const listarVeterinariosBackoffice = async (): Promise<BackofficeMiembro[
   return res.data ?? [];
 };
 
+export const crearVeterinarioCredencialesBackoffice = async (input: {
+  nombre: string;
+  email: string;
+  password: string;
+  veterinariaId?: string;
+}): Promise<BackofficeMiembro> => {
+  const res = await apiClient.post<BackofficeMiembro>('/v1/backoffice/veterinarios', input);
+  return res.data;
+};
+
 export const setBloqueoMiembroBackoffice = async (
   id: string,
   bloqueado: boolean,

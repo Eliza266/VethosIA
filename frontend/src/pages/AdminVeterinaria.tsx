@@ -6,6 +6,7 @@ import { useMe } from '../features/tenant/hooks';
 import { crearInvitacionVeterinaria, listarSolicitudesTecnicas } from '../features/tenant/api';
 import {
   actualizarVeterinariaBackoffice,
+  crearVeterinarioCredencialesBackoffice,
   listarConsumosBackoffice,
   listarVeterinariosBackoffice,
   obtenerVeterinariaBackoffice,
@@ -71,6 +72,10 @@ const AdminVeterinaria: React.FC = () => {
   const [email, setEmail] = useState('');
   const [enlace, setEnlace] = useState('');
   const [error, setError] = useState('');
+  const [nuevoVetNombre, setNuevoVetNombre] = useState('');
+  const [nuevoVetEmail, setNuevoVetEmail] = useState('');
+  const [nuevoVetPassword, setNuevoVetPassword] = useState('');
+  const [credCreado, setCredCreado] = useState('');
   const [formVeterinaria, setFormVeterinaria] = useState(veterinariaFormInicial);
   const scopeListo = Boolean(me?.orgId || me?.veterinariaId || me?.accountId);
   const puedeGestionarCatalogo = rol === 'admin_veterinaria' || rol === 'admin_entidad' || rol === 'veterinario' || rol === 'admin' || rol === 'vet' || rol === 'superadmin';
@@ -203,6 +208,24 @@ const AdminVeterinaria: React.FC = () => {
     mutationFn: (v: { id: string; bloqueado: boolean }) => setBloqueoMiembroBackoffice(v.id, v.bloqueado),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['backoffice-veterinarios'] }),
     onError: (e) => setError(getErrorMessage(e, 'No se pudo cambiar el estado del miembro.')),
+  });
+
+  const crearVetCredenciales = useMutation({
+    mutationFn: () =>
+      crearVeterinarioCredencialesBackoffice({
+        nombre: nuevoVetNombre.trim(),
+        email: nuevoVetEmail.trim(),
+        password: nuevoVetPassword,
+      }),
+    onSuccess: (m) => {
+      setCredCreado(`Veterinario ${m.email} creado. Ya puede iniciar sesión con la contraseña indicada y cambiarla desde su perfil.`);
+      setNuevoVetNombre('');
+      setNuevoVetEmail('');
+      setNuevoVetPassword('');
+      setError('');
+      qc.invalidateQueries({ queryKey: ['backoffice-veterinarios'] });
+    },
+    onError: (e) => setError(getErrorMessage(e, 'No se pudo crear el veterinario.')),
   });
 
   const invitarVeterinario = useMutation({
@@ -362,6 +385,71 @@ const AdminVeterinaria: React.FC = () => {
             </div>
           </div>
         )}
+      </Card>
+
+      <Card className="premium-card">
+        <SectionHeader
+          title="Crear veterinario con credenciales"
+          description="Da de alta un veterinario con email y contraseña temporal. Quedará vinculado a esta veterinaria y podrá cambiar su contraseña desde su perfil."
+        />
+        <div className="mt-4 grid gap-3 md:grid-cols-3">
+          <input
+            aria-label="Nombre del veterinario"
+            placeholder="Nombre completo"
+            value={nuevoVetNombre}
+            onChange={(e) => setNuevoVetNombre(e.target.value)}
+            className="min-h-10 rounded-lg border border-slate-200 px-3 text-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15"
+          />
+          <input
+            type="email"
+            aria-label="Email del nuevo veterinario"
+            placeholder="veterinario@clinica.com"
+            value={nuevoVetEmail}
+            onChange={(e) => setNuevoVetEmail(e.target.value)}
+            className="min-h-10 rounded-lg border border-slate-200 px-3 text-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15"
+          />
+          <div className="flex gap-2">
+            <input
+              aria-label="Contraseña temporal"
+              placeholder="Contraseña temporal"
+              value={nuevoVetPassword}
+              onChange={(e) => setNuevoVetPassword(e.target.value)}
+              className="min-h-10 flex-1 rounded-lg border border-slate-200 px-3 text-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15"
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              aria-label="Generar contraseña"
+              onClick={() => setNuevoVetPassword(generarPasswordTemporal())}
+            >
+              Generar
+            </Button>
+          </div>
+        </div>
+        <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <span className="text-xs text-[var(--muted)]">Mínimo 6 caracteres. Comparte la contraseña de forma segura con el veterinario.</span>
+          <Button
+            aria-label="Crear veterinario"
+            onClick={() => crearVetCredenciales.mutate()}
+            disabled={
+              demoSession ||
+              !nuevoVetNombre.trim() ||
+              !nuevoVetEmail.trim() ||
+              nuevoVetPassword.length < 6 ||
+              !me?.veterinariaId ||
+              crearVetCredenciales.isPending
+            }
+            title={demoSession ? DEMO_ACTION_HINT : undefined}
+          >
+            {crearVetCredenciales.isPending ? 'Creando...' : 'Crear veterinario'}
+          </Button>
+        </div>
+        {!me?.veterinariaId && (
+          <p className="mt-2 text-sm text-amber-700">
+            Esta cuenta aún no tiene veterinariaId V2. Crea el scope de la veterinaria antes de dar de alta veterinarios.
+          </p>
+        )}
+        {credCreado && <p role="status" className="mt-2 text-sm text-emerald-700">{credCreado}</p>}
       </Card>
 
       <section className="grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
@@ -756,6 +844,17 @@ const AdminVeterinaria: React.FC = () => {
 
 export default AdminVeterinaria;
 export { AdminVeterinaria };
+
+function generarPasswordTemporal(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+  const arr = new Uint32Array(10);
+  crypto.getRandomValues(arr);
+  let out = '';
+  for (let i = 0; i < arr.length; i += 1) {
+    out += chars[arr[i] % chars.length];
+  }
+  return `${out}#1`;
+}
 
 function campoOpcional(value: string): string | null {
   const trimmed = value.trim();

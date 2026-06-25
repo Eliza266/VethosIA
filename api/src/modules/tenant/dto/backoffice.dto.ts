@@ -145,6 +145,28 @@ export class CrearVeterinariaBackofficeDto {
   logoUrl?: string | null;
 }
 
+export class CrearVeterinarioCredencialesDto {
+  @IsString()
+  @MinLength(1)
+  @MaxLength(120)
+  nombre!: string;
+
+  @IsEmail()
+  @MaxLength(160)
+  email!: string;
+
+  @IsString()
+  @MinLength(6)
+  @MaxLength(128)
+  password!: string;
+
+  // Solo lo usan admin_entidad/superadmin para apuntar a una sede concreta.
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  veterinariaId?: string;
+}
+
 export class ActualizarVeterinariaBackofficeDto {
   @IsOptional()
   @IsString()

@@ -40,6 +40,7 @@ export type AccionAuditada =
   | 'organizacion.editar'
   | 'veterinaria.crear'
   | 'veterinaria.editar'
+  | 'veterinario.crear_credenciales'
   | 'brigada.crear'
   | 'brigada.editar'
   | 'brigada.atencion_crear'
