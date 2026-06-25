@@ -140,6 +140,14 @@ async function main(): Promise<void> {
       member: { rol: 'vet', role: 'veterinario', accountType: 'veterinaria', accountId: vetId, entidadId: entId, veterinariaId: vetId, planOwnerType: 'entidad', planOwnerId: entId, vinculoTipo: 'staff' },
       vetProfile: true,
     },
+    {
+      email: 'ximenavet@vethosia.com',
+      displayName: 'XimenaVet (vet)',
+      legacyRol: 'vet',
+      claims: { v: 2, role: 'veterinario', accountType: 'veterinaria', accountId: vetId, entidadId: entId, veterinariaId: vetId, planOwnerType: 'entidad', planOwnerId: entId, vinculoTipo: 'staff' },
+      member: { rol: 'vet', role: 'veterinario', accountType: 'veterinaria', accountId: vetId, entidadId: entId, veterinariaId: vetId, planOwnerType: 'entidad', planOwnerId: entId, vinculoTipo: 'staff' },
+      vetProfile: true,
+    },
   ];
 
   for (const u of users) {
