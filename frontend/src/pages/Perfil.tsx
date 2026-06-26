@@ -3,7 +3,7 @@ import { useAuth } from '../hooks/useAuth';
 import { db, auth, storage } from '../services/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { updatePassword } from 'firebase/auth';
-import { Phone, User, Mail, Save, CheckCircle, AlertCircle, MapPin, Building2, IdCard, MessageCircle, type LucideIcon } from 'lucide-react';
+import { Phone, User, Mail, Save, CheckCircle, AlertCircle, MapPin, Building2, IdCard, MessageCircle, Eye, EyeOff, Globe, type LucideIcon } from 'lucide-react';
 import { getErrorMessage } from '../lib/errors';
 import { getFeatureFlags } from '../lib/featureFlags';
 import { actualizarMe, obtenerMe } from '../features/tenant/api';
@@ -23,6 +23,7 @@ interface VetFields {
   telefono: string;
   whatsapp: string;
   ciudad: string;
+  pais: string;
   sede: string;
   veterinaria: string;
   matriculaProfesional: string;
@@ -30,17 +31,53 @@ interface VetFields {
 }
 
 interface VetFieldConfig {
-  field: Exclude<keyof VetFields, 'nombre' | 'foto'>;
+  field: Exclude<keyof VetFields, 'nombre' | 'foto' | 'telefono' | 'whatsapp'>;
   label: string;
   Icon: LucideIcon;
   placeholder: string;
   type: React.HTMLInputTypeAttribute;
 }
 
-const CONTACT_FIELDS: VetFieldConfig[] = [
-  { field: 'telefono', label: 'Teléfono', Icon: Phone, placeholder: '+57 300 123 4567', type: 'tel' },
-  { field: 'whatsapp', label: 'WhatsApp', Icon: MessageCircle, placeholder: '+57 300 123 4567', type: 'tel' },
+// Indicativos telefónicos frecuentes (LatAm + comunes). El número se guarda como "<indicativo> <dígitos>".
+const INDICATIVOS: { code: string; label: string }[] = [
+  { code: '+57', label: 'Colombia (+57)' },
+  { code: '+593', label: 'Ecuador (+593)' },
+  { code: '+51', label: 'Perú (+51)' },
+  { code: '+52', label: 'México (+52)' },
+  { code: '+58', label: 'Venezuela (+58)' },
+  { code: '+56', label: 'Chile (+56)' },
+  { code: '+54', label: 'Argentina (+54)' },
+  { code: '+591', label: 'Bolivia (+591)' },
+  { code: '+507', label: 'Panamá (+507)' },
+  { code: '+506', label: 'Costa Rica (+506)' },
+  { code: '+1', label: 'EE.UU./Canadá (+1)' },
+  { code: '+34', label: 'España (+34)' },
 ];
+
+const PAISES = [
+  'Colombia', 'Ecuador', 'Perú', 'México', 'Venezuela', 'Chile', 'Argentina',
+  'Bolivia', 'Panamá', 'Costa Rica', 'España', 'Estados Unidos', 'Otro',
+];
+
+const INDICATIVO_DEFAULT = '+57';
+
+function splitPhone(raw: string | null | undefined): { indicativo: string; numero: string } {
+  const v = (raw ?? '').trim();
+  if (v.startsWith('+')) {
+    const ordenados = [...INDICATIVOS].sort((a, b) => b.code.length - a.code.length);
+    for (const it of ordenados) {
+      if (v.startsWith(it.code)) {
+        return { indicativo: it.code, numero: v.slice(it.code.length).replace(/\D/g, '') };
+      }
+    }
+  }
+  return { indicativo: INDICATIVO_DEFAULT, numero: v.replace(/\D/g, '') };
+}
+
+function joinPhone(indicativo: string, numero: string): string {
+  const n = (numero ?? '').replace(/\D/g, '');
+  return n ? `${indicativo} ${n}` : '';
+}
 
 const CLINICAL_FIELDS: VetFieldConfig[] = [
   { field: 'veterinaria', label: 'Nombre de la Clínica / Veterinaria', Icon: Building2, placeholder: 'Ej. Clínica Veterinaria Amigos', type: 'text' },
@@ -57,14 +94,21 @@ const Perfil: React.FC = () => {
     telefono: '',
     whatsapp: '',
     ciudad: '',
+    pais: '',
     sede: '',
     veterinaria: '',
     matriculaProfesional: '',
     foto: '',
   });
+  const [telIndicativo, setTelIndicativo] = useState(INDICATIVO_DEFAULT);
+  const [telNumero, setTelNumero] = useState('');
+  const [waIndicativo, setWaIndicativo] = useState(INDICATIVO_DEFAULT);
+  const [waNumero, setWaNumero] = useState('');
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [nuevaContrasena, setNuevaContrasena] = useState('');
   const [confirmarContrasena, setConfirmarContrasena] = useState('');
+  const [verContrasena, setVerContrasena] = useState(false);
+  const [verConfirmar, setVerConfirmar] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -97,11 +141,18 @@ const Perfil: React.FC = () => {
             telefono: me.telefono || '',
             whatsapp: me.whatsapp || '',
             ciudad: me.ciudad || '',
+            pais: me.pais || '',
             sede: me.sede || '',
             veterinaria: me.veterinaria || '',
             matriculaProfesional: me.matriculaProfesional || '',
             foto: me.foto || '',
           });
+          const tel = splitPhone(me.telefono);
+          setTelIndicativo(tel.indicativo);
+          setTelNumero(tel.numero);
+          const wa = splitPhone(me.whatsapp);
+          setWaIndicativo(wa.indicativo);
+          setWaNumero(wa.numero);
         } else {
           const docRef = doc(db, 'veterinarios', user.uid);
           const docSnap = await getDoc(docRef);
@@ -112,17 +163,25 @@ const Perfil: React.FC = () => {
               telefono: data.telefono || '',
               whatsapp: data.whatsapp || '',
               ciudad: data.ciudad || '',
+              pais: data.pais || '',
               sede: data.sede || '',
               veterinaria: data.veterinaria || '',
               matriculaProfesional: data.matriculaProfesional || '',
               foto: data.foto || user.foto || '',
             });
+            const tel = splitPhone(data.telefono);
+            setTelIndicativo(tel.indicativo);
+            setTelNumero(tel.numero);
+            const wa = splitPhone(data.whatsapp);
+            setWaIndicativo(wa.indicativo);
+            setWaNumero(wa.numero);
           } else {
             setFields({
               nombre: user.nombre || '',
               telefono: '',
               whatsapp: '',
               ciudad: '',
+              pais: '',
               sede: '',
               veterinaria: '',
               matriculaProfesional: '',
@@ -182,9 +241,10 @@ const Perfil: React.FC = () => {
         const updatePayload = {
           nombre: fields.nombre.trim(),
           foto: currentFotoUrl,
-          telefono: fields.telefono,
-          whatsapp: fields.whatsapp,
+          telefono: joinPhone(telIndicativo, telNumero),
+          whatsapp: joinPhone(waIndicativo, waNumero),
           ciudad: fields.ciudad,
+          pais: fields.pais,
           sede: fields.sede,
           veterinaria: fields.veterinaria,
           matriculaProfesional: fields.matriculaProfesional,
@@ -336,23 +396,43 @@ const Perfil: React.FC = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
                     <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Nueva Contraseña</label>
-                    <input
-                      type="password"
-                      placeholder="Mínimo 6 caracteres"
-                      value={nuevaContrasena}
-                      onChange={(e) => setNuevaContrasena(e.target.value)}
-                      className="block w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-shadow"
-                    />
+                    <div className="relative">
+                      <input
+                        type={verContrasena ? 'text' : 'password'}
+                        placeholder="Mínimo 6 caracteres"
+                        value={nuevaContrasena}
+                        onChange={(e) => setNuevaContrasena(e.target.value)}
+                        className="block w-full px-3.5 pr-11 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-shadow"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setVerContrasena((v) => !v)}
+                        aria-label={verContrasena ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                        className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
+                      >
+                        {verContrasena ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Confirmar Nueva Contraseña</label>
-                    <input
-                      type="password"
-                      placeholder="Repite la contraseña"
-                      value={confirmarContrasena}
-                      onChange={(e) => setConfirmarContrasena(e.target.value)}
-                      className="block w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-shadow"
-                    />
+                    <div className="relative">
+                      <input
+                        type={verConfirmar ? 'text' : 'password'}
+                        placeholder="Repite la contraseña"
+                        value={confirmarContrasena}
+                        onChange={(e) => setConfirmarContrasena(e.target.value)}
+                        className="block w-full px-3.5 pr-11 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-shadow"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setVerConfirmar((v) => !v)}
+                        aria-label={verConfirmar ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                        className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
+                      >
+                        {verConfirmar ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -363,23 +443,85 @@ const Perfil: React.FC = () => {
                 <div className="border-t border-slate-100 pt-5">
                   <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Información de Contacto</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                    {CONTACT_FIELDS.map(({ field, label, Icon, placeholder, type }) => (
-                      <div key={field}>
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{label}</label>
-                        <div className="relative">
+                    {/* Teléfono: indicativo + número (solo dígitos) */}
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Teléfono</label>
+                      <div className="flex gap-2">
+                        <select
+                          value={telIndicativo}
+                          onChange={(e) => setTelIndicativo(e.target.value)}
+                          aria-label="Indicativo del país (teléfono)"
+                          className="w-28 shrink-0 px-2 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-700 bg-white focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-shadow"
+                        >
+                          {INDICATIVOS.map((it) => (
+                            <option key={it.code} value={it.code}>{it.code}</option>
+                          ))}
+                        </select>
+                        <div className="relative flex-1">
                           <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                            <Icon className="h-4 w-4" />
+                            <Phone className="h-4 w-4" />
                           </div>
                           <input
-                            type={type}
-                            placeholder={placeholder}
-                            value={fields[field]}
-                            onChange={(e) => handleChange(field as keyof VetFields, e.target.value)}
+                            type="tel"
+                            inputMode="numeric"
+                            placeholder="300 123 4567"
+                            value={telNumero}
+                            onChange={(e) => setTelNumero(e.target.value.replace(/\D/g, ''))}
                             className="block w-full pl-10 pr-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-shadow"
                           />
                         </div>
                       </div>
-                    ))}
+                    </div>
+
+                    {/* WhatsApp: indicativo + número (solo dígitos) */}
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">WhatsApp</label>
+                      <div className="flex gap-2">
+                        <select
+                          value={waIndicativo}
+                          onChange={(e) => setWaIndicativo(e.target.value)}
+                          aria-label="Indicativo del país (WhatsApp)"
+                          className="w-28 shrink-0 px-2 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-700 bg-white focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-shadow"
+                        >
+                          {INDICATIVOS.map((it) => (
+                            <option key={it.code} value={it.code}>{it.code}</option>
+                          ))}
+                        </select>
+                        <div className="relative flex-1">
+                          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                            <MessageCircle className="h-4 w-4" />
+                          </div>
+                          <input
+                            type="tel"
+                            inputMode="numeric"
+                            placeholder="300 123 4567"
+                            value={waNumero}
+                            onChange={(e) => setWaNumero(e.target.value.replace(/\D/g, ''))}
+                            className="block w-full pl-10 pr-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-shadow"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* País */}
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">País</label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                          <Globe className="h-4 w-4" />
+                        </div>
+                        <select
+                          value={fields.pais}
+                          onChange={(e) => handleChange('pais', e.target.value)}
+                          className="block w-full pl-10 pr-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 bg-white focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-shadow"
+                        >
+                          <option value="">Selecciona un país</option>
+                          {PAISES.map((p) => (
+                            <option key={p} value={p}>{p}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
                   </div>
                 </div>
 

@@ -72,6 +72,7 @@ export interface MeProfile {
   telefono: string | null;
   whatsapp: string | null;
   ciudad: string | null;
+  pais?: string | null;
   sede: string | null;
   veterinaria: string | null;
   matriculaProfesional: string | null;
@@ -85,6 +86,7 @@ export interface ActualizarPerfilInput {
   telefono?: string;
   whatsapp?: string;
   ciudad?: string;
+  pais?: string;
   sede?: string;
   veterinaria?: string;
   matriculaProfesional?: string;

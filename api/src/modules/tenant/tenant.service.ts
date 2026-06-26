@@ -114,6 +114,7 @@ export interface PerfilVeterinarioDoc {
   telefono?: string | null;
   whatsapp?: string | null;
   ciudad?: string | null;
+  pais?: string | null;
   sede?: string | null;
   veterinaria?: string | null;
   matriculaProfesional?: string | null;
@@ -426,6 +427,7 @@ export class TenantService {
       telefono: typeof data.telefono === 'string' ? data.telefono : null,
       whatsapp: typeof data.whatsapp === 'string' ? data.whatsapp : null,
       ciudad: typeof data.ciudad === 'string' ? data.ciudad : null,
+      pais: typeof data.pais === 'string' ? data.pais : null,
       sede: typeof data.sede === 'string' ? data.sede : null,
       veterinaria: typeof data.veterinaria === 'string' ? data.veterinaria : null,
       matriculaProfesional:

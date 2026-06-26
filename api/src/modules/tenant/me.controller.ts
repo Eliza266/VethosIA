@@ -31,6 +31,7 @@ export interface MeResponse {
   telefono: string | null;
   whatsapp: string | null;
   ciudad: string | null;
+  pais: string | null;
   sede: string | null;
   veterinaria: string | null;
   matriculaProfesional: string | null;
@@ -118,6 +119,7 @@ export class MeController {
       telefono: perfil.telefono ?? null,
       whatsapp: perfil.whatsapp ?? null,
       ciudad: perfil.ciudad ?? null,
+      pais: perfil.pais ?? null,
       sede: perfil.sede ?? null,
       veterinaria: perfil.veterinaria ?? null,
       matriculaProfesional: perfil.matriculaProfesional ?? null,
