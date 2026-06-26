@@ -356,6 +356,7 @@ export class BackofficeService {
     });
 
     await this.tenant.asegurarPerfilVeterinario(uid, { nombre, email });
+    await this.permitirEmailEnWhitelist(email);
 
     await this.auditoria.registrar({
       accion: 'veterinario.crear_credenciales',
@@ -383,6 +384,18 @@ export class BackofficeService {
       estado: miembro.estado,
       bloqueado: false,
     };
+  }
+
+  // El login server-side valida configuracion/acceso.emailsPermitidos. Sin esto, el veterinario
+  // recien creado recibiria 403 en /v1/me. El email se guarda en minusculas (igual que el token).
+  private async permitirEmailEnWhitelist(email: string): Promise<void> {
+    await this.firebase.firestore
+      .collection(COLLECTIONS.configuracion)
+      .doc('acceso')
+      .set(
+        { emailsPermitidos: admin.firestore.FieldValue.arrayUnion(email.toLowerCase()) },
+        { merge: true },
+      );
   }
 
   private async crearUsuarioAuth(email: string, password: string, nombre: string): Promise<string> {

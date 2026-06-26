@@ -895,6 +895,7 @@ describe('BackofficeService', () => {
     });
     expect(fs.store.get(`${COLLECTIONS.veterinarios}/newUid`)).toMatchObject({ uid: 'newUid', email: 'nuevo.vet@clinica.com' });
     expect(auth.setCustomUserClaims).toHaveBeenCalled();
+    expect(fs.store.get(`${COLLECTIONS.configuracion}/acceso`)).toBeDefined();
     expect([...fs.store.values()].some((v) => v.accion === 'veterinario.crear_credenciales')).toBe(true);
   });
 
