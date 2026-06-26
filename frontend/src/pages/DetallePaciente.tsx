@@ -36,6 +36,7 @@ import {
   Activity,
   X,
   Save,
+  Stethoscope,
 } from 'lucide-react';
 
 const parseLocalDate = (dateString: string): Date => {
@@ -317,6 +318,17 @@ const DetallePaciente: React.FC = () => {
       {/* 1. Vistas Condicionales */}
       {activeTab === 'perfil' && (
         <div className="space-y-6">
+          {/* Acción rápida: crear consulta desde el perfil del paciente */}
+          <div className="flex justify-end">
+            <Link
+              to={`/pacientes/${paciente.id}/consultas/nueva`}
+              className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:bg-accent-strong"
+            >
+              <Stethoscope className="h-4 w-4" />
+              Crear consulta
+            </Link>
+          </div>
+
           {/* Dashboard de Métricas */}
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             <div className="metric-tile p-4 flex items-start gap-3 bg-white border border-slate-100 rounded-2xl shadow-sm">
