@@ -208,6 +208,18 @@ async function main(): Promise<void> {
     );
   }
 
+  // 5) Whitelist de acceso: el login server-side valida configuracion/acceso.emailsPermitidos.
+  //    Sin esto, /v1/me responde 403 aunque el usuario tenga claims y membresía.
+  const emails = usuarios.map((u) => u.email);
+  await db
+    .collection('configuracion')
+    .doc('acceso')
+    .set(
+      { emailsPermitidos: admin.firestore.FieldValue.arrayUnion(...emails) },
+      { merge: true },
+    );
+  console.log(`[seed-pyg] whitelist actualizada (+${emails.length} correos)`);
+
   console.log('\n=== SEED PERROS Y GATOS LISTO ===');
   console.log(`Plan: ${planId} | Veterinaria: ${vetId}`);
   console.log(`Contraseña (todos): ${PASSWORD}`);

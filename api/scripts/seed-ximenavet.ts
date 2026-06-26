@@ -178,6 +178,17 @@ async function main(): Promise<void> {
     }
   }
 
+  // Whitelist de acceso: el login server-side valida configuracion/acceso.emailsPermitidos.
+  const emails = users.map((u) => u.email.toLowerCase());
+  await db
+    .collection('configuracion')
+    .doc('acceso')
+    .set(
+      { emailsPermitidos: admin.firestore.FieldValue.arrayUnion(...emails) },
+      { merge: true },
+    );
+  console.log(`[seed-ximenavet] whitelist actualizada (+${emails.length} correos)`);
+
   console.log('\n=== SEED ENTIDADVET / XIMENAVET LISTO ===');
   console.log(`Plan Básico: ${planId} | EntidadVet: ${entId} | XimenaVet: ${vetId}`);
   console.log(`Contraseña (todos): ${PASSWORD}`);
