@@ -1,5 +1,5 @@
 import React, { useCallback, useState, useRef, useEffect } from 'react';
-import { Mic, Square, AlertCircle, RefreshCw, FileText, CheckCircle } from 'lucide-react';
+import { Mic, Square, AlertCircle, RefreshCw, FileText, CheckCircle, Trash2 } from 'lucide-react';
 import { pickSupportedAudioMime } from '../lib/audioMime';
 import { getErrorMessage } from '../lib/errors';
 
@@ -133,6 +133,17 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
     }
   };
 
+  // Borra un bloque ya grabado (por si quedó mal). Si no quedan bloques, vuelve al
+  // estado inicial para poder empezar de nuevo.
+  const eliminarBloque = (index: number) => {
+    setSegments((prev) => {
+      const next = prev.filter((_, i) => i !== index);
+      if (next.length === 0) setIsBlockClosed(false);
+      return next;
+    });
+    setSegmentDurations((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const currentBlockNum = segments.length + (isRecording ? 1 : 0);
 
   return (
@@ -246,7 +257,18 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
             {segments.map((_, index) => (
               <li key={index} className="flex justify-between items-center text-xs text-slate-600 bg-slate-50 border border-slate-100 rounded-lg p-2.5">
                 <span className="font-semibold text-slate-700">Bloque {index + 1}</span>
-                <span className="font-mono text-slate-500">{formatTime(segmentDurations[index] ?? 0)}</span>
+                <div className="flex items-center gap-2.5">
+                  <span className="font-mono text-slate-500">{formatTime(segmentDurations[index] ?? 0)}</span>
+                  <button
+                    type="button"
+                    onClick={() => eliminarBloque(index)}
+                    title="Borrar este bloque"
+                    aria-label={`Borrar bloque ${index + 1}`}
+                    className="text-slate-400 hover:text-red-600 transition"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
               </li>
             ))}
           </ul>

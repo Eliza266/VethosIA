@@ -109,8 +109,8 @@ const NotificationBell: React.FC = () => {
               {(data ?? []).length === 0 ? (
                 <div style={{ color: 'var(--muted)', fontSize: 14 }}>Sin notificaciones.</div>
               ) : (
-                <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 8 }}>
-                  {(data ?? []).map((n) => (
+                <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 8, maxHeight: 'min(60vh, 360px)', overflowY: 'auto' }}>
+                  {(data ?? []).slice(0, 15).map((n) => (
                     <li
                       key={n.id}
                       onClick={() => abrirNotificacion(n)}
@@ -153,7 +153,9 @@ const NotificationBell: React.FC = () => {
                   fontWeight: 700,
                 }}
               >
-                Ver centro de notificaciones
+                {(data ?? []).length > 15
+                  ? `Ver las ${(data ?? []).length} en el centro de notificaciones`
+                  : 'Ver centro de notificaciones'}
               </Link>
             </Card>
           </div>
