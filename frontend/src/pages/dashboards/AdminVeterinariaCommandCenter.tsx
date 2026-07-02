@@ -6,6 +6,7 @@ import { BusinessOverview } from '../../features/saas/BusinessOverview';
 import { listarCitasProximas2h } from '../../features/citas/api';
 import { obtenerMetricas } from '../../features/metricas/api';
 import { usePacientes } from '../../hooks/usePacientes';
+import { useAdminVetMode } from '../../hooks/useAdminVetMode';
 import { getDashboardModulesForProfile } from '../../lib/roleNavigation';
 import type { RbacProfileLike } from '../../lib/rbac';
 import {
@@ -31,7 +32,8 @@ const AdminVeterinariaCommandCenter: React.FC<AdminVeterinariaCommandCenterProps
     queryKey: ['citas-proximas-2h'],
     queryFn: listarCitasProximas2h,
   });
-  const modules = getDashboardModulesForProfile(me ?? null);
+  const { mode } = useAdminVetMode();
+  const modules = getDashboardModulesForProfile(me ?? null, mode);
   const clinicalModules = modules.filter((module) => module.category === 'clinical' || module.category === 'operations');
   const managementModules = modules.filter((module) => module.category === 'tenant' || module.category === 'billing');
 

@@ -32,7 +32,7 @@
 ## ⚠️ Riesgos y pendientes
 | Prioridad | Tema |
 |---|---|
-| 🔴 Ya | **Redesplegar la API**: fix de `max_tokens` (SOAP de consultas largas) — confirmar que esté en producción. |
+| ✅ Hecho | **API redesplegada** (rev. `vetia-api-00015`, 27-jun): fix de `max_tokens` 8192 del SOAP YA está en producción (consulta de 30 min OK). |
 | 🟠 Pronto | Subir los commits locales a GitHub (respaldo). |
 | 🟠 Pronto | **Rotar las API keys** (estuvieron en chats). |
 | 🟡 Escala | Cola de IA **en memoria** → migrar a **Cloud Tasks** para varios vets simultáneos. |

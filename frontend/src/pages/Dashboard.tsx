@@ -2,6 +2,7 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useMe } from '../features/tenant/hooks';
+import { useAdminVetMode } from '../hooks/useAdminVetMode';
 import { normalizarRol, rolLabel } from '../lib/rbac';
 import RouteLoadingSpinner from '../components/RouteLoadingSpinner';
 import { EmptyState, PageHeader } from '../components/ui/Primitives';
@@ -27,6 +28,7 @@ const DashboardFallback: React.FC<{ rol?: string | null }> = ({ rol }) => (
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const { data: me, isLoading: meLoading } = useMe();
+  const { mode } = useAdminVetMode();
 
   if (meLoading) {
     return <RouteLoadingSpinner message="Cargando panel..." />;
@@ -38,6 +40,9 @@ const Dashboard: React.FC = () => {
     case 'veterinario':
       return <VeterinarioCommandCenter me={me ?? undefined} user={user} />;
     case 'admin_veterinaria':
+      if (mode === 'veterinario') {
+        return <VeterinarioCommandCenter me={me ?? undefined} user={user} />;
+      }
       return <AdminVeterinariaCommandCenter me={me ?? undefined} />;
     case 'admin_entidad':
       return <AdminEntidadCommandCenter me={me ?? undefined} />;

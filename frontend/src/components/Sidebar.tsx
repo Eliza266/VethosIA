@@ -3,6 +3,7 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, LogOut, PanelLeftClose, PlusCircle, User } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useMe } from '../features/tenant/hooks';
+import { useAdminVetMode } from '../hooks/useAdminVetMode';
 import { displayUserLabel } from '../lib/displayUser';
 import { getNavbarItemsForProfile } from '../lib/roleNavigation';
 import { rolLabel } from '../lib/rbac';
@@ -11,6 +12,7 @@ import { NAV_ICON, SUPERADMIN_ITEMS, getSuperAdminActiveSection, getSpeciesEmoji
 import { VET_NAVIGATION } from '../config/navigation';
 import { SidebarItem } from './ui/SidebarItem';
 import NotificationBell from './NotificationBell';
+import ModeToggle from './ModeToggle';
 
 declare global {
   interface Window {
@@ -35,6 +37,7 @@ const PATIENT_TABS = [
 export const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, onToggleCollapse, onNavigate, mobile = false }) => {
   const { firebaseUser, logout } = useAuth();
   const { data: me, isLoading: meLoading, isFetching } = useMe();
+  const { mode, setMode, isAdminVet } = useAdminVetMode();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -42,7 +45,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, onToggleCol
   const profileLoading = !!firebaseUser && !sessionMe && (meLoading || isFetching);
   const meRole = sessionMe?.role ?? sessionMe?.rol;
   const isSuperadmin = meRole === 'superadmin';
-  const isVet = meRole === 'vet' || meRole === 'veterinario';
+  const isVet = meRole === 'vet' || meRole === 'veterinario' || (meRole === 'admin_veterinaria' && mode === 'veterinario');
 
   const [currentPaciente, setCurrentPaciente] = React.useState<{ nombre: string; especie: string } | null>(
     () => (typeof window !== 'undefined' ? window.__currentPaciente ?? null : null),
@@ -57,7 +60,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, onToggleCol
   const activeSection = getSuperAdminActiveSection(location.pathname, location.search);
 
   // Items de nivel 1 (reusa RBAC). Para superadmin, secciones de plataforma.
-  const rawItems = isSuperadmin ? null : getNavbarItemsForProfile(sessionMe ?? null);
+  const rawItems = isSuperadmin ? null : getNavbarItemsForProfile(sessionMe ?? null, mode);
 
   // CTA primaria: el item "nuevo" si existe (p. ej. Nuevo paciente para vets).
   const ctaItem = rawItems?.find((i) => i.icon === 'nuevo') ?? null;
@@ -132,6 +135,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, onToggleCol
           )}
         </div>
       </div>
+
+      {/* Interruptor Administración / Veterinario (solo dueño-veterinario) */}
+      {isAdminVet && !showCollapsed && (
+        <div className="px-3 pt-3">
+          <ModeToggle mode={mode} onChange={setMode} className="w-full" />
+        </div>
+      )}
 
       {/* CTA primaria */}
       {ctaItem && (

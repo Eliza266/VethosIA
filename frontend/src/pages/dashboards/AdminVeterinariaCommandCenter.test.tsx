@@ -54,7 +54,7 @@ function renderCenter() {
     <QueryClientProvider client={qc}>
       <MemoryRouter>
         <AdminVeterinariaCommandCenter
-          me={{ uid: 'adminVet', role: 'admin_veterinaria', rol: 'admin', veterinariaId: 'vetA' } as never}
+          me={{ uid: 'adminVet', role: 'admin_veterinaria', rol: 'admin', veterinariaId: 'vetA', planOwnerId: 'adminVet' } as never}
         />
       </MemoryRouter>
     </QueryClientProvider>,
@@ -68,10 +68,10 @@ describe('AdminVeterinariaCommandCenter', () => {
     expect(await screen.findByTestId('admin-veterinaria-command-center')).toBeInTheDocument();
     expect(screen.getByText(/Operaci[oó]n de Cl[ií]nica/i)).toBeInTheDocument();
     expect(screen.getByText(/Control de sede/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/^Veterinarias$/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/^Equipo cl[ií]nico$/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/^Pacientes$/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/^Suscripci[oó]n$/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Mi veterinaria/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Equipo/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Pacientes de sede/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Plan\/Suscripci[oó]n/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/Plan, consumo y estado/i)).toBeInTheDocument();
     expect(screen.queryByText(/Vista entidad/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Soporte plataforma/i)).not.toBeInTheDocument();

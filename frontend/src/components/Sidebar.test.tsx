@@ -6,6 +6,7 @@ import Sidebar from './Sidebar';
 
 const mockUseAuth = vi.fn();
 const mockUseMe = vi.fn();
+const mockUseAdminVetMode = vi.fn();
 
 vi.mock('../hooks/useAuth', () => ({
   useAuth: () => mockUseAuth(),
@@ -13,6 +14,10 @@ vi.mock('../hooks/useAuth', () => ({
 
 vi.mock('../features/tenant/hooks', () => ({
   useMe: () => mockUseMe(),
+}));
+
+vi.mock('../hooks/useAdminVetMode', () => ({
+  useAdminVetMode: () => mockUseAdminVetMode(),
 }));
 
 function renderSidebar(initialPath = '/') {
@@ -40,6 +45,7 @@ describe('Sidebar (roles y RBAC)', () => {
   beforeEach(() => {
     mockUseAuth.mockReturnValue({ firebaseUser: { uid: 'u1' }, logout: vi.fn() });
     mockUseMe.mockReturnValue({ data: meAdmin, isLoading: false, isFetching: false });
+    mockUseAdminVetMode.mockReturnValue({ mode: 'admin', setMode: vi.fn(), isAdminVet: false });
   });
 
   it('marca de la app y navegación accesibles', () => {
@@ -93,17 +99,26 @@ describe('Sidebar (roles y RBAC)', () => {
     expect(screen.queryByRole('link', { name: /^agenda$/i })).not.toBeInTheDocument();
   });
 
-  it('admin_veterinaria ve su scope', () => {
+  it('admin_veterinaria ve su scope según el modo activo', () => {
+    // Modo admin
     mockUseMe.mockReturnValue({
       data: { ...meAdmin, rol: 'admin', role: 'admin_veterinaria', veterinariaId: 'v1', entidadId: 'e1' },
       isLoading: false,
       isFetching: false,
     });
-    renderSidebar();
+    mockUseAdminVetMode.mockReturnValue({ mode: 'admin', setMode: vi.fn(), isAdminVet: true });
+
+    const { unmount } = renderSidebar();
     expect(screen.getByText('Admin Veterinaria')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /veterinarias/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /veterinaria/i })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /pacientes/i })).not.toBeInTheDocument();
+    unmount();
+
+    // Modo veterinario
+    mockUseAdminVetMode.mockReturnValue({ mode: 'veterinario', setMode: vi.fn(), isAdminVet: true });
+    renderSidebar();
     expect(screen.getByRole('link', { name: /pacientes/i })).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /vista entidad/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /veterinaria/i })).not.toBeInTheDocument();
   });
 
   it('superadmin muestra las 9 secciones de plataforma', () => {

@@ -4,6 +4,7 @@ import { FileText, Mic, Plus, Search, Calendar, ChevronRight } from 'lucide-reac
 import { listarCitas, type Cita as CitaApi } from '../../features/citas/api';
 import { useConsultas } from '../../hooks/useConsultas';
 import { usePacientes } from '../../hooks/usePacientes';
+import { useAdminVetMode } from '../../hooks/useAdminVetMode';
 import { displayUserLabel } from '../../lib/displayUser';
 import {
   consultaDetailPath,
@@ -156,7 +157,8 @@ const VeterinarioCommandCenter: React.FC<VeterinarioCommandCenterProps> = ({ me,
   }, [fetchTodasConsultas, pacientes]);
 
   const nombre = displayUserLabel({ nombre: me?.nombre ?? user?.nombre, email: me?.email ?? user?.email });
-  const modules = getDashboardModulesForProfile(me ?? null);
+  const { mode } = useAdminVetMode();
+  const modules = getDashboardModulesForProfile(me ?? null, mode);
   const primaryModules = pickModules(modules, PRIMARY_MODULE_IDS);
   const secondaryModules = pickModules(modules, SECONDARY_MODULE_IDS);
 

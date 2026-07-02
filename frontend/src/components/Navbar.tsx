@@ -4,10 +4,12 @@ import { useAuth } from '../hooks/useAuth';
 import { useMe } from '../features/tenant/hooks';
 import { displayUserLabel } from '../lib/displayUser';
 import { getNavbarItemsForProfile } from '../lib/roleNavigation';
+import { useAdminVetMode } from '../hooks/useAdminVetMode';
 import { rolLabel } from '../lib/rbac';
 import type { NavIcon } from '../lib/rbac';
 import type { MeProfile } from '../features/tenant/api';
 import NotificationBell from './NotificationBell';
+import ModeToggle from './ModeToggle';
 import { VET_NAVIGATION } from '../config/navigation';
 import {
   LogOut,
@@ -122,11 +124,12 @@ function NavbarUserProfile({
 const Navbar: React.FC = () => {
   const { firebaseUser, logout } = useAuth();
   const { data: me, isLoading: meLoading, isFetching } = useMe();
+  const { mode, setMode, isAdminVet } = useAdminVetMode();
   const sessionMe = me?.uid === firebaseUser?.uid ? me : undefined;
   const profileLoading = !!firebaseUser && !sessionMe && (meLoading || isFetching);
   const meRole = sessionMe?.role ?? sessionMe?.rol;
   const isSuperadmin = meRole === 'superadmin';
-  const isVet = meRole === 'vet' || meRole === 'veterinario';
+  const isVet = meRole === 'vet' || meRole === 'veterinario' || (meRole === 'admin_veterinaria' && mode === 'veterinario');
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -192,7 +195,7 @@ const Navbar: React.FC = () => {
   const showSession = !!firebaseUser;
 
   // Modulos para otros roles
-  const navItems = isSuperadmin ? superAdminItems : getNavbarItemsForProfile(sessionMe ?? null);
+  const navItems = isSuperadmin ? superAdminItems : getNavbarItemsForProfile(sessionMe ?? null, mode);
 
   // Niveles para veterinario
   const matchPatient = location.pathname.match(/^\/pacientes\/([^/]+)/);
@@ -238,7 +241,10 @@ const Navbar: React.FC = () => {
 
           {/* Center: Modules (Desktop) */}
           {showSession && (
-            <div className="hidden lg:flex flex-1 items-center justify-center min-w-0 px-4">
+            <div className="hidden lg:flex flex-1 items-center justify-center gap-4 min-w-0 px-4">
+              {isAdminVet && (
+                <ModeToggle mode={mode} onChange={setMode} className="shrink-0 mr-4" />
+              )}
               {isVet ? (
                 isLevel3 ? (
                   /* LEVEL 3 */
@@ -405,7 +411,12 @@ const Navbar: React.FC = () => {
 
       {/* Mobile menu */}
       {isOpen && showSession && (
-        <div className="mx-3 mb-3 space-y-2 rounded-3xl border border-slate-200 bg-white/95 px-4 py-4 shadow-lg backdrop-blur-xl lg:hidden">
+        <div className="mx-3 mb-3 space-y-4 rounded-3xl border border-slate-200 bg-white/95 px-4 py-4 shadow-lg backdrop-blur-xl lg:hidden">
+          {isAdminVet && (
+            <div className="flex justify-center border-b border-slate-100 pb-3" data-testid="mobile-mode-toggle-container">
+              <ModeToggle mode={mode} onChange={setMode} className="w-full max-w-xs" />
+            </div>
+          )}
           {isVet ? (
             isLevel3 ? (
               <div className="space-y-1">

@@ -6,6 +6,7 @@ import Navbar from './Navbar';
 
 const mockUseAuth = vi.fn();
 const mockUseMe = vi.fn();
+const mockUseAdminVetMode = vi.fn();
 
 vi.mock('../hooks/useAuth', () => ({
   useAuth: () => mockUseAuth(),
@@ -13,6 +14,10 @@ vi.mock('../hooks/useAuth', () => ({
 
 vi.mock('../features/tenant/hooks', () => ({
   useMe: () => mockUseMe(),
+}));
+
+vi.mock('../hooks/useAdminVetMode', () => ({
+  useAdminVetMode: () => mockUseAdminVetMode(),
 }));
 
 function renderNavbar() {
@@ -53,6 +58,7 @@ describe('Navbar (roles y entidad)', () => {
       isLoading: false,
       isFetching: false,
     });
+    mockUseAdminVetMode.mockReturnValue({ mode: 'admin', setMode: vi.fn(), isAdminVet: false });
   });
 
   it('muestra email, rol y tenant desde /v1/me (no nombre genérico stale)', () => {
@@ -146,15 +152,23 @@ describe('Navbar (roles y entidad)', () => {
     adminEntidadView.unmount();
 
     mockUseMe.mockReturnValue({
-      data: { ...meAdmin, rol: 'admin_veterinaria' },
+      data: { ...meAdmin, role: 'admin_veterinaria', rol: 'admin' },
       isLoading: false,
       isFetching: false,
     });
-    renderNavbar();
+    mockUseAdminVetMode.mockReturnValue({ mode: 'admin', setMode: vi.fn(), isAdminVet: true });
+    
+    const adminVetView = renderNavbar();
     expect(screen.getByText('Admin Veterinaria')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /veterinarias/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /veterinaria/i })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /pacientes/i })).not.toBeInTheDocument();
+    adminVetView.unmount();
+
+    // Mode: veterinario
+    mockUseAdminVetMode.mockReturnValue({ mode: 'veterinario', setMode: vi.fn(), isAdminVet: true });
+    renderNavbar();
     expect(screen.getByRole('link', { name: /pacientes/i })).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /vista entidad/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /veterinaria/i })).not.toBeInTheDocument();
   });
 
   it('usa role V2 admin_veterinaria sobre rol legacy admin', () => {
@@ -171,11 +185,12 @@ describe('Navbar (roles y entidad)', () => {
       isLoading: false,
       isFetching: false,
     });
+    mockUseAdminVetMode.mockReturnValue({ mode: 'admin', setMode: vi.fn(), isAdminVet: true });
+    
     renderNavbar();
     expect(screen.getByText('Admin Veterinaria')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /veterinarias/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /pacientes/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /suscripci[o\u00f3]n/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /veterinaria/i })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /pacientes/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /vista entidad/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /soporte plataforma/i })).not.toBeInTheDocument();
   });
@@ -195,6 +210,7 @@ describe('Navbar (roles y entidad)', () => {
       isLoading: false,
       isFetching: false,
     });
+    mockUseAdminVetMode.mockReturnValue({ mode: 'admin', setMode: vi.fn(), isAdminVet: true });
 
     renderNavbar();
 

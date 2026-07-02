@@ -54,11 +54,21 @@ describe('roleNavigation', () => {
       veterinariaId: 'vetA',
       entidadId: 'entA',
     };
-    const ids = getNavbarItemsForProfile(profile).map((item) => item.id);
-
-    expect(ids).toEqual(
-      expect.arrayContaining(['dashboard', 'veterinarias', 'pacientes', 'agenda', 'vacunas']),
+    
+    // Test admin mode (default)
+    const adminIds = getNavbarItemsForProfile(profile).map((item) => item.id);
+    expect(adminIds).toEqual(
+      expect.arrayContaining(['dashboard', 'veterinarias', 'equipo-clinico', 'metricas']),
     );
+    expect(adminIds).not.toContain('pacientes');
+
+    // Test veterinario mode
+    const vetIds = getNavbarItemsForProfile(profile, 'veterinario').map((item) => item.id);
+    expect(vetIds).toEqual(
+      expect.arrayContaining(['dashboard', 'pacientes', 'agenda', 'vacunas', 'brigadas']),
+    );
+    expect(vetIds).not.toContain('veterinarias');
+
     expect(canAccessModule(profile, 'veterinarias')).toBe(true);
     expect(canAccessClinicalRoutes(profile)).toBe(true);
     expect(canAccessPath(profile, '/veterinaria')).toBe(true);
