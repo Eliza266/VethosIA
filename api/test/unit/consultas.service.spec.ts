@@ -5,6 +5,7 @@ import { ConsumoService } from '../../src/modules/saas/consumo.service';
 import { CitasService } from '../../src/modules/citas/citas.service';
 import { SuscripcionesService } from '../../src/modules/saas/suscripciones.service';
 import { ConsultaDoc } from '../../src/modules/consultas/consulta.types';
+import { DiagnosticoEstructurado } from '../../src/modules/consultas/diagnostico-estructurado';
 import { AuthUser, AuthUserV2 } from '../../src/common/auth/auth-user.interface';
 import { fakeFirebase } from './saas.fakes';
 
@@ -484,7 +485,7 @@ describe('ConsultasService.aprobar', () => {
   });
 
   it('aprobar conserva el snapshot de diagnostico estructurado', async () => {
-    const diagnosticoEstructurado = [
+    const diagnosticoEstructurado: DiagnosticoEstructurado[] = [
       {
         id: 'd1',
         nombre: 'Dermatitis alergica',

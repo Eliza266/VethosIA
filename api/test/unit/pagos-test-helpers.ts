@@ -47,7 +47,7 @@ export function seedWompiForPlanOwner(
     secretEventsSecret,
     secretIntegritySecret,
   };
-  fs.store.set(`${COLLECTIONS.pagosConfig}/${planOwnerId}`, doc);
+  fs.store.set(`${COLLECTIONS.pagosConfig}/${planOwnerId}`, doc as unknown as Record<string, unknown>);
   return merged;
 }
 

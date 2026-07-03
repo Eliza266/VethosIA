@@ -23,7 +23,7 @@ export default defineConfig([
     },
   },
   {
-    files: ['src/features/auth/hooks.tsx', 'src/hooks/useAuth.tsx'],
+    files: ['src/features/auth/hooks.tsx', 'src/hooks/useAuth.tsx', 'src/hooks/useAdminVetMode.tsx'],
     rules: {
       'react-refresh/only-export-components': 'off',
     },

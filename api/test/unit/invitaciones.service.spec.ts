@@ -313,6 +313,7 @@ describe('InvitacionesService', () => {
     const { svc, token } = await crearInvitacionConScopeV2();
     const res = await svc.aceptar(token, { uid: 'nuevoVet', email: 'vet@x.com' }, { accountId: 'account-evil' });
 
+    if (!('accountId' in res)) throw new Error('se esperaba InvitacionAceptada');
     expect(res.accountId).toBe('account-server');
   });
 
@@ -320,6 +321,7 @@ describe('InvitacionesService', () => {
     const { svc, token } = await crearInvitacionConScopeV2();
     const res = await svc.aceptar(token, { uid: 'nuevoVet', email: 'vet@x.com' }, { entidadId: 'entidad-evil' });
 
+    if (!('entidadId' in res)) throw new Error('se esperaba InvitacionAceptada');
     expect(res.entidadId).toBe('entidad-server');
   });
 
@@ -327,6 +329,7 @@ describe('InvitacionesService', () => {
     const { svc, token } = await crearInvitacionConScopeV2();
     const res = await svc.aceptar(token, { uid: 'nuevoVet', email: 'vet@x.com' }, { veterinariaId: 'veterinaria-evil' });
 
+    if (!('veterinariaId' in res)) throw new Error('se esperaba InvitacionAceptada');
     expect(res.veterinariaId).toBe('veterinaria-server');
   });
 
@@ -334,6 +337,7 @@ describe('InvitacionesService', () => {
     const { svc, token } = await crearInvitacionConScopeV2();
     const res = await svc.aceptar(token, { uid: 'nuevoVet', email: 'vet@x.com' }, { planOwnerId: 'plan-owner-evil' });
 
+    if (!('planOwnerId' in res)) throw new Error('se esperaba InvitacionAceptada');
     expect(res.planOwnerId).toBe('plan-owner-server');
   });
 

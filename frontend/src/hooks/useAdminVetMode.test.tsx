@@ -2,11 +2,12 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, act } from '@testing-library/react';
 import React from 'react';
 import { AdminVetModeProvider, useAdminVetMode } from './useAdminVetMode';
-import { useMe } from '../features/tenant/hooks';
+
+const mockUseMe = vi.fn();
 
 // Mock useMe hook
 vi.mock('../features/tenant/hooks', () => ({
-  useMe: vi.fn(),
+  useMe: () => mockUseMe(),
 }));
 
 const TestComponent: React.FC = () => {
@@ -33,7 +34,7 @@ describe('useAdminVetMode Context and Hook', () => {
 
   it('proporciona valores por defecto para admin_veterinaria', () => {
     // Mock user as admin_veterinaria
-    (useMe as any).mockReturnValue({
+    mockUseMe.mockReturnValue({
       data: { role: 'admin_veterinaria', uid: 'user1' },
       isLoading: false,
     });
@@ -49,7 +50,7 @@ describe('useAdminVetMode Context and Hook', () => {
   });
 
   it('permite cambiar el modo y lo persiste en localStorage', () => {
-    (useMe as any).mockReturnValue({
+    mockUseMe.mockReturnValue({
       data: { role: 'admin_veterinaria', uid: 'user1' },
       isLoading: false,
     });
@@ -83,7 +84,7 @@ describe('useAdminVetMode Context and Hook', () => {
   it('recupera el ultimo modo guardado en localStorage', () => {
     localStorage.setItem('vethos_admin_vet_mode', 'veterinario');
 
-    (useMe as any).mockReturnValue({
+    mockUseMe.mockReturnValue({
       data: { role: 'admin_veterinaria', uid: 'user1' },
       isLoading: false,
     });
@@ -101,7 +102,7 @@ describe('useAdminVetMode Context and Hook', () => {
   it('si el rol no es admin_veterinaria, isAdminVet es false y el modo es siempre admin', () => {
     localStorage.setItem('vethos_admin_vet_mode', 'veterinario');
 
-    (useMe as any).mockReturnValue({
+    mockUseMe.mockReturnValue({
       data: { role: 'veterinario', uid: 'user1' },
       isLoading: false,
     });

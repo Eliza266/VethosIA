@@ -165,7 +165,7 @@ export class VacunasRepository {
     const payload = {
       ...data,
       ...scope,
-      origen: 'custom',
+      origen: 'custom' as const,
       archivada: false,
       creadoEn: admin.firestore.FieldValue.serverTimestamp(),
     };
@@ -174,7 +174,7 @@ export class VacunasRepository {
       ...payload,
       id: ref.id,
       creadoEn: new Date().toISOString(),
-    } as any;
+    };
   }
 
   async actualizarCatalogo(

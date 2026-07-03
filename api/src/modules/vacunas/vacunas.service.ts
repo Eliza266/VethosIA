@@ -20,7 +20,7 @@ import {
 import { PacientesService } from '../pacientes/pacientes.service';
 import { PacienteDoc } from '../pacientes/paciente.types';
 import { stripUndefinedFields } from '../../common/utils/strip-undefined-fields';
-import { buscarVacunaCatalogo, CATALOGO_VACUNAS_BASE } from './catalogo-vacunas';
+import { buscarVacunaCatalogo, CATALOGO_VACUNAS_BASE, type VacunaCatalogoBase } from './catalogo-vacunas';
 import { NotificacionesService } from '../plataforma/notificaciones.service';
 
 export interface CrearVacunaInput {
@@ -72,8 +72,10 @@ export class VacunasService {
     return CATALOGO_VACUNAS_BASE;
   }
 
-  async catalogoCompleto(user: AuthUser): Promise<any[]> {
-    const baseMapped = this.catalogoBase().map((b) => ({ ...b, origen: 'base' }));
+  async catalogoCompleto(
+    user: AuthUser,
+  ): Promise<Array<(VacunaCatalogoBase & { origen: 'base' }) | VacunaCatalogoCustomDoc>> {
+    const baseMapped = this.catalogoBase().map((b) => ({ ...b, origen: 'base' as const }));
     const tenant = filtroTenantRuntime(user);
     const custom = await this.repo.listarCatalogoCustom(tenant);
     return [...baseMapped, ...custom];

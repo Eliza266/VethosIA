@@ -1,10 +1,11 @@
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { VacunasService } from '../../src/modules/vacunas/vacunas.service';
 import { VacunasRepository } from '../../src/modules/vacunas/vacunas.repository';
-import { calcularEstadoVacuna, VacunaDoc } from '../../src/modules/vacunas/vacuna.types';
+import { calcularEstadoVacuna, VacunaDoc, VacunaCatalogoCustomDoc } from '../../src/modules/vacunas/vacuna.types';
 import { AuthUser } from '../../src/common/auth/auth-user.interface';
 import { PacientesService } from '../../src/modules/pacientes/pacientes.service';
 import { ActualizarVacunaDto } from '../../src/modules/vacunas/dto/vacuna.dto';
+import type { RuntimeTenantFilter, RuntimeResourceScope } from '../../src/common/auth/runtime-v2';
 
 const HOY = new Date('2026-06-14T12:00:00Z');
 
@@ -66,34 +67,48 @@ class FakeRepo {
     return [...this.store.values()].filter((v) => !v.eliminadaEn);
   }
 
-  catalogStore = new Map<string, any>();
+  catalogStore = new Map<string, VacunaCatalogoCustomDoc>();
   private catalogSeq = 0;
 
-  async getCatalogoById(id: string): Promise<any> {
+  async getCatalogoById(id: string): Promise<VacunaCatalogoCustomDoc> {
     const doc = this.catalogStore.get(id);
     if (!doc) throw new NotFoundException(`Entrada de catálogo ${id} no existe.`);
     return { ...doc };
   }
 
-  async listarCatalogoCustom(tenant: any): Promise<any[]> {
+  async listarCatalogoCustom(tenant: RuntimeTenantFilter): Promise<VacunaCatalogoCustomDoc[]> {
     return [...this.catalogStore.values()].filter((item) => !item.archivada);
   }
 
-  async crearCatalogo(scope: any, data: any): Promise<any> {
+  async crearCatalogo(
+    scope: Partial<RuntimeResourceScope> & { orgId?: string; veterinarioId?: string },
+    data: Omit<VacunaCatalogoCustomDoc, 'id' | 'origen' | 'archivada' | 'creadoEn'>,
+  ): Promise<VacunaCatalogoCustomDoc> {
     const id = `c${++this.catalogSeq}`;
-    const doc = { ...data, ...scope, id, origen: 'custom', archivada: false, creadoEn: new Date().toISOString() };
+    const doc: VacunaCatalogoCustomDoc = {
+      ...data,
+      ...scope,
+      id,
+      origen: 'custom',
+      archivada: false,
+      creadoEn: new Date().toISOString(),
+    };
     this.catalogStore.set(id, doc);
     return doc;
   }
 
-  async actualizarCatalogo(id: string, scope: any, data: any): Promise<void> {
+  async actualizarCatalogo(
+    id: string,
+    scope: RuntimeTenantFilter,
+    data: Partial<Omit<VacunaCatalogoCustomDoc, 'id'>>,
+  ): Promise<void> {
     const prev = this.catalogStore.get(id);
     if (prev) {
       this.catalogStore.set(id, { ...prev, ...data });
     }
   }
 
-  async archivarCatalogo(id: string, scope: any): Promise<void> {
+  async archivarCatalogo(id: string, scope: RuntimeTenantFilter): Promise<void> {
     const prev = this.catalogStore.get(id);
     if (prev) {
       this.catalogStore.set(id, { ...prev, archivada: true });
@@ -324,7 +339,7 @@ describe('VacunasService', () => {
     const cat = await svc.catalogoCompleto(user);
     expect(cat.length).toBeGreaterThan(svc.catalogoBase().length);
     const customItem = cat.find(item => item.nombre === 'Vacuna Custom');
-    expect(customItem).toBeDefined();
+    if (!customItem) throw new Error('customItem no encontrado');
     expect(customItem.origen).toBe('custom');
   });
 
@@ -346,6 +361,6 @@ describe('VacunasService', () => {
 
     await svc.archivarEntradaCatalogo(created.id, user);
     const cat = await svc.catalogoCompleto(user);
-    expect(cat.find(item => item.id === created.id)).toBeUndefined();
+    expect(cat.find(item => 'id' in item && item.id === created.id)).toBeUndefined();
   });
 });
