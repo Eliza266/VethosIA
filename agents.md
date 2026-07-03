@@ -1,8 +1,14 @@
-# VetIA — Guía para agentes
+# Vethos AI — Guía para agentes
 
-VetIA es un SaaS de historias clínicas veterinarias (multi-tenant, PWA). Tres piezas: `frontend/`
-(React 19 + Vite, PWA), `api/` (NestJS 10, contrato `/v1`, Cloud Run) y `functions/` (Cloud
-Functions legacy). Sobre Firebase (Auth, Firestore, Storage), proyecto `vethosia-production`.
+Vethos AI (antes "VetIA") es un SaaS de historias clínicas veterinarias (multi-tenant, PWA). Tres
+piezas: `frontend/` (React 19 + Vite, PWA), `api/` (NestJS 10, contrato `/v1`, Cloud Run) y
+`functions/` (Cloud Functions legacy). Sobre Firebase (Auth, Firestore, Storage), proyecto
+`vethosia-5895b`.
+
+## Desarrollo local
+Local se trabaja **contra el proyecto real `vethosia-5895b`** (ADC de `gerencia@vethosia.com`),
+**no con emuladores** (esta máquina no tiene Java). Ver Quickstart en `README.md`. El job
+`api-emulator` de CI sí usa el Firebase Emulator Suite (corre en GitHub Actions, con Java).
 
 ## Principios no negociables
 - El frontend SOLO habla con `/v1`. Sin claves de IA en el navegador. Sin lógica de tenant en el cliente.

@@ -1,8 +1,9 @@
-# VetIA
+# Vethos AI
 
-**VetIA** es una app de historias clínicas veterinarias: el veterinario registra pacientes y
-consultas, graba el audio de la consulta, una IA lo transcribe y lo estructura en formato **SOAP**, y
-se genera la historia clínica en PDF para compartir por email o WhatsApp. Multi-clínica, con roles.
+**Vethos AI** (antes llamada "VetIA") es una app de historias clínicas veterinarias: el veterinario
+registra pacientes y consultas, graba el audio de la consulta, una IA lo transcribe y lo estructura
+en formato **SOAP**, y se genera la historia clínica en PDF para compartir por email o WhatsApp.
+Multi-clínica, con roles.
 
 Construida sobre **Firebase** (Auth, Firestore, Storage, Cloud Functions) con una **API NestJS** por
 encima (estrategia *Strangler Fig*) y un **frontend React + Vite**.
@@ -38,26 +39,36 @@ firebase.json, firestore.rules, storage.rules, firestore.indexes.json   # infra 
 .github/workflows/ci.yml   # CI (api, api-emulator, functions, frontend)
 ```
 
-## Quickstart (local con emuladores)
+## Quickstart (local, contra el proyecto real `vethosia-5895b`)
 
-Pre-requisitos: Node 20 y `firebase-tools` (`npm i -g firebase-tools`). PowerShell: encadená con `;`.
+Pre-requisitos: **Node 20+**, **Git**, **Google Cloud SDK (`gcloud`)** y **Firebase CLI**
+(`npm i -g firebase-tools`). **No hace falta Java ni emuladores** — se trabaja en local contra
+el proyecto real de pruebas. PowerShell: encadená con `;`.
 
 ```powershell
-# 1) Emuladores (terminal 1) - UI en http://localhost:4000
-firebase emulators:start --project vethosia-production
+# 1) Autenticarte en Google como gerencia@vethosia.com
+gcloud auth login
+gcloud auth application-default login      # la API la usa para leer Firestore
+gcloud config set project vethosia-5895b
+firebase login                             # misma cuenta gerencia@vethosia.com
 
-# 2) API (terminal 2)
-cd api ; copy .env.example .env ; npm install
-$env:FIRESTORE_EMULATOR_HOST="127.0.0.1:8080"; $env:FIREBASE_AUTH_EMULATOR_HOST="127.0.0.1:9099"; $env:STORAGE_EMULATOR_HOST="http://127.0.0.1:9199"; $env:GCLOUD_PROJECT="vethosia-production"
-npm run start:dev          # http://localhost:8080/v1/health
+# 2) API (terminal 1)
+cd api ; copy .env.example .env    # completar con las credenciales reales (ver Vethos-MAESTRO.md)
+npm install
+npm run start:dev          # http://localhost:8081/v1/health
 
-# 3) Frontend (terminal 3)
-cd frontend ; copy .env.example .env.local ; npm install
+# 3) Frontend (terminal 2)
+cd frontend ; copy .env.example .env.local   # completar VITE_API_BASE_URL=http://localhost:8081
+npm install
 npm run dev                # http://localhost:5173
 ```
 
+> ⛔ **No corras `firebase emulators:start`** en local (falta Java en esta máquina → error 503).
+> Se trabaja contra el proyecto real `vethosia-5895b`, sin emuladores.
+
 Pasos detallados (migración, seed, deploy a Cloud Run, troubleshooting) en el
-[RUNBOOK](./docs/RUNBOOK.md).
+[RUNBOOK](./docs/RUNBOOK.md) — algunos pasos ahí describen el flujo con emuladores de una
+etapa anterior del proyecto; para el flujo local actual, usar esta sección.
 
 ## Instalacion limpia Linux/CI
 
@@ -104,4 +115,4 @@ observabilidad en [`docs/DEPLOY.md`](./docs/DEPLOY.md).
 
 - **Frontend:** React 19, Vite, TypeScript, axios, Vitest, Playwright.
 - **API:** NestJS, firebase-admin, pdfkit, Gemini, Cloud Tasks. Desplegable en Cloud Run.
-- **Infra:** Firebase (Auth, Firestore, Storage, Functions). Proyecto `vethosia-production`.
+- **Infra:** Firebase (Auth, Firestore, Storage, Functions). Proyecto `vethosia-5895b`.
