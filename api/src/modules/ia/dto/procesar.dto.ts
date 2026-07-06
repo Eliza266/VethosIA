@@ -1,4 +1,4 @@
-import { IsOptional, IsString, MaxLength, IsArray, ArrayMaxSize } from 'class-validator';
+import { IsOptional, IsString, MaxLength, IsArray, ArrayMaxSize, IsIn } from 'class-validator';
 import { MAX_AUDIO_BASE64 } from './transcribir.dto';
 
 // body de POST /v1/consultas/:id/procesar (encola el pipeline async de IA).
@@ -23,4 +23,10 @@ export class ProcesarConsultaDto {
   @IsOptional()
   @IsString()
   mimeType?: string;
+
+  // 'agregar': la consulta ya tiene SOAP (sigue en borrador) y este audio es un bloque
+  // adicional. Ver IaJob['modo'] para el detalle de que hace el worker con esto.
+  @IsOptional()
+  @IsIn(['completo', 'agregar'])
+  modo?: 'completo' | 'agregar';
 }

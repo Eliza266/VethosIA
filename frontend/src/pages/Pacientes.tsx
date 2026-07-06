@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useTourGuide } from '../hooks/useTourGuide';
+import TourHelpButton from '../components/TourHelpButton';
 import { Link, useLocation } from 'react-router-dom';
 import { usePacientes } from '../hooks/usePacientes';
 import { listarCitas, type Cita as CitaApi } from '../features/citas/api';
@@ -33,6 +35,11 @@ const mapCitaApi = (c: CitaApi): Cita => ({
   creadoEn: new Date(),
 });
 
+const TOUR_STEPS_PACIENTES = [
+  { element: '[data-tour="pacientes-busqueda"]', popover: { title: 'Buscar pacientes', description: 'Aquí ves todos los pacientes registrados. Usa la búsqueda para encontrar uno rápido.' } },
+  { element: '[data-tour="pacientes-nuevo"]', popover: { title: 'Nuevo paciente', description: 'Este botón te permite registrar un paciente nuevo.' } },
+];
+
 const Pacientes: React.FC = () => {
   const { pacientes, loading, error } = usePacientes();
   const [searchTerm, setSearchTerm] = useState('');
@@ -42,6 +49,7 @@ const Pacientes: React.FC = () => {
   const location = useLocation();
 
   const currentTab = new URLSearchParams(location.search).get('tab') || 'listar';
+  const { replay } = useTourGuide('pacientes-lista', TOUR_STEPS_PACIENTES);
 
   const especies = [
     { value: 'todos', label: 'Todos', emoji: '🐾' },
@@ -105,6 +113,7 @@ const Pacientes: React.FC = () => {
         action={
           <Link
             to="/pacientes/nuevo"
+            data-tour="pacientes-nuevo"
             className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2.5 text-sm font-bold text-white shadow-md shadow-accent/10 hover:bg-accent-strong transition-all hover:scale-[1.01]"
           >
             <Plus className="h-4 w-4" />
@@ -208,7 +217,7 @@ const Pacientes: React.FC = () => {
         <>
           {/* Search, Filter and View toggle */}
           <div className="command-panel flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between p-4">
-            <div className="relative flex-1">
+            <div className="relative flex-1" data-tour="pacientes-busqueda">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <input
                 type="text"
@@ -377,6 +386,7 @@ const Pacientes: React.FC = () => {
           )}
         </>
       )}
+      <TourHelpButton onReplay={replay} />
     </div>
   );
 };

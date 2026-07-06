@@ -5,7 +5,7 @@ import { apiClient } from '../../lib/apiClient';
 import { getFeatureFlags } from '../../lib/featureFlags';
 import { toAppError } from '../../lib/errors';
 import { normalizeResultadoSOAP } from './soapNormalize';
-import type { ResultadoSOAP } from '../../types';
+import type { ResultadoSOAP, ExamenConsulta } from '../../types';
 
 // Capa de API de consultas. La IA (transcripcion + SOAP) va SIEMPRE por /v1 con las claves
 // server-side: NUNCA desde el navegador (eso exponia la API key de Gemini). HC y docs aun
@@ -72,16 +72,40 @@ export const transcribirAudio = async (audioBlob: Blob, audioPath?: string): Pro
 export const procesarConsultaConIA = async (
   consultaId: string,
   audioPaths: string[],
-  mimeType: string
+  mimeType: string,
+  modo?: 'completo' | 'agregar'
 ): Promise<{ estado: string }> => {
   try {
     const res = await apiClient.post<{ estado: string }>(`/v1/consultas/${consultaId}/procesar`, {
       audioPaths,
       mimeType,
+      ...(modo ? { modo } : {}),
     });
     return res.data;
   } catch (err) {
     throw toAppError(err, 'ia/procesar', 'Error al encolar el procesamiento de la consulta.');
+  }
+};
+
+// ─── EXAMENES (PDF) ────────────────────────────────────────
+/**
+ * Sube un PDF de resultados de examen y devuelve el resumen de IA ya guardado en la consulta.
+ * POST /v1/consultas/:id/examenes {nombre, pdfBase64} -> ExamenConsulta.
+ */
+export const subirExamenConsulta = async (
+  consultaId: string,
+  nombre: string,
+  pdfFile: Blob
+): Promise<ExamenConsulta> => {
+  try {
+    const pdfBase64 = await blobToBase64(pdfFile);
+    const res = await apiClient.post<ExamenConsulta>(`/v1/consultas/${consultaId}/examenes`, {
+      nombre,
+      pdfBase64,
+    });
+    return res.data;
+  } catch (err) {
+    throw toAppError(err, 'consultas/examenes', 'Error al subir el resultado del examen.');
   }
 };
 

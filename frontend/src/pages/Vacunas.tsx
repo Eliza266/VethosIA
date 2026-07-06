@@ -1,4 +1,6 @@
 import React, { useMemo, useState } from 'react';
+import { useTourGuide } from '../hooks/useTourGuide';
+import TourHelpButton from '../components/TourHelpButton';
 import { Link, useLocation } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, CheckCircle2, Filter, ListChecks, Syringe, ShieldAlert } from 'lucide-react';
@@ -32,6 +34,12 @@ const fechaCorta = (iso?: string): string => {
   return input || iso;
 };
 
+const TOUR_STEPS_VACUNAS = [
+  { element: '[data-tour="vacunas-control"]', popover: { title: 'Control de vacunas', description: 'Aquí controlas el carnet de vacunación de cada paciente y las próximas dosis pendientes.' } },
+  // TODO: El catálogo de vacunas no está expuesto directamente en esta vista de veterinario.
+  // { element: '[data-tour="vacunas-catalogo"]', popover: { title: 'Catálogo de vacunas', description: 'Este catálogo te permite registrar rápido las vacunas que aplica tu veterinaria.' } }
+];
+
 const Vacunas: React.FC = () => {
   const qc = useQueryClient();
   const location = useLocation();
@@ -42,6 +50,7 @@ const Vacunas: React.FC = () => {
   const [tipo, setTipo] = useState('');
 
   const currentTab = new URLSearchParams(location.search).get('tab') || 'control';
+  const { replay } = useTourGuide('vacunas', TOUR_STEPS_VACUNAS);
 
   const filtros = useMemo(
     () => ({
@@ -202,7 +211,7 @@ const Vacunas: React.FC = () => {
             />
           </div>
 
-          <Card padding="lg">
+          <Card padding="lg" data-tour="vacunas-control">
             <SectionHeader
               title="Control de vacunas"
               description="Filtra por estado, especie, paciente o tipo para priorizar la atención preventiva."
@@ -340,6 +349,7 @@ const Vacunas: React.FC = () => {
           </Card>
         </>
       )}
+      <TourHelpButton onReplay={replay} />
     </div>
   );
 };

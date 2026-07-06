@@ -12,6 +12,35 @@ interface AudioRecorderProps {
 const BLOQUE_MAX_MS = 20 * 60 * 1000;
 const BLOQUE_AVISO_MS = 17 * 60 * 1000;
 
+// Editable sin tocar el resto del componente: texto que el vet debe leerle al
+// propietario al iniciar la grabacion (consentimiento de tratamiento de datos).
+const TEXTO_CONSENTIMIENTO =
+  'Antes de continuar, informa al propietario: "Esta consulta se graba y la información se ' +
+  'procesa con inteligencia artificial para generar la historia clínica; al continuar aceptas ' +
+  'el tratamiento de tus datos según nuestra política de privacidad."';
+
+/** Beep corto generado por el navegador (sin archivos de audio ni internet). */
+const reproducirAvisoSonoro = (): void => {
+  try {
+    const AudioContextCtor =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioContextCtor) return;
+    const ctx = new AudioContextCtor();
+    const oscillator = ctx.createOscillator();
+    const gain = ctx.createGain();
+    oscillator.type = 'sine';
+    oscillator.frequency.value = 880;
+    gain.gain.value = 0.15;
+    oscillator.connect(gain);
+    gain.connect(ctx.destination);
+    oscillator.start();
+    oscillator.stop(ctx.currentTime + 0.3);
+  } catch {
+    // Si el navegador no soporta audio, el aviso visual ya esta en pantalla.
+  }
+};
+
 const AudioRecorder: React.FC<AudioRecorderProps> = ({
   onAudioRecorded,
   isProcessing = false,
@@ -127,6 +156,13 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
     }
   }, [seconds, isRecording, maxSeconds]);
 
+  // Beep cuando entra el aviso de "faltan 3 min" (dispara una sola vez al cruzar el umbral).
+  useEffect(() => {
+    if (isRecording && seconds === avisoSeconds) {
+      reproducirAvisoSonoro();
+    }
+  }, [seconds, isRecording, avisoSeconds]);
+
   const handleFinish = () => {
     if (segments.length > 0) {
       onAudioRecorded(segments);
@@ -192,6 +228,12 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
           <span className="text-xs font-semibold text-red-500 uppercase tracking-widest animate-pulse">
             Grabando Bloque {currentBlockNum}...
           </span>
+
+          {currentBlockNum === 1 && (
+            <div className="rounded-lg border border-[var(--border)] bg-[var(--accent-soft)] p-3 text-xs text-[var(--text)]">
+              {TEXTO_CONSENTIMIENTO}
+            </div>
+          )}
 
           {seconds >= avisoSeconds && (
             <div className="text-amber-700 bg-amber-50 border border-amber-100 rounded-lg p-2 text-xs font-semibold text-center w-full animate-pulse">

@@ -1,4 +1,16 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query, Res } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Res,
+} from '@nestjs/common';
 import { Roles } from '../../common/auth/roles.decorator';
 import type { Response } from 'express';
 import { HcService, NumeroHcResult } from './hc.service';
@@ -14,7 +26,11 @@ import { ConsultasRepository } from './consultas.repository';
 import { ProcesarConsultaDto } from '../ia/dto/procesar.dto';
 import { CurrentUser } from '../../common/auth/current-user.decorator';
 import { AuthUser } from '../../common/auth/auth-user.interface';
-import { assertAcceso } from '../../common/auth/access';
+import { assertAcceso, particionTenant } from '../../common/auth/access';
+import { StorageService } from '../storage/storage.service';
+import { SubirExamenDto } from './dto/examen.dto';
+import { ExamenConsulta } from './consulta.types';
+import { randomUUID } from 'node:crypto';
 
 @Controller('consultas')
 export class ConsultasController {
@@ -25,6 +41,7 @@ export class ConsultasController {
     private readonly email: EmailService,
     private readonly ia: IaService,
     private readonly consultas: ConsultasRepository,
+    private readonly storage: StorageService,
   ) {}
 
   @Get()
@@ -115,7 +132,15 @@ export class ConsultasController {
     assertAcceso(user, consulta);
     this.email.assertProviderConfigurado();
     const { url: pdfUrl } = await this.pdf.generar(id, user);
-    return this.email.enviarHistorial({ ...dto, pdfUrl, actorUid: user.uid, orgId: user.orgId ?? null });
+    const { buffer: pdfBuffer, filename: pdfFilename } = await this.pdf.descargar(id, user);
+    return this.email.enviarHistorial({
+      ...dto,
+      pdfUrl,
+      pdfBuffer,
+      pdfFilename,
+      actorUid: user.uid,
+      orgId: user.orgId ?? null,
+    });
   }
 
   // POST /v1/consultas/:id/procesar -> encola el pipeline async de IA (no en el contrato base,
@@ -129,6 +154,9 @@ export class ConsultasController {
   ): Promise<{ estado: 'procesando' }> {
     const consulta = await this.consultas.getById(id);
     assertAcceso(user, consulta);
+    if (dto.modo === 'agregar' && consulta.estado !== 'borrador') {
+      throw new BadRequestException('Solo se pueden agregar bloques a una consulta en borrador.');
+    }
     // gate de consumo (100% bloquea) + auditoria soap.inicio antes de encolar.
     await this.consultasSvc.prepararProcesamiento(id, user);
     await this.ia.encolarProcesamiento({
@@ -139,8 +167,40 @@ export class ConsultasController {
       audioPaths: dto.audioPaths,
       audioBase64: dto.audioBase64,
       mimeType: dto.mimeType,
+      modo: dto.modo,
     });
     return { estado: 'procesando' };
+  }
+
+  // POST /v1/consultas/:id/examenes -> sube un PDF de resultados de examen, lo resume con
+  // IA y lo agrega a la historia (no toca el SOAP). Funciona este aprobada o no la consulta.
+  @Post(':id/examenes')
+  @HttpCode(201)
+  async subirExamen(
+    @Param('id') id: string,
+    @Body() dto: SubirExamenDto,
+    @CurrentUser() user: AuthUser,
+  ): Promise<ExamenConsulta> {
+    const consulta = await this.consultas.getById(id);
+    assertAcceso(user, consulta);
+
+    const buffer = Buffer.from(dto.pdfBase64, 'base64');
+    const tenant = consulta.orgId ?? particionTenant(user, consulta);
+    const examenId = randomUUID();
+    const storagePath = `examenes/${tenant}/${id}/${examenId}.pdf`;
+    await this.storage.subirBuffer(storagePath, buffer, 'application/pdf');
+
+    const resumen = await this.ia.resumirExamenPdf(dto.pdfBase64, dto.nombre);
+    const examen: ExamenConsulta = {
+      id: examenId,
+      nombre: dto.nombre,
+      resumen,
+      storagePath,
+      subidoEn: new Date().toISOString(),
+    };
+    const examenesPrevios = consulta.examenes ?? [];
+    await this.consultas.update(id, { examenes: [...examenesPrevios, examen] });
+    return examen;
   }
 
   // POST /v1/consultas/:id/aprobar -> aprueba (solo lectura), propaga peso/talla y

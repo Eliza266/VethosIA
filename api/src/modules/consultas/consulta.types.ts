@@ -19,6 +19,14 @@ export interface ConsultaSignosVitales {
   condicionCorporal?: number | null;
 }
 
+export interface ExamenConsulta {
+  id: string;
+  nombre: string;
+  resumen: string;
+  storagePath: string;
+  subidoEn: string;
+}
+
 export interface ConsultaDoc {
   id: string;
   numeroHC?: string;
@@ -46,6 +54,8 @@ export interface ConsultaDoc {
   signosVitales?: ConsultaSignosVitales;
   soap?: ConsultaSoap;
   diagnosticoEstructurado?: DiagnosticoEstructurado[];
+  /** Resultados de examenes (PDF) subidos durante o despues de la consulta, con resumen de IA. */
+  examenes?: ExamenConsulta[];
   fechaHora?: unknown;
   creadoEn?: unknown;
   actualizadoEn?: unknown;

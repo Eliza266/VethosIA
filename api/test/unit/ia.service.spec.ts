@@ -3,6 +3,7 @@ import { IaService } from '../../src/modules/ia/ia.service';
 import { SttService } from '../../src/modules/ia/stt.service';
 import { SoapService } from '../../src/modules/ia/soap.service';
 import { StorageService } from '../../src/modules/storage/storage.service';
+import { ClaudeLlmProvider } from '../../src/modules/ia/providers/claude-llm.provider';
 import { ConsultasRepository } from '../../src/modules/consultas/consultas.repository';
 import { IaJob, IaQueue } from '../../src/modules/ia/queue/queue.interface';
 import { SoapResult } from '../../src/modules/ia/interfaces/gemini.interface';
@@ -70,7 +71,8 @@ function build(opts: {
 
   const queue = { enqueue: jest.fn(async (_j: IaJob) => undefined) } as unknown as IaQueue;
 
-  const service = new IaService(stt, soap, storage, consultas, queue);
+  const claude = { resumirDocumentoPdf: jest.fn() } as unknown as ClaudeLlmProvider;
+  const service = new IaService(stt, soap, storage, consultas, queue, claude);
   return { service, stt, soap, storage, consultas, queue, calls };
 }
 

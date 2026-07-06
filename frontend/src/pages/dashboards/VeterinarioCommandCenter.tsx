@@ -1,4 +1,6 @@
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
+import { useTourGuide } from '../../hooks/useTourGuide';
+import TourHelpButton from '../../components/TourHelpButton';
 import { Link } from 'react-router-dom';
 import { FileText, Mic, Plus, Search, Calendar, ChevronRight } from 'lucide-react';
 import { listarCitas, type Cita as CitaApi } from '../../features/citas/api';
@@ -117,6 +119,11 @@ const ConsultaRecienteRow: React.FC<{
   );
 };
 
+const TOUR_STEPS_INICIO = [
+  { element: '[data-tour="inicio-panel"]', popover: { title: 'Tu panel principal', description: 'Este es tu panel principal. Aquí ves un resumen rápido de tu día: consultas, pacientes y tu agenda.' } },
+  { element: '[data-tour="inicio-nueva-consulta"]', popover: { title: 'Nueva consulta', description: 'Desde aquí puedes iniciar una nueva consulta en un clic.' } },
+];
+
 const VeterinarioCommandCenter: React.FC<VeterinarioCommandCenterProps> = ({ me, user }) => {
   const { pacientes } = usePacientes();
   const { fetchTodasConsultas } = useConsultas();
@@ -158,6 +165,7 @@ const VeterinarioCommandCenter: React.FC<VeterinarioCommandCenterProps> = ({ me,
 
   const nombre = displayUserLabel({ nombre: me?.nombre ?? user?.nombre, email: me?.email ?? user?.email });
   const { mode } = useAdminVetMode();
+  const { replay } = useTourGuide('inicio', TOUR_STEPS_INICIO);
   const modules = getDashboardModulesForProfile(me ?? null, mode);
   const primaryModules = pickModules(modules, PRIMARY_MODULE_IDS);
   const secondaryModules = pickModules(modules, SECONDARY_MODULE_IDS);
@@ -187,7 +195,7 @@ const VeterinarioCommandCenter: React.FC<VeterinarioCommandCenterProps> = ({ me,
   }, [pacientes, searchTerm]);
 
   return (
-    <CommandCenterShell testId="veterinario-command-center">
+    <CommandCenterShell testId="veterinario-command-center" data-tour="inicio-panel">
       {/* Compact header — replaces the old green banner */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
@@ -197,6 +205,7 @@ const VeterinarioCommandCenter: React.FC<VeterinarioCommandCenterProps> = ({ me,
         <div className="flex shrink-0 flex-wrap gap-2">
           <Link
             to="/pacientes"
+            data-tour="inicio-nueva-consulta"
             className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2.5 text-sm font-bold text-white shadow-md shadow-accent/10 hover:bg-accent-strong transition-all hover:scale-[1.01]"
           >
             <Mic className="h-4 w-4" />
@@ -327,6 +336,7 @@ const VeterinarioCommandCenter: React.FC<VeterinarioCommandCenterProps> = ({ me,
           </div>
         </InsightPanel>
       </div>
+      <TourHelpButton onReplay={replay} />
     </CommandCenterShell>
   );
 };

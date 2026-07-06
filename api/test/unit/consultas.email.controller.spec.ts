@@ -30,6 +30,7 @@ describe('ConsultasController email', () => {
       email as never,
       {} as never,
       consultas as never,
+      {} as never,
     );
     const user = { uid: 'vet1', rol: 'vet', orgId: 'org1' } as AuthUser;
 

@@ -41,4 +41,43 @@ export class ClaudeLlmProvider implements LlmProvider {
       .join('\n')
       .trim();
   }
+
+  // Claude puede leer PDFs directamente (bloque de tipo 'document'). Se usa para resumir
+  // resultados de examenes; no forma parte de LlmProvider porque no todos los proveedores
+  // de fallback (Gemini/mock) necesitan soportar documentos.
+  async resumirDocumentoPdf(pdfBase64: string, prompt: string): Promise<string> {
+    if (!this.apiKey) throw new Error('ANTHROPIC_API_KEY no configurada.');
+    const { data } = await axios.post(
+      'https://api.anthropic.com/v1/messages',
+      {
+        model: this.model,
+        max_tokens: Number(process.env.ANTHROPIC_MAX_TOKENS ?? 8192),
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'document',
+                source: { type: 'base64', media_type: 'application/pdf', data: pdfBase64 },
+              },
+              { type: 'text', text: prompt },
+            ],
+          },
+        ],
+      },
+      {
+        headers: {
+          'x-api-key': this.apiKey,
+          'anthropic-version': '2023-06-01',
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+    const bloques = (data?.content ?? []) as Array<{ type?: string; text?: string }>;
+    return bloques
+      .filter((b) => b.type === 'text' && typeof b.text === 'string')
+      .map((b) => b.text)
+      .join('\n')
+      .trim();
+  }
 }

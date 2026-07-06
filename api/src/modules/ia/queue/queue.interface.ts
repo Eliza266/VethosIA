@@ -19,6 +19,11 @@ export interface IaJob {
   mimeType?: string;
   // para detectar y reintentar jobs; lo setea quien encola.
   intento?: number;
+  // 'agregar': el vet grabo un bloque MAS sobre una consulta en borrador que ya tenia SOAP.
+  // audioPaths trae SOLO el/los bloque(s) nuevo(s); se transcriben, se pegan a la
+  // transcripcion existente y se regenera el SOAP con todo el texto junto.
+  // default ('completo'): transcribe todo audioPaths desde cero (comportamiento historico).
+  modo?: 'completo' | 'agregar';
 }
 
 export interface IaQueue {

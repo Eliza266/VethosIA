@@ -15,6 +15,7 @@ import { PdfService } from '../../src/modules/consultas/pdf.service';
 import { EmailService } from '../../src/modules/email/email.service';
 import { IaService } from '../../src/modules/ia/ia.service';
 import { ConsultasRepository } from '../../src/modules/consultas/consultas.repository';
+import { StorageService } from '../../src/modules/storage/storage.service';
 import { RolesGuard } from '../../src/common/auth/roles.guard';
 import { ROLES_KEY } from '../../src/common/auth/roles.decorator';
 import { Rol } from '../../src/common/auth/auth-user.interface';
@@ -46,6 +47,7 @@ describe('POST /v1/consultas/:id/aprobar RBAC', () => {
         { provide: EmailService, useValue: {} },
         { provide: IaService, useValue: {} },
         { provide: ConsultasRepository, useValue: {} },
+        { provide: StorageService, useValue: {} },
         { provide: APP_GUARD, useClass: MockAuthGuard },
         { provide: APP_GUARD, useClass: RolesGuard },
       ],

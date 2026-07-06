@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { useTourGuide } from '../hooks/useTourGuide';
+import TourHelpButton from '../components/TourHelpButton';
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { usePacientes } from '../hooks/usePacientes';
 import { useConsultas } from '../hooks/useConsultas';
@@ -77,6 +79,12 @@ const hasManualClinicalContent = (form: ManualConsultaForm): boolean =>
     form.condicionCorporal,
   ].some((value) => value.trim().length > 0);
 
+const TOUR_STEPS_NUEVA_CONSULTA = [
+  { element: '[data-tour="nueva-consulta-mic"]', popover: { title: 'Grabar consulta', description: 'Presiona aquí para empezar a grabar la consulta. Habla con naturalidad: motivo, hallazgos, diagnóstico y plan.' } },
+  { element: '[data-tour="nueva-consulta-bloques"]', popover: { title: 'Bloques de audio', description: 'Cada bloque dura máximo 20 minutos; si necesitas más tiempo, se cierra solo y puedes seguir grabando otro bloque.' } },
+  { element: '[data-tour="nueva-consulta-info"]', popover: { title: 'IA automática', description: 'Cuando termines, la IA transcribe todo y arma automáticamente la historia clínica en formato SOAP.' } },
+];
+
 const NuevaConsulta: React.FC = () => {
   const { pacienteId } = useParams<{ pacienteId: string }>();
   const [searchParams] = useSearchParams();
@@ -87,6 +95,7 @@ const NuevaConsulta: React.FC = () => {
   const { crearConsulta, actualizarConsulta, procesarAudioConsulta, error: apiError } = useConsultas();
   const { user } = useAuth();
   const { brigadas } = useBrigadas();
+  const { replay } = useTourGuide('nueva-consulta', TOUR_STEPS_NUEVA_CONSULTA);
 
   const [paciente, setPaciente] = useState<Paciente | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -290,7 +299,7 @@ const NuevaConsulta: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2">
-          <div className="mb-3">
+          <div className="mb-3" data-tour="nueva-consulta-bloques">
             <h2 className="text-sm font-extrabold text-slate-800 flex items-center gap-2">
               Grabación de Audio
             </h2>
@@ -314,6 +323,7 @@ const NuevaConsulta: React.FC = () => {
               onAudioRecorded={handleAudioRecorded}
               isProcessing={isProcessing}
               onManualFallback={() => setManualVisible(true)}
+              data-tour="nueva-consulta-mic"
             />
           )}
 
@@ -440,7 +450,7 @@ const NuevaConsulta: React.FC = () => {
         </div>
 
         {/* Instructions Card */}
-        <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm space-y-4">
+        <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm space-y-4" data-tour="nueva-consulta-info">
           <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2 border-b border-slate-50 pb-2">
             <HelpCircle className="h-4 w-4 text-accent" />
             ¿Cómo funciona?
@@ -465,6 +475,7 @@ const NuevaConsulta: React.FC = () => {
           </ul>
         </div>
       </div>
+      <TourHelpButton onReplay={replay} />
     </div>
   );
 };

@@ -127,6 +127,14 @@ export interface ResultadoSOAP {
 }
 
 // ─── CONSULTA ──────────────────────────────────────────────
+export interface ExamenConsulta {
+  id: string;
+  nombre: string;
+  resumen: string;
+  storagePath: string;
+  subidoEn: string;
+}
+
 export interface Consulta {
   id?: string;
   numeroHC?: string;
@@ -145,6 +153,8 @@ export interface Consulta {
   transcripcion?: string;
   soap?: SOAP;
   diagnosticoEstructurado?: DiagnosticoEstructurado[];
+  /** Resultados de examenes (PDF) subidos con resumen de IA. No forma parte del SOAP. */
+  examenes?: ExamenConsulta[];
   estado: 'procesando' | 'borrador' | 'aprobada' | 'error';
   ubicacion?: {
     direccion?: string;

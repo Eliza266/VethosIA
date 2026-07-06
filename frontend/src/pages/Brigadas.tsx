@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTourGuide } from '../hooks/useTourGuide';
+import TourHelpButton from '../components/TourHelpButton';
 import { useLocation } from 'react-router-dom';
 import { Activity, AlertCircle, Calendar, CheckCircle2, ClipboardList, MapPin, Plus, Stethoscope, Users, X } from 'lucide-react';
 import { useBrigadas } from '../hooks/useBrigadas';
@@ -41,12 +43,18 @@ const ESTADO_CONFIG = {
   finalizada: { label: 'Finalizada', classes: 'bg-blue-50 text-blue-700 border-blue-200', dot: 'bg-blue-500' },
 };
 
+const TOUR_STEPS_BRIGADAS = [
+  { element: '[data-tour="brigadas-lista"]', popover: { title: 'Listado de brigadas', description: 'Las brigadas agrupan las consultas que atiendes en una jornada de campo.' } },
+  { element: '[data-tour="brigadas-activa"]', popover: { title: 'Brigada activa', description: 'Actívala antes de empezar a atender, y todas tus consultas del día quedarán asociadas automáticamente.' } },
+];
+
 const Brigadas: React.FC = () => {
   const { data: me } = useMe();
   const rol = normalizarRol(me?.role ?? me?.rol ?? null);
   const { brigadas, loading, error, crearBrigada, actualizarBrigada } = useBrigadas();
   const location = useLocation();
   const currentTab = new URLSearchParams(location.search).get('tab') || 'listar';
+  const { replay } = useTourGuide('brigadas', TOUR_STEPS_BRIGADAS);
 
   const [sedes, setSedes] = useState<BackofficeVeterinaria[]>([]);
   const [miembros, setMiembros] = useState<BackofficeMiembro[]>([]);
@@ -367,7 +375,7 @@ const Brigadas: React.FC = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
-          <div className={`${gridBrigadasClass} self-start`}>
+          <div className={`${gridBrigadasClass} self-start`} data-tour="brigadas-lista">
           {brigadas.map((brigada) => {
             const estado = ESTADO_CONFIG[brigada.estado] || ESTADO_CONFIG.planificada;
             return (
@@ -552,6 +560,7 @@ const Brigadas: React.FC = () => {
             <div className="flex flex-wrap gap-2">
               {estadoSiguiente(selected) && (
                 <button
+                  data-tour="brigadas-activa"
                   onClick={() => void handleEstado(selected, estadoSiguiente(selected) as Brigada['estado'])}
                   className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50"
                 >
@@ -597,6 +606,7 @@ const Brigadas: React.FC = () => {
       )}
       </>
       )}
+      <TourHelpButton onReplay={replay} />
     </div>
   );
 };

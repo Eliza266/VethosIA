@@ -1,4 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { useTourGuide } from '../hooks/useTourGuide';
+import TourHelpButton from '../components/TourHelpButton';
 import { useAuth } from '../hooks/useAuth';
 import { db, auth, storage } from '../services/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
@@ -86,8 +88,13 @@ const CLINICAL_FIELDS: VetFieldConfig[] = [
   { field: 'matriculaProfesional', label: 'Matrícula Profesional', Icon: IdCard, placeholder: 'Ej. 12345-COL', type: 'text' },
 ];
 
+const TOUR_STEPS_PERFIL = [
+  { element: '[data-tour="perfil-datos"]', popover: { title: 'Datos personales', description: 'Aquí puedes actualizar tus datos personales y cambiar tu contraseña.' } }
+];
+
 const Perfil: React.FC = () => {
   const { user } = useAuth();
+  const { replay } = useTourGuide('perfil', TOUR_STEPS_PERFIL);
   const queryClient = useQueryClient();
   const [fields, setFields] = useState<VetFields>({
     nombre: '',
@@ -355,7 +362,7 @@ const Perfil: React.FC = () => {
             </div>
           )}
 
-          <form onSubmit={handleSave} className="space-y-6">
+          <form onSubmit={handleSave} className="space-y-6" data-tour="perfil-datos">
             {/* Identity */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div>
@@ -564,6 +571,7 @@ const Perfil: React.FC = () => {
           </form>
         </div>
       </div>
+      <TourHelpButton onReplay={replay} />
     </div>
   );
 };

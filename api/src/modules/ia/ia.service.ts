@@ -8,6 +8,9 @@ import { IA_QUEUE, IaJob, IaQueue } from './queue/queue.interface';
 import { IaProcessor } from './queue/ia-processor';
 import { InMemoryQueueService } from './queue/in-memory-queue.service';
 import { assertAudioPathPermitido, AudioPathContext } from '../../common/storage/audio-path';
+import { ClaudeLlmProvider } from './providers/claude-llm.provider';
+
+const MARCA_CONTINUACION = '\n\n--- Continuación (nuevo bloque de grabación) ---\n\n';
 
 export interface TranscribirInput {
   audioPath?: string;
@@ -30,6 +33,7 @@ export class IaService implements IaProcessor, OnModuleInit {
     private readonly storage: StorageService,
     private readonly consultas: ConsultasRepository,
     @Inject(IA_QUEUE) private readonly queue: IaQueue,
+    private readonly claude: ClaudeLlmProvider,
   ) {}
 
   // si la cola es la in-memory, nos registramos como su procesador. Esto rompe el ciclo
@@ -64,6 +68,16 @@ export class IaService implements IaProcessor, OnModuleInit {
 
   async generarSoap(transcripcion: string): Promise<SoapResult> {
     return this.soap.generarSoap(transcripcion);
+  }
+
+  // Resumen clinico corto de un PDF de resultados de examen. Usa Claude directamente
+  // (lee el PDF nativo); no pasa por el arreglo de proveedores con fallback de generarSoap.
+  async resumirExamenPdf(pdfBase64: string, nombreExamen: string): Promise<string> {
+    const prompt =
+      `Este PDF contiene los resultados del examen "${nombreExamen}" de una mascota. ` +
+      'Resume en español, en máximo 5 líneas, los hallazgos clínicamente relevantes ' +
+      '(valores fuera de rango, diagnósticos o recomendaciones). No repitas el PDF completo.';
+    return this.claude.resumirDocumentoPdf(pdfBase64, prompt);
   }
 
   // Encola el procesamiento y marca la consulta como 'procesando'. El cliente sube el audio
@@ -112,6 +126,12 @@ export class IaService implements IaProcessor, OnModuleInit {
         transcripcion = await this.stt.transcribir(base64, mimeType);
       } else {
         throw new BadRequestException('Debes enviar audioPath, audioPaths o audioBase64.');
+      }
+
+      if (job.modo === 'agregar') {
+        const consultaActual = await this.consultas.getById(consultaId);
+        const previa = consultaActual.transcripcion?.trim();
+        transcripcion = previa ? `${previa}${MARCA_CONTINUACION}${transcripcion}` : transcripcion;
       }
 
       await this.consultas.update(consultaId, { transcripcion });

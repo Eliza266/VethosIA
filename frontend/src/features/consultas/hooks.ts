@@ -264,6 +264,59 @@ export const useConsultas = () => {
     }
   };
 
+  /**
+   * Agrega UN bloque de audio mas a una consulta que ya tiene SOAP (sigue en borrador).
+   * Solo transcribe el bloque nuevo y le pide a la IA que rehaga el SOAP con la
+   * transcripcion completa (vieja + nueva). Requiere VITE_USE_API_IA=true.
+   */
+  const agregarBloqueConsulta = async (
+    consultaId: string,
+    audioBlobs: Blob[],
+    audioUrlsPrevias: string[] = [],
+    onProgress?: (msg: string, pct: number) => void
+  ): Promise<boolean> => {
+    if (!user) {
+      console.error('[VetIA] Error: usuario no autenticado');
+      return false;
+    }
+    if (!getFeatureFlags().useApiIA) {
+      setError('Agregar bloques adicionales requiere el motor de IA nuevo (VITE_USE_API_IA).');
+      return false;
+    }
+    setError(null);
+
+    try {
+      onProgress?.('Subiendo el bloque nuevo...', 20);
+      const mimeType = audioBlobs[0]?.type || 'audio/webm';
+      const offset = audioUrlsPrevias.length;
+
+      const uploadResults = await Promise.all(
+        audioBlobs.map(async (blob, i) => {
+          const path = `audios/${user.uid}/${consultaId}-${offset + i}.webm`;
+          const uploadResult = await uploadBytes(ref(storage, path), blob);
+          const downloadUrl = await getDownloadURL(uploadResult.ref);
+          return { path, downloadUrl };
+        })
+      );
+      const audioPaths = uploadResults.map((r) => r.path);
+      const nuevasUrls = uploadResults.map((r) => r.downloadUrl);
+
+      await actualizarConsultaDoc(consultaId, {
+        estado: 'procesando',
+        audioUrls: [...audioUrlsPrevias, ...nuevasUrls],
+      });
+
+      onProgress?.('Agregando el bloque a la historia clínica...', 60);
+      await procesarConsultaConIA(consultaId, audioPaths, mimeType, 'agregar');
+      onProgress?.('¡Bloque agregado!', 100);
+      return true;
+    } catch (err) {
+      console.error('[VetIA] Error agregando bloque:', err);
+      setError(getErrorMessage(err, 'Error al agregar el nuevo bloque de audio.'));
+      return false;
+    }
+  };
+
   return {
     consultas,
     loading,
@@ -276,5 +329,6 @@ export const useConsultas = () => {
     aprobarConsulta,
     eliminarConsulta,
     procesarAudioConsulta,
+    agregarBloqueConsulta,
   };
 };

@@ -8,9 +8,17 @@ export interface EmailHistorialInput {
   nombrePropietario?: string;
   nombrePaciente?: string;
   pdfUrl: string;
+  /** Si viene, el PDF se adjunta al correo (ademas del link de descarga). */
+  pdfBuffer?: Buffer;
+  pdfFilename?: string;
   nombreVet?: string;
   actorUid?: string;
   orgId?: string | null;
+}
+
+interface AdjuntoPdf {
+  buffer: Buffer;
+  filename: string;
 }
 
 export interface EmailHistorialResult {
@@ -58,11 +66,15 @@ export class EmailService {
 
     const subject = `Historia Clínica - ${input.nombrePaciente ?? ''}`;
     const html = this.plantilla(input);
+    const adjunto =
+      input.pdfBuffer && input.pdfFilename
+        ? { buffer: input.pdfBuffer, filename: input.pdfFilename }
+        : undefined;
 
     if (this.cfg.provider === 'sendgrid' && this.cfg.sendgridApiKey) {
-      await this.enviarSendgrid(input.emailDestinatario, subject, html);
+      await this.enviarSendgrid(input.emailDestinatario, subject, html, adjunto);
     } else {
-      await this.enviarSmtp(input.emailDestinatario, subject, html);
+      await this.enviarSmtp(input.emailDestinatario, subject, html, adjunto);
     }
     return { success: true };
   }
@@ -91,14 +103,41 @@ export class EmailService {
     }
   }
 
-  private async enviarSendgrid(to: string, subject: string, html: string): Promise<void> {
+  private async enviarSendgrid(
+    to: string,
+    subject: string,
+    html: string,
+    adjunto?: AdjuntoPdf,
+  ): Promise<void> {
     // require perezoso para no exigir el paquete si no se usa SendGrid.
     const sg = await import('@sendgrid/mail');
     sg.default.setApiKey(this.cfg.sendgridApiKey as string);
-    await sg.default.send({ to, from: this.cfg.from, subject, html });
+    await sg.default.send({
+      to,
+      from: this.cfg.from,
+      subject,
+      html,
+      ...(adjunto
+        ? {
+            attachments: [
+              {
+                filename: adjunto.filename,
+                content: adjunto.buffer.toString('base64'),
+                type: 'application/pdf',
+                disposition: 'attachment',
+              },
+            ],
+          }
+        : {}),
+    });
   }
 
-  private async enviarSmtp(to: string, subject: string, html: string): Promise<void> {
+  private async enviarSmtp(
+    to: string,
+    subject: string,
+    html: string,
+    adjunto?: AdjuntoPdf,
+  ): Promise<void> {
     const transporter = this.cfg.smtp.host
       ? nodemailer.createTransport({
           host: this.cfg.smtp.host,
@@ -110,7 +149,15 @@ export class EmailService {
           service: 'gmail',
           auth: { user: this.cfg.smtp.user ?? this.cfg.from, pass: this.cfg.smtp.pass },
         });
-    await transporter.sendMail({ from: `"Vethos AI" <${this.cfg.from}>`, to, subject, html });
+    await transporter.sendMail({
+      from: `"Vethos AI" <${this.cfg.from}>`,
+      to,
+      subject,
+      html,
+      ...(adjunto
+        ? { attachments: [{ filename: adjunto.filename, content: adjunto.buffer }] }
+        : {}),
+    });
   }
 
   private assertDestinatarioValido(email: string): void {
@@ -156,12 +203,13 @@ export class EmailService {
         </div>
         <div style="padding: 30px;">
           <p>Hola <strong>${input.nombrePropietario ?? ''}</strong>,</p>
-          <p>Adjunto la historia clínica de <strong>${input.nombrePaciente ?? ''}</strong> generada por el Dr(a). <strong>${input.nombreVet ?? ''}</strong>.</p>
+          <p>Adjunto encontrará la historia clínica de <strong>${input.nombrePaciente ?? ''}</strong> generada por el Dr(a). <strong>${input.nombreVet ?? ''}</strong>.</p>
           <div style="text-align: center; margin: 30px 0;">
             <a href="${input.pdfUrl}" style="background: #072040; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px;">
               Descargar Historia Clínica
             </a>
           </div>
+          <p style="color: #666; font-size: 12px;">Si no ves el archivo adjunto, usa el botón de arriba para descargarlo.</p>
           <p style="color: #666; font-size: 12px;">Generado por Vethos AI</p>
         </div>
       </div>

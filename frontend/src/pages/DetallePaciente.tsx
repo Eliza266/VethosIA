@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTourGuide } from '../hooks/useTourGuide';
+import TourHelpButton from '../components/TourHelpButton';
 import { useParams, Link, useLocation } from 'react-router-dom';
 import { usePacientes } from '../hooks/usePacientes';
 import { useConsultas } from '../hooks/useConsultas';
@@ -46,6 +48,11 @@ const parseLocalDate = (dateString: string): Date => {
   return new Date(Number(year), Number(month) - 1, Number(day));
 };
 
+const TOUR_STEPS_PACIENTE_DETALLE = [
+  { element: '[data-tour="paciente-info"]', popover: { title: 'Información del paciente', description: 'Aquí ves toda la información del paciente: datos, historial de consultas y vacunas.' } },
+  { element: '[data-tour="paciente-nueva-consulta"]', popover: { title: 'Nueva consulta', description: 'Desde este botón puedes iniciar una consulta nueva para este paciente.' } },
+];
+
 const DetallePaciente: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
@@ -55,6 +62,7 @@ const DetallePaciente: React.FC = () => {
   const { getPaciente, pacientes, fetchPacientes, actualizarPaciente } = usePacientes();
   const { fetchConsultasPorPaciente } = useConsultas();
   const { data: me } = useMe();
+  const { replay } = useTourGuide('paciente-detalle', TOUR_STEPS_PACIENTE_DETALLE);
 
   const [paciente, setPaciente] = useState<Paciente | null>(null);
   const [consultasPaciente, setConsultasPaciente] = useState<Consulta[]>([]);
@@ -314,7 +322,7 @@ const DetallePaciente: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in" data-tour="paciente-info">
       {/* 1. Vistas Condicionales */}
       {activeTab === 'perfil' && (
         <div className="space-y-6">
@@ -322,6 +330,7 @@ const DetallePaciente: React.FC = () => {
           <div className="flex justify-end">
             <Link
               to={`/pacientes/${paciente.id}/consultas/nueva`}
+              data-tour="paciente-nueva-consulta"
               className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:bg-accent-strong"
             >
               <Stethoscope className="h-4 w-4" />
@@ -892,6 +901,7 @@ const DetallePaciente: React.FC = () => {
           </div>
         </div>
       )}
+      <TourHelpButton onReplay={replay} />
     </div>
   );
 };

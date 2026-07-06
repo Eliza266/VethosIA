@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { useTourGuide } from '../hooks/useTourGuide';
+import TourHelpButton from '../components/TourHelpButton';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useConsultas } from '../hooks/useConsultas';
 import { usePacientes } from '../hooks/usePacientes';
@@ -12,7 +14,7 @@ import type {
   MedicamentoSugerido,
 } from '../types';
 import SoapViewer from '../components/SoapViewer';
-import { ArrowLeft, AlertCircle, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, AlertCircle, AlertTriangle, Sparkles, Upload } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { getErrorMessage } from '../lib/errors';
@@ -25,7 +27,8 @@ import {
   type HistoriaClinicaPDFInput,
 } from '../features/consultas/pdf';
 import { construirUrlWhatsApp } from '../features/consultas/sharing';
-import { obtenerUrlPDF, enviarHistorialEmail } from '../features/consultas/api';
+import { obtenerUrlPDF, enviarHistorialEmail, subirExamenConsulta } from '../features/consultas/api';
+import AudioRecorder from '../components/AudioRecorder';
 import {
   PRIORIDAD_COLORS,
   PRIORIDAD_LABELS,
@@ -37,15 +40,29 @@ import PanelMedicamentos from '../features/consultas/components/PanelMedicamento
 import DiagnosticoEstructuradoPanel from '../features/consultas/components/DiagnosticoEstructuradoPanel';
 import { useToast, useConfirm } from '../components/ui/Primitives';
 
+const TOUR_STEPS_CONSULTA_DETALLE = [
+  { element: '[data-tour="consulta-soap"]', popover: { title: 'Nota SOAP', description: 'Aquí revisas la nota SOAP generada por la IA. Puedes editar cualquier campo antes de aprobarla.' } },
+  { element: '[data-tour="consulta-acciones"]', popover: { title: 'Compartir', description: 'Desde aquí generas el PDF y lo envías por correo o WhatsApp al dueño de la mascota.' } },
+  { element: '[data-tour="consulta-aprobar"]', popover: { title: 'Aprobar', description: 'Cuando todo esté correcto, presiona Aprobar para cerrar la consulta.' } },
+];
+
 const DetalleConsulta: React.FC = () => {
   const { pacienteId, consultaId } = useParams<{ pacienteId: string; consultaId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
 
   const { getPaciente } = usePacientes();
-  const { getConsulta, actualizarConsulta, aprobarConsulta, eliminarConsulta, error: apiError } = useConsultas();
+  const {
+    getConsulta,
+    actualizarConsulta,
+    aprobarConsulta,
+    eliminarConsulta,
+    agregarBloqueConsulta,
+    error: apiError,
+  } = useConsultas();
   const { toast } = useToast();
   const { confirm } = useConfirm();
+  const { replay } = useTourGuide('consulta-detalle', TOUR_STEPS_CONSULTA_DETALLE);
 
   const [consulta, setConsulta] = useState<Consulta | null>(null);
   const [paciente, setPaciente] = useState<Paciente | null>(null);
@@ -64,6 +81,13 @@ const DetalleConsulta: React.FC = () => {
   const [isSavingDatos, setIsSavingDatos] = useState(false);
   const [isSendingWhatsApp, setIsSendingWhatsApp] = useState(false);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
+
+  const [mostrarAgregarAudio, setMostrarAgregarAudio] = useState(false);
+  const [isAgregandoBloque, setIsAgregandoBloque] = useState(false);
+
+  const [examenNombre, setExamenNombre] = useState('');
+  const [examenArchivo, setExamenArchivo] = useState<File | null>(null);
+  const [isSubiendoExamen, setIsSubiendoExamen] = useState(false);
 
   useEffect(() => {
     const fetchVet = async () => {
@@ -154,6 +178,48 @@ const DetalleConsulta: React.FC = () => {
     } catch (err) {
       console.error(err);
       setError(getErrorMessage(err, 'Error al actualizar la nota SOAP.'));
+    }
+  };
+
+  const handleAgregarBloque = async (audioBlobs: Blob[]) => {
+    if (!consultaId || audioBlobs.length === 0) return;
+    setIsAgregandoBloque(true);
+    setError(null);
+    try {
+      const ok = await agregarBloqueConsulta(consultaId, audioBlobs, consulta?.audioUrls ?? []);
+      if (ok) {
+        setConsulta((prev) => (prev ? { ...prev, estado: 'procesando' } : null));
+        setMostrarAgregarAudio(false);
+        toast('Bloque agregado, actualizando la historia clínica...', 'success');
+      } else {
+        throw new Error('No se pudo agregar el bloque de audio.');
+      }
+    } catch (err) {
+      console.error(err);
+      setError(getErrorMessage(err, 'Error al agregar el bloque de audio.'));
+    } finally {
+      setIsAgregandoBloque(false);
+    }
+  };
+
+  const handleSubirExamen = async () => {
+    if (!consultaId || !examenArchivo) return;
+    setIsSubiendoExamen(true);
+    setError(null);
+    try {
+      const nombre = examenNombre.trim() || examenArchivo.name;
+      const examen = await subirExamenConsulta(consultaId, nombre, examenArchivo);
+      setConsulta((prev) =>
+        prev ? { ...prev, examenes: [...(prev.examenes ?? []), examen] } : null
+      );
+      setExamenNombre('');
+      setExamenArchivo(null);
+      toast('Resultado de examen agregado a la historia.', 'success');
+    } catch (err) {
+      console.error(err);
+      setError(getErrorMessage(err, 'Error al subir el resultado del examen.'));
+    } finally {
+      setIsSubiendoExamen(false);
     }
   };
 
@@ -430,6 +496,7 @@ const DetalleConsulta: React.FC = () => {
           </div>
 
           <ConsultaActions
+          data-tour="consulta-acciones"
           consulta={consulta}
           paciente={paciente}
           isDeleting={isDeleting}
@@ -477,6 +544,7 @@ const DetalleConsulta: React.FC = () => {
                 </div>
               )}
               <SoapViewer
+                data-tour="consulta-soap"
                 soap={consulta.soap}
                 onSave={consulta.estado === 'borrador' ? handleSaveSoap : undefined}
               />
@@ -487,10 +555,73 @@ const DetalleConsulta: React.FC = () => {
                 onChange={consulta.estado === 'borrador' ? handleSaveDiagnosticos : undefined}
               />
               <PanelMedicamentos consulta={consulta} onAddMedToPlan={handleAddMedToPlan} />
+
+              {consulta.estado === 'borrador' && (
+                <div className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-[0_14px_35px_-30px_rgba(15,23,42,0.45)]">
+                  {mostrarAgregarAudio ? (
+                    <AudioRecorder
+                      onAudioRecorded={handleAgregarBloque}
+                      isProcessing={isAgregandoBloque}
+                    />
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setMostrarAgregarAudio(true)}
+                      className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 py-3 text-sm font-bold text-slate-600 transition hover:border-accent hover:text-accent"
+                    >
+                      <Sparkles className="h-4 w-4" />
+                      Agregar más audio a esta consulta
+                    </button>
+                  )}
+                </div>
+              )}
+
+              <div className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-[0_14px_35px_-30px_rgba(15,23,42,0.45)] space-y-3">
+                <h3 className="text-sm font-extrabold text-slate-800">Exámenes complementarios</h3>
+
+                {consulta.examenes?.length ? (
+                  <ul className="space-y-2">
+                    {consulta.examenes.map((ex) => (
+                      <li key={ex.id} className="rounded-lg border border-slate-100 p-3 text-xs">
+                        <p className="font-bold text-slate-700">{ex.nombre}</p>
+                        <p className="mt-1 text-slate-500">{ex.resumen}</p>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-xs text-slate-400">Sin exámenes subidos todavía.</p>
+                )}
+
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <input
+                    type="text"
+                    value={examenNombre}
+                    onChange={(e) => setExamenNombre(e.target.value)}
+                    placeholder="Nombre del examen (opcional)"
+                    className="min-h-9 flex-1 rounded-lg border border-slate-200 px-3 text-xs outline-none focus:border-accent"
+                  />
+                  <input
+                    type="file"
+                    accept="application/pdf"
+                    onChange={(e) => setExamenArchivo(e.target.files?.[0] ?? null)}
+                    className="text-xs"
+                  />
+                  <button
+                    type="button"
+                    disabled={!examenArchivo || isSubiendoExamen}
+                    onClick={handleSubirExamen}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-2 text-xs font-bold text-white transition hover:bg-accent-strong disabled:opacity-50"
+                  >
+                    <Upload className="h-3.5 w-3.5" />
+                    {isSubiendoExamen ? 'Subiendo...' : 'Subir resultado'}
+                  </button>
+                </div>
+              </div>
             </>
           )}
         </div>
       </div>
+      <TourHelpButton onReplay={replay} />
     </div>
   );
 };

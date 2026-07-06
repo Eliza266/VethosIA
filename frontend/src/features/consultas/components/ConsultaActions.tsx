@@ -113,7 +113,13 @@ const ConsultaActions: React.FC<Props> = ({
       )}
 
       {!esAprobada && consulta.soap && puedeAprobarConsulta && (
-        <Button variant="primary" size="lg" onClick={onApprove} disabled={isApproving}>
+        <Button
+          variant="primary"
+          size="lg"
+          onClick={onApprove}
+          disabled={isApproving}
+          data-tour="consulta-aprobar"
+        >
           <CheckCircle2 className="h-5 w-5" />
           {isApproving ? 'Aprobando...' : 'Aprobar Consulta'}
         </Button>

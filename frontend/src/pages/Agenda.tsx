@@ -1,4 +1,6 @@
 import React, { useMemo, useState } from 'react';
+import { useTourGuide } from '../hooks/useTourGuide';
+import TourHelpButton from '../components/TourHelpButton';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { CalendarClock, CalendarDays, CheckCircle2, Link2, Plus, Users, X, Save, TrendingUp, AlertTriangle } from 'lucide-react';
 import { useCitas } from '../features/citas/hooks';
@@ -23,9 +25,15 @@ const ESTADO_LABEL: Record<Cita['estado'], string> = {
 const inputClasses =
   'w-full min-h-11 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3.5 py-2 text-sm text-[var(--text)] outline-none transition-all placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--accent)_18%,transparent)]';
 
+const TOUR_STEPS_AGENDA = [
+  { element: '[data-tour="agenda-calendario"]', popover: { title: 'Calendario', description: 'Aquí ves tu calendario de citas. Cambia entre vista de mes, semana o día.' } },
+  { element: '[data-tour="agenda-nueva-cita"]', popover: { title: 'Nueva cita', description: 'Haz clic en un espacio vacío para crear una cita nueva.' } },
+];
+
 const Agenda: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { replay } = useTourGuide('agenda', TOUR_STEPS_AGENDA);
   const { data, isLoading, crear, cambiarEstado, vincularPaciente } = useCitas();
   const { pacientes } = usePacientes();
 
@@ -178,7 +186,7 @@ const Agenda: React.FC = () => {
         title="Agenda Médica"
         description="Planifica citas, vincula pacientes y abre la consulta clínica."
         action={
-          <Button variant="primary" onClick={() => setIsModalOpen(true)} className="rounded-xl">
+          <Button variant="primary" onClick={() => setIsModalOpen(true)} className="rounded-xl" data-tour="agenda-nueva-cita">
             <Plus className="h-4 w-4" />
             Nueva Cita
           </Button>
@@ -333,19 +341,21 @@ const Agenda: React.FC = () => {
                   <Skeleton height={60} />
                 </div>
               ) : (
-                <React.Suspense fallback={
-                  <div className="grid gap-3">
-                    <Skeleton height={60} />
-                    <Skeleton height={60} />
-                    <Skeleton height={60} />
-                  </div>
-                }>
-                  <CalendarioCitas
-                    citas={data ?? []}
-                    onSelectCita={(cita) => setSelectedCita(cita)}
-                    onSelectSlot={handleSelectSlot}
-                  />
-                </React.Suspense>
+                <div data-tour="agenda-calendario">
+                  <React.Suspense fallback={
+                    <div className="grid gap-3">
+                      <Skeleton height={60} />
+                      <Skeleton height={60} />
+                      <Skeleton height={60} />
+                    </div>
+                  }>
+                    <CalendarioCitas
+                      citas={data ?? []}
+                      onSelectCita={(cita) => setSelectedCita(cita)}
+                      onSelectSlot={handleSelectSlot}
+                    />
+                  </React.Suspense>
+                </div>
               )}
             </div>
           ) : (
@@ -553,6 +563,7 @@ const Agenda: React.FC = () => {
         </div>
       )}
 
+      <TourHelpButton onReplay={replay} />
     </div>
   );
 };
