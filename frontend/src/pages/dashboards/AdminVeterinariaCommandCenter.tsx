@@ -1,4 +1,6 @@
 import React from 'react';
+import { useTourGuide } from '../../hooks/useTourGuide';
+import TourHelpButton from '../../components/TourHelpButton';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Activity, Calendar, ClipboardList, Users } from 'lucide-react';
@@ -22,7 +24,15 @@ interface AdminVeterinariaCommandCenterProps {
   me?: RbacProfileLike & { nombre?: string | null; organizacionNombre?: string | null };
 }
 
+const TOUR_STEPS_ADMIN_VET = [
+  { element: '[data-tour="admin-vet-panel"]', popover: { title: 'Tu panel de gerencia', description: 'Aquí ves el resumen operativo de tu veterinaria: pacientes, consultas, agenda y consumo de historias del plan, sin entrar al flujo clínico individual.' } },
+  { element: '[data-tour="admin-vet-mi-veterinaria"]', popover: { title: 'Mi veterinaria', description: 'Gestiona el perfil de tu sede, el equipo clínico (veterinarios vinculados), invitaciones nuevas y solicitudes técnicas pendientes.' } },
+  { element: '[data-tour="admin-vet-plan"]', popover: { title: 'Consumo y plan', description: 'Revisa cuántas historias clínicas ha usado tu veterinaria este período, cuántos cupos de plan tienes disponibles y el estado de tu suscripción.' } },
+  { element: '[data-tour="admin-vet-accesos"]', popover: { title: 'Accesos rápidos', description: 'Atajos directos a Agenda, Pacientes y Brigadas de tu sede, para revisar o coordinar sin perder tiempo navegando el menú.' } },
+];
+
 const AdminVeterinariaCommandCenter: React.FC<AdminVeterinariaCommandCenterProps> = ({ me }) => {
+  const { replay } = useTourGuide('admin-vet-inicio', TOUR_STEPS_ADMIN_VET);
   const { pacientes, loading } = usePacientes();
   const metricas = useQuery({
     queryKey: ['metricas-dashboard'],
@@ -38,7 +48,7 @@ const AdminVeterinariaCommandCenter: React.FC<AdminVeterinariaCommandCenterProps
   const managementModules = modules.filter((module) => module.category === 'tenant' || module.category === 'billing');
 
   return (
-    <CommandCenterShell testId="admin-veterinaria-command-center">
+    <CommandCenterShell testId="admin-veterinaria-command-center" data-tour="admin-vet-panel">
       <CommandHero
         variant="clinic"
         eyebrow="Operación de Clínica"
@@ -46,10 +56,10 @@ const AdminVeterinariaCommandCenter: React.FC<AdminVeterinariaCommandCenterProps
         description="Una vista gerencial para coordinar agenda, pacientes de la veterinaria, brigadas, invitaciones y consumo sin entrar al flujo individual como veterinario."
         action={
           <>
-            <PrimaryLink to="/veterinaria" icon={<Users className="h-4 w-4" />}>
+            <PrimaryLink to="/veterinaria" icon={<Users className="h-4 w-4" />} data-tour="admin-vet-mi-veterinaria">
               Mi veterinaria
             </PrimaryLink>
-            <PrimaryLink to="/suscripcion" icon={<Activity className="h-4 w-4" />}>
+            <PrimaryLink to="/suscripcion" icon={<Activity className="h-4 w-4" />} data-tour="admin-vet-plan">
               Consumo y plan
             </PrimaryLink>
           </>
@@ -106,7 +116,7 @@ const AdminVeterinariaCommandCenter: React.FC<AdminVeterinariaCommandCenterProps
       />
 
       <InsightPanel title="Acciones gerenciales" description="Atajos seguros para operar la sede sin acciones incompletas.">
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-3" data-tour="admin-vet-accesos">
           <Link to="/agenda" className="premium-card premium-card-hover p-4">
             <Calendar className="h-5 w-5 text-[var(--accent)]" />
             <p className="mt-3 text-sm font-black text-slate-900">Agenda de sede</p>
@@ -124,6 +134,7 @@ const AdminVeterinariaCommandCenter: React.FC<AdminVeterinariaCommandCenterProps
           </Link>
         </div>
       </InsightPanel>
+      <TourHelpButton onReplay={replay} />
     </CommandCenterShell>
   );
 };

@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useTourGuide } from '../hooks/useTourGuide';
+import TourHelpButton from '../components/TourHelpButton';
 import { Link } from 'react-router-dom';
 import { Calendar, CreditCard, Stethoscope, Users } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -53,6 +55,17 @@ const acciones = [
   },
 ];
 
+const TOUR_STEPS_ADMIN_VETERINARIA = [
+  { element: '[data-tour="admin-vet-operacion"]', popover: { title: 'Operación de clínica', description: 'Esta consola reúne la ficha de tu veterinaria, el equipo clínico, el consumo de IA y las solicitudes técnicas, cada uno en su propia sección para no mezclar acciones.' } },
+  { element: '[data-tour="admin-vet-datos"]', popover: { title: 'Datos de clínica', description: 'Edita el nombre, dirección, ciudad, teléfono y correo de contacto de tu veterinaria.' } },
+  { element: '[data-tour="admin-vet-crear-credenciales"]', popover: { title: 'Crear veterinario con credenciales', description: 'La forma más rápida de dar de alta a un veterinario: le asignas correo y contraseña temporal aquí mismo, y queda vinculado a tu veterinaria de inmediato (él puede cambiar su contraseña después desde su perfil).' } },
+  { element: '[data-tour="admin-vet-invitar"]', popover: { title: 'Invitar por enlace', description: 'Alternativa a crear credenciales: genera un enlace temporal para que el veterinario se vincule él mismo, eligiendo su propia contraseña.' } },
+  { element: '[data-tour="admin-vet-equipo"]', popover: { title: 'Equipo clínico', description: 'Lista de veterinarios vinculados a tu veterinaria. Desde aquí puedes activar o desactivar el acceso de cualquier miembro.' } },
+  { element: '[data-tour="admin-vet-consumo"]', popover: { title: 'Consumo por veterinario', description: 'Cuánto ha usado cada veterinario del cupo de historias clínicas de tu plan en el período actual.' } },
+  { element: '[data-tour="admin-vet-solicitudes"]', popover: { title: 'Solicitudes técnicas', description: 'Si una vinculación queda con algún conflicto (por ejemplo, un correo ya registrado en otra cuenta), aparece aquí para que el equipo técnico de Vethos la resuelva.' } },
+  { element: '[data-tour="admin-vet-catalogo"]', popover: { title: 'Catálogo de vacunas', description: 'Agrega vacunas propias de tu clínica, además de las vacunas base que trae el sistema (esas son de solo lectura).' } },
+];
+
 const veterinariaFormInicial = {
   nombre: '',
   direccion: '',
@@ -64,6 +77,7 @@ const veterinariaFormInicial = {
 };
 
 const AdminVeterinaria: React.FC = () => {
+  const { replay } = useTourGuide('admin-vet-mi-veterinaria', TOUR_STEPS_ADMIN_VETERINARIA);
   const { data: me } = useMe();
   const qc = useQueryClient();
   const accionesVisibles = acciones.filter((accion) => accion.to !== '/suscripcion' || puedeVerSuscripcion(me ?? null));
@@ -293,7 +307,7 @@ const AdminVeterinaria: React.FC = () => {
         <BusinessOverview rol={rol} profile={me ?? null} />
       </section>
 
-      <Card className="premium-card">
+      <Card className="premium-card" data-tour="admin-vet-operacion">
         <SectionHeader
           title="Operación de clínica"
           description="Ficha, equipo, consumo e invitaciones quedan separados para administrar la sede sin mezclar acciones."
@@ -313,7 +327,7 @@ const AdminVeterinaria: React.FC = () => {
         </div>
       </Card>
 
-      <Card className="premium-card">
+      <Card className="premium-card" data-tour="admin-vet-datos">
         <SectionHeader
           title="Datos de clínica"
           description="Información básica de la veterinaria asociada a tu cuenta."
@@ -387,7 +401,7 @@ const AdminVeterinaria: React.FC = () => {
         )}
       </Card>
 
-      <Card className="premium-card">
+      <Card className="premium-card" data-tour="admin-vet-crear-credenciales">
         <SectionHeader
           title="Crear veterinario con credenciales"
           description="Da de alta un veterinario con email y contraseña temporal. Quedará vinculado a esta veterinaria y podrá cambiar su contraseña desde su perfil."
@@ -453,7 +467,7 @@ const AdminVeterinaria: React.FC = () => {
       </Card>
 
       <section className="grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
-      <Card className="premium-card">
+      <Card className="premium-card" data-tour="admin-vet-invitar">
         <SectionHeader
           title="Invitar veterinario a la clínica"
           description="Genera un enlace temporal para vincular un veterinario operativo solo a esta veterinaria."
@@ -490,7 +504,7 @@ const AdminVeterinaria: React.FC = () => {
         )}
       </Card>
 
-      <Card className="premium-card">
+      <Card className="premium-card" data-tour="admin-vet-equipo">
         <SectionHeader
           title="Equipo clínico"
           description="Miembros visibles dentro de esta veterinaria y acciones seguras de activación."
@@ -533,7 +547,7 @@ const AdminVeterinaria: React.FC = () => {
       </section>
 
       <section className="grid gap-5 xl:grid-cols-[1fr_0.8fr]">
-      <Card className="premium-card">
+      <Card className="premium-card" data-tour="admin-vet-consumo">
         <SectionHeader
           title="Consumo por veterinario"
           description="Uso de IA dentro del alcance de esta veterinaria."
@@ -568,7 +582,7 @@ const AdminVeterinaria: React.FC = () => {
         </ul>
       </Card>
 
-      <Card className="premium-card">
+      <Card className="premium-card" data-tour="admin-vet-solicitudes">
         <SectionHeader
           title="Solicitudes técnicas"
           description="Vinculaciones con conflicto quedan visibles para seguimiento mientras Área Técnica las resuelve."
@@ -597,7 +611,7 @@ const AdminVeterinaria: React.FC = () => {
       </Card>
       </section>
 
-      <Card className="premium-card">
+      <Card className="premium-card" data-tour="admin-vet-catalogo">
         <SectionHeader
           title="Catálogo de vacunas personalizado"
           description="Administra el catálogo de vacunas custom de tu clínica. Las vacunas base provistas por el sistema son de sólo lectura."
@@ -838,6 +852,7 @@ const AdminVeterinaria: React.FC = () => {
           );
         })}
       </section>
+      <TourHelpButton onReplay={replay} />
     </div>
   );
 };

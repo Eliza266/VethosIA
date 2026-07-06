@@ -214,9 +214,11 @@ export const PrimaryLink: React.FC<{
   to: string;
   children: React.ReactNode;
   icon?: React.ReactNode;
-}> = ({ to, children, icon }) => (
+  'data-tour'?: string;
+}> = ({ to, children, icon, 'data-tour': dataTour }) => (
   <Link
     to={to}
+    data-tour={dataTour}
     className="inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--accent)] px-4 py-2.5 text-sm font-black text-[var(--accent-contrast)] shadow-[var(--shadow-accent)] transition-all hover:brightness-95"
   >
     {icon}
