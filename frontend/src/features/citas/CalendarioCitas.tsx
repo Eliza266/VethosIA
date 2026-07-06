@@ -1,5 +1,5 @@
-import React from 'react';
-import { Calendar, dateFnsLocalizer, Views } from 'react-big-calendar';
+import React, { useState } from 'react';
+import { Calendar, dateFnsLocalizer, Views, type View } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { es } from 'date-fns/locale/es';
 import type { Cita } from './api';
@@ -52,6 +52,12 @@ export const CalendarioCitas: React.FC<CalendarioCitasProps> = ({
   onSelectCita,
   onSelectSlot,
 }) => {
+  // En pantallas angostas, 7 columnas (vista Semana) quedan ilegibles: arrancamos en
+  // vista Dia. El vet sigue pudiendo cambiar de vista manualmente desde la barra.
+  const [view, setView] = useState<View>(() =>
+    typeof window !== 'undefined' && window.innerWidth < 768 ? Views.DAY : Views.WEEK
+  );
+
   const events: CalendarEvent[] = citas.map((cita) => {
     const startDate = new Date(cita.fecha);
     return {
@@ -97,22 +103,25 @@ export const CalendarioCitas: React.FC<CalendarioCitasProps> = ({
   };
 
   return (
-    <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
-      <Calendar
-        localizer={localizer}
-        events={events}
-        startAccessor="start"
-        endAccessor="end"
-        style={{ height: '72vh' }}
-        views={[Views.MONTH, Views.WEEK, Views.DAY, Views.AGENDA]}
-        defaultView={Views.WEEK}
-        messages={messages}
-        culture="es"
-        selectable={true}
-        onSelectEvent={(event) => onSelectCita(event.resource)}
-        onSelectSlot={(slotInfo) => onSelectSlot(slotInfo.start)}
-        eventPropGetter={eventPropGetter}
-      />
+    <div className="bg-white p-2 sm:p-4 rounded-2xl border border-slate-100 shadow-sm">
+      <div className="overflow-x-auto">
+        <Calendar
+          localizer={localizer}
+          events={events}
+          startAccessor="start"
+          endAccessor="end"
+          style={{ height: '72vh', minWidth: view === Views.DAY ? undefined : 640 }}
+          views={[Views.MONTH, Views.WEEK, Views.DAY, Views.AGENDA]}
+          view={view}
+          onView={setView}
+          messages={messages}
+          culture="es"
+          selectable={true}
+          onSelectEvent={(event) => onSelectCita(event.resource)}
+          onSelectSlot={(slotInfo) => onSelectSlot(slotInfo.start)}
+          eventPropGetter={eventPropGetter}
+        />
+      </div>
     </div>
   );
 };

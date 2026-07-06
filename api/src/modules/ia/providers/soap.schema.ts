@@ -15,6 +15,24 @@ const numOrNull = z.preprocess((v) => {
 const strDef = (def = '') =>
   z.preprocess((v) => (typeof v === 'string' ? v : v == null ? def : String(v)), z.string());
 
+// Para datos opcionales detectados (paciente/propietario): null si no vino o vino vacio,
+// a diferencia de strDef que rellena con '' (aqui '' significa "no detectado").
+const strNullable = z.preprocess(
+  (v) => (typeof v === 'string' && v.trim() ? v.trim() : null),
+  z.string().nullable(),
+);
+
+export const datosPacienteSchema = z.object({
+  nombre: strNullable,
+  especie: strNullable,
+  raza: strNullable,
+});
+
+export const datosPropietarioSchema = z.object({
+  nombre: strNullable,
+  telefono: strNullable,
+});
+
 export const signosVitalesSchema = z.object({
   peso: numOrNull,
   temperatura: numOrNull,
@@ -56,6 +74,14 @@ export const soapSchema = z.object({
   medicamentosSugeridos: z.preprocess(
     (v) => (Array.isArray(v) ? v : []),
     z.array(medicamentoSchema),
+  ),
+  datosPaciente: z.preprocess(
+    (v) => (v && typeof v === 'object' ? v : {}),
+    datosPacienteSchema,
+  ),
+  datosPropietario: z.preprocess(
+    (v) => (v && typeof v === 'object' ? v : {}),
+    datosPropietarioSchema,
   ),
 });
 

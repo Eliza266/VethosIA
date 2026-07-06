@@ -95,3 +95,13 @@ export const eliminarPaciente = async (id: string): Promise<void> => {
   // soft delete legacy: marcamos deletedAt en el doc.
   await updateDoc(doc(db, 'pacientes', id), { deletedAt: new Date() } as Partial<Paciente>);
 };
+
+// Consulta rapida (Opcion B): mueve una consulta (creada con paciente placeholder) a un
+// paciente ya existente y borra el placeholder. Solo existe via API (no hay equivalente
+// legacy directo a Firestore).
+export const vincularConsultaAPaciente = async (
+  pacienteId: string,
+  consultaId: string
+): Promise<void> => {
+  await apiClient.patch(`/v1/pacientes/${pacienteId}/vincular-consulta`, { consultaId });
+};

@@ -5,7 +5,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { usePacientes } from '../hooks/usePacientes';
 import { listarCitas, type Cita as CitaApi } from '../features/citas/api';
 import PacienteCard from '../components/PacienteCard';
-import { Search, Plus, Filter, AlertCircle, LayoutGrid, List, Users, Scale, Activity } from 'lucide-react';
+import { Search, Plus, Filter, AlertCircle, LayoutGrid, List, Users, Scale, Activity, Mic } from 'lucide-react';
 import type { Cita } from '../types';
 import { KpiCard, Card, SectionHeader, PageHeader } from '../components/ui/Primitives';
 
@@ -41,7 +41,10 @@ const TOUR_STEPS_PACIENTES = [
 ];
 
 const Pacientes: React.FC = () => {
-  const { pacientes, loading, error } = usePacientes();
+  const { pacientes: pacientesConPlaceholders, loading, error } = usePacientes();
+  // Los placeholders de "consulta rapida" son temporales (se confirman o se descartan desde
+  // DetalleConsulta); no deben aparecer como pacientes reales en el listado.
+  const pacientes = pacientesConPlaceholders.filter((p) => !p.esPlaceholder);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedEspecie, setSelectedEspecie] = useState<string>('todos');
   const [viewMode, setViewMode] = useState<'card' | 'list'>('card');
@@ -111,14 +114,25 @@ const Pacientes: React.FC = () => {
         title="Pacientes"
         description="Gestiona los expedientes clínicos de todas las mascotas registradas."
         action={
-          <Link
-            to="/pacientes/nuevo"
-            data-tour="pacientes-nuevo"
-            className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2.5 text-sm font-bold text-white shadow-md shadow-accent/10 hover:bg-accent-strong transition-all hover:scale-[1.01]"
-          >
-            <Plus className="h-4 w-4" />
-            Nuevo Paciente
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            <Link
+              to="/consultas/nueva-rapida"
+              data-tour="pacientes-consulta-rapida"
+              title="Empieza a grabar sin elegir mascota; la IA detecta los datos en el audio."
+              className="inline-flex items-center gap-1.5 rounded-xl border border-accent/30 bg-white px-4 py-2.5 text-sm font-bold text-accent shadow-sm hover:bg-accent/5 transition-all hover:scale-[1.01]"
+            >
+              <Mic className="h-4 w-4" />
+              Consulta rápida
+            </Link>
+            <Link
+              to="/pacientes/nuevo"
+              data-tour="pacientes-nuevo"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2.5 text-sm font-bold text-white shadow-md shadow-accent/10 hover:bg-accent-strong transition-all hover:scale-[1.01]"
+            >
+              <Plus className="h-4 w-4" />
+              Nuevo Paciente
+            </Link>
+          </div>
         }
       />
 

@@ -11,6 +11,7 @@ import {
 } from '../../common/auth/access';
 import { CrearPacienteDto, ActualizarPacienteDto } from './dto/paciente.dto';
 import { AuditoriaService } from '../plataforma/auditoria.service';
+import { ConsultasRepository } from '../consultas/consultas.repository';
 
 // Logica de negocio de pacientes: aislamiento por tenant, id legible y soft delete.
 // Regla: un paciente eliminado (deletedAt) NO aparece en listados ni es accesible/
@@ -20,6 +21,7 @@ export class PacientesService {
   constructor(
     private readonly repo: PacientesRepository,
     private readonly auditoria: AuditoriaService,
+    private readonly consultasRepo: ConsultasRepository,
   ) {}
 
   async crear(dto: CrearPacienteDto, user: AuthUser): Promise<PacienteDoc> {
@@ -72,6 +74,43 @@ export class PacientesService {
       recurso: id,
     });
     return this.obtener(id, user);
+  }
+
+  // Consulta rapida (Opcion B): el vet grabo sin elegir paciente, la IA detecto que en
+  // realidad era una mascota YA registrada. Movemos la consulta a ese paciente real y
+  // borramos (soft delete) el placeholder que se habia creado para arrancar a grabar.
+  async vincularConsulta(
+    pacienteId: string,
+    consultaId: string,
+    user: AuthUser,
+  ): Promise<{ ok: true }> {
+    const paciente = await this.obtener(pacienteId, user); // valida acceso + no eliminado
+    assertOperacionClinica(user, paciente);
+
+    const consulta = await this.consultasRepo.getById(consultaId);
+    assertAcceso(user, consulta);
+    assertOperacionClinica(user, consulta);
+
+    const pacienteAnteriorId = consulta.pacienteId;
+    await this.consultasRepo.update(consultaId, {
+      pacienteId,
+      pacientePendienteConfirmar: false,
+    });
+
+    if (pacienteAnteriorId && pacienteAnteriorId !== pacienteId) {
+      const anterior = await this.repo.getById(pacienteAnteriorId).catch(() => null);
+      if (anterior?.esPlaceholder) {
+        await this.repo.softDelete(pacienteAnteriorId);
+      }
+    }
+
+    await this.auditoria.registrar({
+      accion: 'paciente.vincularConsulta',
+      actorUid: user.uid,
+      orgId: user.orgId ?? null,
+      recurso: consultaId,
+    });
+    return { ok: true };
   }
 
   async eliminar(id: string, user: AuthUser): Promise<{ eliminado: true }> {

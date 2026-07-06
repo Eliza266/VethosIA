@@ -11,6 +11,7 @@ export type AccionAuditada =
   | 'paciente.crear'
   | 'paciente.editar'
   | 'paciente.eliminar'
+  | 'paciente.vincularConsulta'
   | 'soap.inicio'
   | 'historia.aprobar'
   | 'historia.editar_borrador'

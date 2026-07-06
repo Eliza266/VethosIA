@@ -65,6 +65,11 @@ INSTRUCCIONES:
   y uno diferencial "Parvovirus". Solo déjalo vacío si la transcripción no permite ningún
   diagnóstico. Cada item: nombre, tipo (principal|diferencial|secundario),
   estado (presuntivo|confirmado|descartado), origen "ia".
+- DATOS DE PACIENTE/PROPIETARIO (solo si se mencionan explícitamente, p. ej. "esta es
+  Firulais, un labrador" o "el dueño es Juan Pérez, teléfono 300..."): llena "datosPaciente"
+  (nombre, especie, raza) y "datosPropietario" (nombre, telefono) con lo que se diga. Si no
+  se menciona nada de esto en la transcripción, deja los 4 campos en null. NO inventes ni
+  asumas un nombre que no se haya dicho.
 
 Devuelve ÚNICAMENTE un objeto JSON válido sin comentarios ni backticks:
 {
@@ -97,7 +102,9 @@ Devuelve ÚNICAMENTE un objeto JSON válido sin comentarios ni backticks:
   ],
   "medicamentosSugeridos": [
     { "nombre": "", "dosis": "", "via": "", "frecuencia": "", "duracion": "", "indicacion": "" }
-  ]
+  ],
+  "datosPaciente": { "nombre": null, "especie": null, "raza": null },
+  "datosPropietario": { "nombre": null, "telefono": null }
 }
 
 Transcripción:
@@ -106,6 +113,6 @@ Transcripción:
   }
 
   private promptSimple(transcripcion: string): string {
-    return `Extrae esta transcripción en un objeto JSON con este formato estricto sin texto adicional: {"motivo":"","prioridad":"rutina","signosVitales":{},"subjetivo":"","objetivo":"","analisis":"","plan":"","diagnosticoEstructurado":[],"medicamentosSugeridos":[]}. Transcripción: "${transcripcion}"`;
+    return `Extrae esta transcripción en un objeto JSON con este formato estricto sin texto adicional: {"motivo":"","prioridad":"rutina","signosVitales":{},"subjetivo":"","objetivo":"","analisis":"","plan":"","diagnosticoEstructurado":[],"medicamentosSugeridos":[],"datosPaciente":{"nombre":null,"especie":null,"raza":null},"datosPropietario":{"nombre":null,"telefono":null}}. Transcripción: "${transcripcion}"`;
   }
 }

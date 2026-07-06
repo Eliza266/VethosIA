@@ -67,6 +67,19 @@ export interface DiagnosticoEstructuradoIa {
   actualizadoEn?: string;
 }
 
+// Datos de paciente/propietario detectados en la transcripcion (consulta rapida sin
+// paciente preseleccionado). Todo opcional: solo se llena si se menciono en el audio.
+export interface DatosPacienteIa {
+  nombre?: string | null;
+  especie?: string | null;
+  raza?: string | null;
+}
+
+export interface DatosPropietarioIa {
+  nombre?: string | null;
+  telefono?: string | null;
+}
+
 export interface SoapResult {
   motivo: string;
   prioridad: PrioridadIa;
@@ -77,4 +90,6 @@ export interface SoapResult {
   plan: string;
   diagnosticoEstructurado: DiagnosticoEstructuradoIa[];
   medicamentosSugeridos: MedicamentoSugerido[];
+  datosPaciente?: DatosPacienteIa;
+  datosPropietario?: DatosPropietarioIa;
 }

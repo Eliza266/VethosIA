@@ -6,6 +6,7 @@ import {
   obtenerPaciente,
   crearPaciente,
   actualizarPacienteDoc,
+  vincularConsultaAPaciente,
 } from './api';
 import type { Paciente } from '../../types';
 
@@ -90,6 +91,20 @@ export const usePacientes = () => {
     }
   };
 
+  // Consulta rapida (Opcion B): vincula la consulta a un paciente ya existente y descarta
+  // (soft delete) el placeholder que se creo para arrancar a grabar sin elegir paciente.
+  const vincularConsulta = async (pacienteId: string, consultaId: string): Promise<boolean> => {
+    setError(null);
+    try {
+      await vincularConsultaAPaciente(pacienteId, consultaId);
+      return true;
+    } catch (err) {
+      console.error('Error linking consultation to patient:', err);
+      setError(getErrorMessage(err, 'Error al vincular la consulta con el paciente.'));
+      return false;
+    }
+  };
+
   return {
     pacientes,
     loading,
@@ -98,5 +113,6 @@ export const usePacientes = () => {
     getPaciente,
     agregarPaciente,
     actualizarPaciente,
+    vincularConsulta,
   };
 };

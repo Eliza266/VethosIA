@@ -13,6 +13,8 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { buildPatientPhotoStoragePath } from '../lib/patientPhotoStorage';
 import { BRAND } from '../lib/theme';
 import { useMe } from '../features/tenant/hooks';
+import { PAIS_DEFAULT, splitPhone, joinPhone, type PaisIndicativo } from '../lib/phone';
+import PhoneInput from '../components/ui/PhoneInput';
 import {
   LineChart,
   Line,
@@ -95,10 +97,12 @@ const DetallePaciente: React.FC = () => {
     origen: '',
     notasGenerales: '',
     propietarioNombre: '',
-    propietarioTelefono: '',
-    propietarioWhatsapp: '',
     propietarioEmail: '',
   });
+  const [telPais, setTelPais] = useState<PaisIndicativo>(PAIS_DEFAULT);
+  const [telNumero, setTelNumero] = useState('');
+  const [waPais, setWaPais] = useState<PaisIndicativo>(PAIS_DEFAULT);
+  const [waNumero, setWaNumero] = useState('');
 
   const [fechaDesde, setFechaDesde] = useState('');
   const [fechaHasta, setFechaHasta] = useState('');
@@ -255,10 +259,14 @@ const DetallePaciente: React.FC = () => {
       origen: paciente?.origen || '',
       notasGenerales: paciente?.notasGenerales || '',
       propietarioNombre: paciente?.propietario?.nombre || '',
-      propietarioTelefono: paciente?.propietario?.telefono || '',
-      propietarioWhatsapp: paciente?.propietario?.whatsapp || '',
       propietarioEmail: paciente?.propietario?.email || '',
     });
+    const tel = splitPhone(paciente?.propietario?.telefono);
+    setTelPais(tel.pais);
+    setTelNumero(tel.numero);
+    const wa = splitPhone(paciente?.propietario?.whatsapp);
+    setWaPais(wa.pais);
+    setWaNumero(wa.numero);
     setIsEditModalOpen(true);
   };
 
@@ -287,8 +295,8 @@ const DetallePaciente: React.FC = () => {
         foto: currentFotoUrl,
         propietario: {
           nombre: editForm.propietarioNombre.trim(),
-          telefono: editForm.propietarioTelefono.trim(),
-          whatsapp: editForm.propietarioWhatsapp.trim() || undefined,
+          telefono: joinPhone(telPais, telNumero),
+          whatsapp: joinPhone(waPais, waNumero) || undefined,
           email: editForm.propietarioEmail.trim() || undefined,
         },
       });
@@ -308,8 +316,8 @@ const DetallePaciente: React.FC = () => {
             foto: currentFotoUrl,
             propietario: {
               nombre: editForm.propietarioNombre.trim(),
-              telefono: editForm.propietarioTelefono.trim(),
-              whatsapp: editForm.propietarioWhatsapp.trim() || undefined,
+              telefono: joinPhone(telPais, telNumero),
+              whatsapp: joinPhone(waPais, waNumero) || undefined,
               email: editForm.propietarioEmail.trim() || undefined,
             },
           };
@@ -847,25 +855,22 @@ const DetallePaciente: React.FC = () => {
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-500 mb-1">Teléfono</label>
-                    <input
-                      type="tel"
-                      required
-                      value={editForm.propietarioTelefono}
-                      onChange={e => setEditForm({ ...editForm, propietarioTelefono: e.target.value })}
-                      className="w-full px-3 py-2 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-accent focus:bg-white outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-500 mb-1">WhatsApp</label>
-                    <input
-                      type="tel"
-                      value={editForm.propietarioWhatsapp}
-                      onChange={e => setEditForm({ ...editForm, propietarioWhatsapp: e.target.value })}
-                      className="w-full px-3 py-2 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-accent focus:bg-white outline-none"
-                    />
-                  </div>
+                  <PhoneInput
+                    id="editar-paciente-telefono"
+                    label="Teléfono"
+                    pais={telPais}
+                    numero={telNumero}
+                    onChangePais={setTelPais}
+                    onChangeNumero={setTelNumero}
+                  />
+                  <PhoneInput
+                    id="editar-paciente-whatsapp"
+                    label="WhatsApp"
+                    pais={waPais}
+                    numero={waNumero}
+                    onChangePais={setWaPais}
+                    onChangeNumero={setWaNumero}
+                  />
                 </div>
 
                 <div>

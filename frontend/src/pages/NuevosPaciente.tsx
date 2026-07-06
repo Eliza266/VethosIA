@@ -9,6 +9,8 @@ import { buildPatientPhotoStoragePath } from '../lib/patientPhotoStorage';
 import type { Paciente, Propietario } from '../types';
 import { Save, AlertCircle } from 'lucide-react';
 import { PageHeader } from '../components/ui/Primitives';
+import { PAIS_DEFAULT, joinPhone, type PaisIndicativo } from '../lib/phone';
+import PhoneInput from '../components/ui/PhoneInput';
 
 const NuevosPaciente: React.FC = () => {
   const { agregarPaciente, actualizarPaciente, error: apiError } = usePacientes();
@@ -27,10 +29,13 @@ const NuevosPaciente: React.FC = () => {
     color: '',
     chip: '',
     propietarioNombre: '',
-    propietarioTelefono: '',
-    propietarioWhatsapp: '',
     propietarioEmail: '',
   });
+
+  const [telPais, setTelPais] = useState<PaisIndicativo>(PAIS_DEFAULT);
+  const [telNumero, setTelNumero] = useState('');
+  const [waPais, setWaPais] = useState<PaisIndicativo>(PAIS_DEFAULT);
+  const [waNumero, setWaNumero] = useState('');
 
   const [fotoFile, setFotoFile] = useState<File | null>(null);
   const [fotoPreview, setFotoPreview] = useState<string | null>(null);
@@ -67,7 +72,7 @@ const NuevosPaciente: React.FC = () => {
       setFormError('El nombre del propietario es obligatorio.');
       return;
     }
-    if (!form.propietarioTelefono.trim()) {
+    if (!telNumero.trim()) {
       setFormError('El teléfono del propietario es obligatorio.');
       return;
     }
@@ -76,9 +81,9 @@ const NuevosPaciente: React.FC = () => {
 
     const propietario: Propietario = {
       nombre: form.propietarioNombre.trim(),
-      telefono: form.propietarioTelefono.trim(),
+      telefono: joinPhone(telPais, telNumero),
       email: form.propietarioEmail.trim() || undefined,
-      whatsapp: form.propietarioWhatsapp.trim() || undefined,
+      whatsapp: joinPhone(waPais, waNumero) || undefined,
     };
 
     const nuevoPaciente: Omit<Paciente, 'veterinarioId' | 'creadoEn'> = {
@@ -354,36 +359,23 @@ const NuevosPaciente: React.FC = () => {
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="propietarioTelefono" className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                    Teléfono <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="tel"
-                    id="propietarioTelefono"
-                    name="propietarioTelefono"
-                    value={form.propietarioTelefono}
-                    onChange={handleChange}
-                    placeholder="Ej. 3001234567"
-                    className="w-full px-3.5 py-2.5 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-accent focus:ring-1 focus:ring-accent focus:bg-white outline-none transition-all"
-                    required
-                  />
-                </div>
+                <PhoneInput
+                  id="nuevo-paciente-telefono"
+                  label="Teléfono *"
+                  pais={telPais}
+                  numero={telNumero}
+                  onChangePais={setTelPais}
+                  onChangeNumero={setTelNumero}
+                />
 
-                <div>
-                  <label htmlFor="propietarioWhatsapp" className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                    WhatsApp (Opcional)
-                  </label>
-                  <input
-                    type="tel"
-                    id="propietarioWhatsapp"
-                    name="propietarioWhatsapp"
-                    value={form.propietarioWhatsapp}
-                    onChange={handleChange}
-                    placeholder="Ej. 3001234567"
-                    className="w-full px-3.5 py-2.5 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:border-accent focus:ring-1 focus:ring-accent focus:bg-white outline-none transition-all"
-                  />
-                </div>
+                <PhoneInput
+                  id="nuevo-paciente-whatsapp"
+                  label="WhatsApp (Opcional)"
+                  pais={waPais}
+                  numero={waNumero}
+                  onChangePais={setWaPais}
+                  onChangeNumero={setWaNumero}
+                />
               </div>
 
               <div>

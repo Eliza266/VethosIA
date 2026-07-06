@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTourGuide } from '../hooks/useTourGuide';
 import TourHelpButton from '../components/TourHelpButton';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useConsultas } from '../hooks/useConsultas';
 import { usePacientes } from '../hooks/usePacientes';
 import { useAuth } from '../hooks/useAuth';
+import { buscarPacienteCoincidente, mapEspecieDetectada } from '../features/pacientes/matching';
 import type {
   Consulta,
   DiagnosticoEstructurado,
@@ -38,6 +39,7 @@ import ConsultaActions from '../features/consultas/components/ConsultaActions';
 import ColumnaIzquierda from '../features/consultas/components/ColumnaIzquierda';
 import PanelMedicamentos from '../features/consultas/components/PanelMedicamentos';
 import DiagnosticoEstructuradoPanel from '../features/consultas/components/DiagnosticoEstructuradoPanel';
+import PacienteDetectadoBanner from '../features/consultas/components/PacienteDetectadoBanner';
 import { useToast, useConfirm } from '../components/ui/Primitives';
 
 const TOUR_STEPS_CONSULTA_DETALLE = [
@@ -51,7 +53,7 @@ const DetalleConsulta: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const { getPaciente } = usePacientes();
+  const { pacientes: todosPacientes, getPaciente, actualizarPaciente, vincularConsulta } = usePacientes();
   const {
     getConsulta,
     actualizarConsulta,
@@ -88,6 +90,9 @@ const DetalleConsulta: React.FC = () => {
   const [examenNombre, setExamenNombre] = useState('');
   const [examenArchivo, setExamenArchivo] = useState<File | null>(null);
   const [isSubiendoExamen, setIsSubiendoExamen] = useState(false);
+
+  const [isVinculandoPaciente, setIsVinculandoPaciente] = useState(false);
+  const [isConfirmandoPacienteNuevo, setIsConfirmandoPacienteNuevo] = useState(false);
 
   useEffect(() => {
     const fetchVet = async () => {
@@ -220,6 +225,64 @@ const DetalleConsulta: React.FC = () => {
       setError(getErrorMessage(err, 'Error al subir el resultado del examen.'));
     } finally {
       setIsSubiendoExamen(false);
+    }
+  };
+
+  // Consulta rapida (Opcion B): mientras la consulta tenga pacientePendienteConfirmar,
+  // buscamos si el nombre detectado por la IA coincide con un paciente ya registrado.
+  const pacienteCoincidente = useMemo(() => {
+    if (!consulta?.pacientePendienteConfirmar || !consulta.datosDetectados) return null;
+    return buscarPacienteCoincidente(consulta.datosDetectados, todosPacientes, paciente?.id);
+  }, [consulta, todosPacientes, paciente]);
+
+  const handleVincularPacienteDetectado = async () => {
+    if (!consultaId || !pacienteCoincidente?.id) return;
+    setIsVinculandoPaciente(true);
+    setError(null);
+    try {
+      const ok = await vincularConsulta(pacienteCoincidente.id, consultaId);
+      if (!ok) throw new Error('No se pudo vincular la consulta al paciente.');
+      toast('Consulta vinculada al paciente existente.', 'success');
+      navigate(`/pacientes/${pacienteCoincidente.id}/consultas/${consultaId}`, { replace: true });
+    } catch (err) {
+      console.error(err);
+      setError(getErrorMessage(err, 'Error al vincular la consulta con el paciente.'));
+    } finally {
+      setIsVinculandoPaciente(false);
+    }
+  };
+
+  const handleConfirmarPacienteNuevo = async () => {
+    if (!paciente?.id || !consultaId || !consulta?.datosDetectados) return;
+    setIsConfirmandoPacienteNuevo(true);
+    setError(null);
+    try {
+      const d = consulta.datosDetectados;
+      const camposPaciente: Partial<Paciente> = { esPlaceholder: false };
+      if (d.nombrePaciente) camposPaciente.nombre = d.nombrePaciente;
+      if (d.especie) camposPaciente.especie = mapEspecieDetectada(d.especie);
+      if (d.raza) camposPaciente.raza = d.raza;
+      if (d.nombrePropietario || d.telefonoPropietario) {
+        camposPaciente.propietario = {
+          ...paciente.propietario,
+          ...(d.nombrePropietario ? { nombre: d.nombrePropietario } : {}),
+          ...(d.telefonoPropietario ? { telefono: d.telefonoPropietario } : {}),
+        };
+      }
+      const okPaciente = await actualizarPaciente(paciente.id, camposPaciente);
+      if (!okPaciente) throw new Error('No se pudo actualizar el paciente.');
+
+      const okConsulta = await actualizarConsulta(consultaId, { pacientePendienteConfirmar: false });
+      if (!okConsulta) throw new Error('No se pudo actualizar la consulta.');
+
+      setConsulta((prev) => (prev ? { ...prev, pacientePendienteConfirmar: false } : null));
+      setPaciente((prev) => (prev ? { ...prev, ...camposPaciente } : null));
+      toast('Datos del paciente confirmados.', 'success');
+    } catch (err) {
+      console.error(err);
+      setError(getErrorMessage(err, 'Error al confirmar los datos del paciente.'));
+    } finally {
+      setIsConfirmandoPacienteNuevo(false);
     }
   };
 
@@ -534,6 +597,16 @@ const DetalleConsulta: React.FC = () => {
             </div>
           ) : (
             <>
+              {consulta.pacientePendienteConfirmar && consulta.datosDetectados && (
+                <PacienteDetectadoBanner
+                  datosDetectados={consulta.datosDetectados}
+                  pacienteCoincidente={pacienteCoincidente}
+                  isVinculando={isVinculandoPaciente}
+                  isConfirmando={isConfirmandoPacienteNuevo}
+                  onVincular={handleVincularPacienteDetectado}
+                  onConfirmarNuevo={handleConfirmarPacienteNuevo}
+                />
+              )}
               {iaFallida && (
                 <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 p-4 rounded-2xl">
                   <AlertTriangle className="h-5 w-5 shrink-0 text-amber-600 mt-0.5" />

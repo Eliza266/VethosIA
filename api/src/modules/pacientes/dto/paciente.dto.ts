@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
 import {
+  IsBoolean,
   IsEmail,
   IsIn,
   IsNumber,
@@ -36,6 +37,7 @@ export class CrearPacienteDto {
   @IsOptional() @IsString() @MaxLength(4000) notas?: string;
   @IsOptional() @IsNumber() ultimoPeso?: number;
   @IsOptional() @IsNumber() ultimaTalla?: number;
+  @IsOptional() @IsBoolean() esPlaceholder?: boolean;
 }
 
 // En update todos los campos son opcionales (no se permite cambiar orgId/codigo).
@@ -56,4 +58,10 @@ export class ActualizarPacienteDto {
   @IsOptional() @IsString() @MaxLength(4000) notas?: string;
   @IsOptional() @IsNumber() ultimoPeso?: number;
   @IsOptional() @IsNumber() ultimaTalla?: number;
+  @IsOptional() @IsBoolean() esPlaceholder?: boolean;
+}
+
+// body de PATCH /v1/pacientes/:id/vincular-consulta.
+export class VincularConsultaDto {
+  @IsString() @MinLength(1) @MaxLength(128) consultaId!: string;
 }

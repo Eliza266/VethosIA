@@ -27,6 +27,15 @@ export interface ExamenConsulta {
   subidoEn: string;
 }
 
+/** Paciente/propietario detectados por la IA en consultas rapidas (sin paciente preseleccionado). */
+export interface DatosDetectadosConsulta {
+  nombrePaciente?: string | null;
+  especie?: string | null;
+  raza?: string | null;
+  nombrePropietario?: string | null;
+  telefonoPropietario?: string | null;
+}
+
 export interface ConsultaDoc {
   id: string;
   numeroHC?: string;
@@ -56,6 +65,10 @@ export interface ConsultaDoc {
   diagnosticoEstructurado?: DiagnosticoEstructurado[];
   /** Resultados de examenes (PDF) subidos durante o despues de la consulta, con resumen de IA. */
   examenes?: ExamenConsulta[];
+  /** Datos de paciente/propietario que la IA detecto en el audio (consulta rapida). */
+  datosDetectados?: DatosDetectadosConsulta;
+  /** true si esta consulta se inicio con un paciente placeholder (aun sin confirmar). */
+  pacientePendienteConfirmar?: boolean;
   fechaHora?: unknown;
   creadoEn?: unknown;
   actualizadoEn?: unknown;

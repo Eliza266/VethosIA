@@ -40,6 +40,8 @@ export interface PacienteDoc {
   ultimoPeso?: number;
   ultimaTalla?: number;
   deletedAt?: string | null;
+  /** true si se creo automaticamente desde "consulta rapida" y aun no se confirmo. */
+  esPlaceholder?: boolean;
   creadoEn?: unknown;
 }
 

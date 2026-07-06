@@ -3,6 +3,8 @@ import { Badge, Button, Card, EmptyState, SectionHeader } from '../../components
 import type { BackofficeEntidad } from '../../features/backoffice/api';
 import type { EntidadDraft, SuperAdminActionState, SuperAdminDataset } from './types';
 import { consumoLabel, itemStyle, lineStyle, listStyle, inputStyle, text } from './utils';
+import { splitPhone, joinPhone } from '../../lib/phone';
+import PhoneInput from '../../components/ui/PhoneInput';
 
 export const EntidadesPanel: React.FC<{
   data: SuperAdminDataset;
@@ -18,6 +20,8 @@ export const EntidadesPanel: React.FC<{
   actionState: SuperAdminActionState;
 }> = ({ data, nueva, setNueva, editId, draft, setDraft, onCreate, onEditStart, onEditCancel, onSave, actionState }) => {
   const nuevaError = !nueva.nombre.trim() ? 'Completa nombre de entidad.' : null;
+  const nuevaTel = splitPhone(nueva.telefono);
+  const draftTel = splitPhone(draft.telefono);
   return (
     <div className="grid gap-5" data-testid="superadmin-entidades-panel">
       <Card className="premium-card">
@@ -52,10 +56,14 @@ export const EntidadesPanel: React.FC<{
             <span>País</span>
             <input aria-label="País entidad global" placeholder="Ej. Colombia" value={nueva.pais} onChange={(e) => setNueva((c) => ({ ...c, pais: e.target.value }))} style={inputStyle} />
           </label>
-          <label className="grid gap-1 text-xs font-black uppercase tracking-wider text-[var(--muted)]">
-            <span>Teléfono</span>
-            <input aria-label="Teléfono entidad global" placeholder="Ej. +57 300 123 4567" value={nueva.telefono} onChange={(e) => setNueva((c) => ({ ...c, telefono: e.target.value }))} style={inputStyle} />
-          </label>
+          <PhoneInput
+            id="entidad-nueva-telefono"
+            label="Teléfono"
+            pais={nuevaTel.pais}
+            numero={nuevaTel.numero}
+            onChangePais={(p) => setNueva((c) => ({ ...c, telefono: joinPhone(p, nuevaTel.numero) }))}
+            onChangeNumero={(n) => setNueva((c) => ({ ...c, telefono: joinPhone(nuevaTel.pais, n) }))}
+          />
           <label className="grid gap-1 text-xs font-black uppercase tracking-wider text-[var(--muted)]">
             <span>Correo contacto</span>
             <input aria-label="Correo entidad global" placeholder="Ej. contacto@entidad.com" value={nueva.emailContacto} onChange={(e) => setNueva((c) => ({ ...c, emailContacto: e.target.value }))} style={inputStyle} />
@@ -116,10 +124,15 @@ export const EntidadesPanel: React.FC<{
                       <span>País</span>
                       <input aria-label={`País entidad ${entidad.nombre}`} placeholder="Ej. Colombia" value={draft.pais} onChange={(e) => setDraft((c) => ({ ...c, pais: e.target.value }))} style={inputStyle} />
                     </label>
-                    <label className="grid gap-1 text-xs font-black uppercase tracking-wider text-[var(--muted)]">
-                      <span>Teléfono</span>
-                      <input aria-label={`Teléfono entidad ${entidad.nombre}`} placeholder="Ej. +57 300 123 4567" value={draft.telefono} onChange={(e) => setDraft((c) => ({ ...c, telefono: e.target.value }))} style={inputStyle} />
-                    </label>
+                    <PhoneInput
+                      id={`entidad-draft-telefono-${entidad.id}`}
+                      key={editId ?? entidad.id}
+                      label="Teléfono"
+                      pais={draftTel.pais}
+                      numero={draftTel.numero}
+                      onChangePais={(p) => setDraft((c) => ({ ...c, telefono: joinPhone(p, draftTel.numero) }))}
+                      onChangeNumero={(n) => setDraft((c) => ({ ...c, telefono: joinPhone(draftTel.pais, n) }))}
+                    />
                     <label className="grid gap-1 text-xs font-black uppercase tracking-wider text-[var(--muted)]">
                       <span>Correo contacto</span>
                       <input aria-label={`Correo entidad ${entidad.nombre}`} value={draft.emailContacto} onChange={(e) => setDraft((c) => ({ ...c, emailContacto: e.target.value }))} style={inputStyle} />

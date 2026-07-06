@@ -92,6 +92,7 @@ function svcWith(): { svc: PacientesService; repo: FakeRepo } {
   const svc = new PacientesService(
     repo as unknown as PacientesRepository,
     auditoria as never,
+    {} as never,
   );
   return { svc, repo };
 }
@@ -237,6 +238,7 @@ describe('PacientesService', () => {
     const svc = new PacientesService(
       repo as unknown as PacientesRepository,
       auditoria as never,
+      {} as never,
     );
     const p = await svc.crear({ nombre: 'Luna' }, user);
     const dto = Object.assign(new ActualizarPacienteDto(), {

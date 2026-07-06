@@ -48,6 +48,8 @@ export interface Paciente {
   // multi-tenant: opcional para no romper datos viejos sin orgId
   orgId?: string;
   propietario: Propietario;
+  /** true si se creo automaticamente desde "consulta rapida" y aun no se confirmo. */
+  esPlaceholder?: boolean;
   creadoEn: Date;
 }
 
@@ -135,6 +137,15 @@ export interface ExamenConsulta {
   subidoEn: string;
 }
 
+/** Paciente/propietario detectados por la IA en consultas rapidas (sin paciente preseleccionado). */
+export interface DatosDetectadosConsulta {
+  nombrePaciente?: string | null;
+  especie?: string | null;
+  raza?: string | null;
+  nombrePropietario?: string | null;
+  telefonoPropietario?: string | null;
+}
+
 export interface Consulta {
   id?: string;
   numeroHC?: string;
@@ -155,6 +166,10 @@ export interface Consulta {
   diagnosticoEstructurado?: DiagnosticoEstructurado[];
   /** Resultados de examenes (PDF) subidos con resumen de IA. No forma parte del SOAP. */
   examenes?: ExamenConsulta[];
+  /** Datos de paciente/propietario que la IA detecto en el audio (consulta rapida). */
+  datosDetectados?: DatosDetectadosConsulta;
+  /** true si esta consulta se inicio con un paciente placeholder (aun sin confirmar). */
+  pacientePendienteConfirmar?: boolean;
   estado: 'procesando' | 'borrador' | 'aprobada' | 'error';
   ubicacion?: {
     direccion?: string;

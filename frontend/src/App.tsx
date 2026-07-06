@@ -24,6 +24,7 @@ import Pacientes from './pages/Pacientes';
 import NuevosPaciente from './pages/NuevosPaciente';
 import DetallePaciente from './pages/DetallePaciente';
 import NuevaConsulta from './pages/NuevaConsulta';
+import NuevaConsultaRapida from './pages/NuevaConsultaRapida';
 import DetalleConsulta from './pages/DetalleConsulta';
 import Perfil from './pages/Perfil';
 import Agenda from './pages/Agenda';
@@ -57,6 +58,7 @@ function App() {
                     <Route element={<ClinicalRoute />}>
                       <Route path="/pacientes" element={<Pacientes />} />
                       <Route path="/pacientes/nuevo" element={<NuevosPaciente />} />
+                      <Route path="/consultas/nueva-rapida" element={<NuevaConsultaRapida />} />
                       <Route path="/pacientes/:id" element={<DetallePaciente />} />
                       <Route path="/pacientes/:pacienteId/consultas/nueva" element={<NuevaConsulta />} />
                       <Route path="/pacientes/:pacienteId/consultas/:consultaId" element={<DetalleConsulta />} />

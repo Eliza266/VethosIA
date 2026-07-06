@@ -10,7 +10,7 @@ import {
 import { PacientesService } from './pacientes.service';
 import { HistorialService } from './historial.service';
 import { PdfService } from '../consultas/pdf.service';
-import { CrearPacienteDto, ActualizarPacienteDto } from './dto/paciente.dto';
+import { CrearPacienteDto, ActualizarPacienteDto, VincularConsultaDto } from './dto/paciente.dto';
 import { PacienteDoc } from './paciente.types';
 import { CurrentUser } from '../../common/auth/current-user.decorator';
 import { AuthUser } from '../../common/auth/auth-user.interface';
@@ -63,6 +63,17 @@ export class PacientesController {
     @CurrentUser() user: AuthUser,
   ): Promise<PacienteDoc> {
     return this.pacientes.actualizar(id, dto, user);
+  }
+
+  // Consulta rapida: mueve una consulta (creada con paciente placeholder) a este
+  // paciente ya existente, y borra el placeholder.
+  @Patch(':id/vincular-consulta')
+  async vincularConsulta(
+    @Param('id') id: string,
+    @Body() dto: VincularConsultaDto,
+    @CurrentUser() user: AuthUser,
+  ): Promise<{ ok: true }> {
+    return this.pacientes.vincularConsulta(id, dto.consultaId, user);
   }
 
   // Soft delete: el asistente NO borra (jerarquia: @Roles('vet') excluye asistente).
