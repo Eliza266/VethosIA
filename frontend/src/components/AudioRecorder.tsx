@@ -9,8 +9,8 @@ interface AudioRecorderProps {
   onManualFallback?: () => void;
 }
 
-const BLOQUE_MAX_MS = 15 * 60 * 1000;
-const BLOQUE_AVISO_MS = 12 * 60 * 1000;
+const BLOQUE_MAX_MS = 20 * 60 * 1000;
+const BLOQUE_AVISO_MS = 17 * 60 * 1000;
 
 const AudioRecorder: React.FC<AudioRecorderProps> = ({
   onAudioRecorded,
@@ -150,7 +150,7 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
     <div className="flex flex-col items-center justify-center p-6 bg-white border border-slate-100 rounded-2xl shadow-sm max-w-md mx-auto w-full">
       <h3 className="text-lg font-bold text-slate-800 mb-2">Grabar Consulta</h3>
       <p className="text-sm text-slate-500 text-center mb-6">
-        Graba el audio de la consulta en bloques de hasta 15 minutos. Al finalizar, la IA unirá y estructurará la nota SOAP.
+        Graba el audio de la consulta en bloques de hasta 20 minutos. Al finalizar, la IA unirá y estructurará la nota SOAP.
       </p>
 
       {error && (
@@ -195,7 +195,7 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
 
           {seconds >= avisoSeconds && (
             <div className="text-amber-700 bg-amber-50 border border-amber-100 rounded-lg p-2 text-xs font-semibold text-center w-full animate-pulse">
-              Faltan 3 min para cerrar el bloque (máx 15 min)
+              Faltan 3 min para cerrar el bloque (máx 20 min)
             </div>
           )}
         </div>

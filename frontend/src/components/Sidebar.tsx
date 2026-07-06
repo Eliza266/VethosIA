@@ -13,6 +13,7 @@ import { VET_NAVIGATION } from '../config/navigation';
 import { SidebarItem } from './ui/SidebarItem';
 import NotificationBell from './NotificationBell';
 import ModeToggle from './ModeToggle';
+import logoVethos from '../assets/logo-vethos.png';
 
 declare global {
   interface Window {
@@ -108,11 +109,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, onToggleCol
       {/* Header: marca + colapsar */}
       <div className="flex items-center gap-2 px-3" style={{ height: 'var(--topbar-height)', borderBottom: '1px solid var(--border)' }}>
         <Link to="/" onClick={onNavigate} className="flex min-w-0 items-center gap-2" aria-label="Vethos AI, inicio">
-          <span
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sm font-black text-white"
-            style={{ background: 'var(--accent)' }}
-          >
-            V
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white">
+            <img src={logoVethos} alt="Vethos AI" className="h-6 w-6 object-contain" />
           </span>
           {!showCollapsed && (
             <span className="truncate text-base font-black tracking-tight" style={{ color: 'var(--text)' }}>

@@ -151,14 +151,14 @@ export class EmailService {
   private plantilla(input: EmailHistorialInput): string {
     return `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <div style="background: #0F6E56; padding: 20px; text-align: center;">
+        <div style="background: #072040; padding: 20px; text-align: center;">
           <h1 style="color: white; margin: 0;">Vethos AI</h1>
         </div>
         <div style="padding: 30px;">
           <p>Hola <strong>${input.nombrePropietario ?? ''}</strong>,</p>
           <p>Adjunto la historia clínica de <strong>${input.nombrePaciente ?? ''}</strong> generada por el Dr(a). <strong>${input.nombreVet ?? ''}</strong>.</p>
           <div style="text-align: center; margin: 30px 0;">
-            <a href="${input.pdfUrl}" style="background: #0F6E56; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px;">
+            <a href="${input.pdfUrl}" style="background: #072040; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px;">
               Descargar Historia Clínica
             </a>
           </div>

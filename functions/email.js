@@ -13,18 +13,18 @@ const FROM = process.env.EMAIL_FROM || process.env.EMAIL_USER || 'vetiasoporte@g
 function plantillaHtml({ nombrePropietario, nombrePaciente, pdfUrl, nombreVet }) {
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <div style="background: #0F6E56; padding: 20px; text-align: center;">
-        <h1 style="color: white; margin: 0;">VetIA</h1>
+      <div style="background: #072040; padding: 20px; text-align: center;">
+        <h1 style="color: white; margin: 0;">Vethos AI</h1>
       </div>
       <div style="padding: 30px;">
         <p>Hola <strong>${nombrePropietario || ''}</strong>,</p>
         <p>Adjunto la historia clínica de <strong>${nombrePaciente || ''}</strong> generada por el Dr(a). <strong>${nombreVet || ''}</strong>.</p>
         <div style="text-align: center; margin: 30px 0;">
-          <a href="${pdfUrl}" style="background: #0F6E56; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px;">
+          <a href="${pdfUrl}" style="background: #072040; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px;">
             Descargar Historia Clínica
           </a>
         </div>
-        <p style="color: #666; font-size: 12px;">Generado por VetIA</p>
+        <p style="color: #666; font-size: 12px;">Generado por Vethos AI</p>
       </div>
     </div>
   `;
@@ -52,7 +52,7 @@ async function enviarConSmtp({ to, subject, html }) {
         auth: { user: process.env.EMAIL_USER || 'vetiasoporte@gmail.com', pass: process.env.EMAIL_PASS },
       });
 
-  await transporter.sendMail({ from: `"VetIA" <${FROM}>`, to, subject, html });
+  await transporter.sendMail({ from: `"Vethos AI" <${FROM}>`, to, subject, html });
 }
 
 async function enviarEmailHistorial({ emailDestinatario, nombrePropietario, nombrePaciente, pdfUrl, nombreVet }) {

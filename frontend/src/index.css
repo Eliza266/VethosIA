@@ -24,14 +24,14 @@
   --text: #101613;
   --text-secondary: #3a4541;
   --muted: #646f6b;
-  /* Marca unificada en #0f6e56 (PWA + acento) */
-  --accent: #0f6e56;
-  --accent-strong: #0a5341;
-  --accent-soft: #e6f4ef;
+  /* Marca unificada Vethos AI (PWA + acento): azul marino + celeste del logo */
+  --accent: #072040;
+  --accent-strong: #072540;
+  --accent-soft: #e5f0fa;
   --accent-contrast: #ffffff;
-  --accent-glow: rgba(15, 110, 86, 0.18);
-  --clinical-blue: #173b73;
-  --clinical-cyan: #0e7490;
+  --accent-glow: rgba(7, 199, 242, 0.22);
+  --clinical-blue: #072040;
+  --clinical-cyan: #07c7f2;
   --clinical-lime: #9ccf3f;
   --ink: #07111f;
   --success: #15803d;
@@ -56,10 +56,10 @@
   --shadow-lg: 0 24px 48px -16px rgba(11, 18, 32, 0.16);
   --shadow-accent: 0 12px 32px -8px var(--accent-glow);
   --focus-ring: 0 0 0 3px color-mix(in srgb, var(--accent) 28%, transparent);
-  --gradient-hero: linear-gradient(135deg, #042f2e 0%, #0c6b5a 46%, #173b73 100%);
+  --gradient-hero: linear-gradient(135deg, #072040 0%, #072540 55%, #07c7f2 100%);
   --gradient-surface: linear-gradient(180deg, rgba(255,255,255,0.96) 0%, color-mix(in srgb, var(--surface-2) 52%, var(--surface)) 100%);
-  --gradient-command: radial-gradient(circle at 12% 8%, rgba(12, 107, 90, 0.18), transparent 30%),
-    radial-gradient(circle at 88% 0%, rgba(23, 59, 115, 0.14), transparent 34%),
+  --gradient-command: radial-gradient(circle at 12% 8%, rgba(7, 32, 64, 0.18), transparent 30%),
+    radial-gradient(circle at 88% 0%, rgba(7, 199, 242, 0.14), transparent 34%),
     linear-gradient(180deg, #f8fbfc 0%, #eef5f8 42%, #f8fafc 100%);
   --space-1: 4px;
   --space-2: 8px;
@@ -105,11 +105,11 @@
   --text: #e8eef5;
   --text-secondary: #cbd5e1;
   --muted: #94a3b8;
-  --accent: #2dd4bf;
-  --accent-strong: #14b8a6;
-  --accent-soft: rgba(45, 212, 191, 0.12);
-  --accent-contrast: #04221c;
-  --accent-glow: rgba(45, 212, 191, 0.22);
+  --accent: #07c7f2;
+  --accent-strong: #05dbf2;
+  --accent-soft: rgba(7, 199, 242, 0.12);
+  --accent-contrast: #072040;
+  --accent-glow: rgba(7, 199, 242, 0.22);
   --success: #34d399;
   --success-soft: rgba(52, 211, 153, 0.12);
   --warn: #fbbf24;
@@ -125,7 +125,7 @@
   --shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
   --shadow-md: 0 12px 32px -8px rgba(0, 0, 0, 0.55);
   --shadow-lg: 0 24px 48px -16px rgba(0, 0, 0, 0.65);
-  --gradient-hero: linear-gradient(145deg, #04221c 0%, #0f3d34 50%, #115e52 100%);
+  --gradient-hero: linear-gradient(145deg, #051629 0%, #072040 50%, #0a4a68 100%);
   --gradient-surface: linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%);
 }
 

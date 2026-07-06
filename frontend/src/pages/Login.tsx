@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import { ShieldCheck, Loader2, Sparkles, Lock } from 'lucide-react';
 import { getErrorMessage } from '../lib/errors';
 import { isFirebaseConfigured, missingFirebaseConfig } from '../lib/firebase';
+import logoVethos from '../assets/logo-vethos.png';
 
 const Login: React.FC = () => {
   const { user, loginWithGoogle, loginWithEmail, resetPassword, loading, accessDeniedMessage } =
@@ -90,11 +91,11 @@ const Login: React.FC = () => {
         <div className="pointer-events-none absolute -bottom-[15%] -right-[15%] h-[70%] w-[70%] rounded-full bg-white/8 blur-3xl" />
 
         <div className="relative z-10 flex items-center gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-white text-xl font-extrabold text-[var(--accent)] shadow-lg">
-            V
+          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-white shadow-lg">
+            <img src={logoVethos} alt="Vethos AI" className="h-8 w-8 object-contain" />
           </span>
           <span className="text-xl font-extrabold tracking-tight">
-            Vethos<span className="text-emerald-200"> AI</span>
+            Vethos<span className="text-cyan-200"> AI</span>
           </span>
           <span className="ml-2 rounded-full border border-white/20 bg-white/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider">
             Clinical Command Center
@@ -103,13 +104,13 @@ const Login: React.FC = () => {
 
         <div className="relative z-10 my-auto max-w-lg animate-fade-in">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold">
-            <Sparkles className="h-3.5 w-3.5 text-emerald-200" />
+            <Sparkles className="h-3.5 w-3.5 text-cyan-200" />
             IA clínica para veterinarios
           </div>
           <h1 className="mb-6 text-5xl font-black leading-[1.02] tracking-tight">
             Historias clínicas inteligentes para equipos veterinarios modernos.
           </h1>
-          <p className="text-base leading-relaxed text-emerald-50/90">
+          <p className="text-base leading-relaxed text-cyan-50/90">
             Graba el audio de tus consultas. Vethos transcribe, estructura SOAP y deja listo el expediente para
             aprobar, compartir PDF o WhatsApp en segundos.
           </p>
@@ -121,7 +122,7 @@ const Login: React.FC = () => {
               'Historial digital seguro con control por rol',
             ].map((item) => (
               <div key={item} className="flex items-center gap-3">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/12 text-emerald-200 text-xs">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/12 text-cyan-200 text-xs">
                   ✓
                 </span>
                 <span className="text-sm font-medium">{item}</span>
@@ -143,7 +144,7 @@ const Login: React.FC = () => {
           </div>
         </div>
 
-        <div className="relative z-10 flex flex-wrap items-center gap-4 text-xs text-emerald-100/80">
+        <div className="relative z-10 flex flex-wrap items-center gap-4 text-xs text-cyan-100/80">
           <span>&copy; {new Date().getFullYear()} Vethos AI</span>
           <span className="hidden h-3 w-px bg-white/20 sm:block" />
           <span className="flex items-center gap-1.5">
@@ -159,11 +160,11 @@ const Login: React.FC = () => {
           {/* Mobile hero compacto */}
           <div className="command-hero p-5 lg:hidden">
             <div className="mb-3 flex items-center gap-2">
-              <span className="brand-orb flex h-9 w-9 items-center justify-center rounded-xl text-lg font-bold text-white">
-                V
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white">
+                <img src={logoVethos} alt="Vethos AI" className="h-6 w-6 object-contain" />
               </span>
-              <span className="text-lg font-extrabold text-[var(--text)]">
-                Vethos<span className="text-[var(--accent)]"> AI</span>
+              <span className="text-lg font-extrabold text-white">
+                Vethos<span className="text-cyan-200"> AI</span>
               </span>
             </div>
             <p className="text-sm leading-relaxed text-white/78">

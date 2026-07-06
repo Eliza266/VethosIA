@@ -22,10 +22,10 @@ const EMPTY_SECTION = 'Sin información documentada en esta consulta';
 const FECHA_COLOMBIA = 'America/Bogota';
 
 const COLOR = {
-  brand: '#0F6E56',
-  brandDark: '#0A4D3C',
-  brandLight: '#E8F5F1',
-  brandSoft: '#F0FAF7',
+  brand: '#072040',
+  brandDark: '#072540',
+  brandLight: '#E5F0FA',
+  brandSoft: '#F2F2F2',
   text: '#1A1A1A',
   muted: '#6B7280',
   border: '#D1D5DB',

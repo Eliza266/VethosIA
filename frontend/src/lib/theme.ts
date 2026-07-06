@@ -5,9 +5,9 @@
  * En CSS (className / style) usa SIEMPRE las variables `var(--accent)`, no estas constantes.
  */
 export const BRAND = {
-  accent: '#0f6e56',
-  accentStrong: '#0a5341',
-  accentSoft: '#e6f4ef',
+  accent: '#072040',
+  accentStrong: '#072540',
+  accentSoft: '#e5f0fa',
   info: '#1d4ed8',
   success: '#15803d',
   warn: '#b45309',

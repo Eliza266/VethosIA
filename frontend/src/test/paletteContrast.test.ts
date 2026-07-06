@@ -12,8 +12,8 @@ const TOKENS = {
   text: '#101613',
   textSecondary: '#3a4541',
   muted: '#646f6b',
-  accent: '#0f6e56',
-  accentStrong: '#0a5341',
+  accent: '#072040',
+  accentStrong: '#072540',
   accentContrast: '#ffffff',
 } as const;
 

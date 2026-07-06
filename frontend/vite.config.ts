@@ -23,12 +23,12 @@ export default defineConfig(({ mode }) => {
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg'],
+      includeAssets: ['logo-vethos.png'],
       manifest: {
         name: 'Vethos AI - Notas Clínicas Veterinarias',
         short_name: 'Vethos AI',
         description: 'Historias clínicas veterinarias con IA: graba, transcribe y estructura en SOAP.',
-        theme_color: '#0f6e56',
+        theme_color: '#072040',
         background_color: '#0a0f1a',
         display: 'standalone',
         orientation: 'portrait',
@@ -36,9 +36,9 @@ export default defineConfig(({ mode }) => {
         scope: '/',
         lang: 'es',
         icons: [
-          { src: '/icons/icon.svg', sizes: '192x192', type: 'image/svg+xml' },
-          { src: '/icons/icon.svg', sizes: '512x512', type: 'image/svg+xml' },
-          { src: '/icons/icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any maskable' },
+          { src: '/logo-vethos.png', sizes: '192x192', type: 'image/png' },
+          { src: '/logo-vethos.png', sizes: '512x512', type: 'image/png' },
+          { src: '/logo-vethos.png', sizes: '1254x1254', type: 'image/png', purpose: 'any maskable' },
         ],
       },
       workbox: {
