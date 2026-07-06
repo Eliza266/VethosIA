@@ -26,8 +26,8 @@ const inputClasses =
   'w-full min-h-11 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3.5 py-2 text-sm text-[var(--text)] outline-none transition-all placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--accent)_18%,transparent)]';
 
 const TOUR_STEPS_AGENDA = [
-  { element: '[data-tour="agenda-calendario"]', popover: { title: 'Calendario', description: 'Aquí ves tu calendario de citas. Cambia entre vista de mes, semana o día.' } },
-  { element: '[data-tour="agenda-nueva-cita"]', popover: { title: 'Nueva cita', description: 'Haz clic en un espacio vacío para crear una cita nueva.' } },
+  { element: '[data-tour="agenda-calendario"]', popover: { title: 'Calendario', description: 'Aquí ves tu calendario de citas, tipo Google Calendar. Cambia entre vista de mes, semana o día; en celular arranca en vista de día para que se lea mejor.' } },
+  { element: '[data-tour="agenda-nueva-cita"]', popover: { title: 'Nueva cita', description: 'Haz clic en un espacio vacío para crear una cita nueva. Puedes vincularla a un paciente existente y, el día de la cita, abrirla directo hacia la consulta.' } },
 ];
 
 const Agenda: React.FC = () => {

@@ -51,8 +51,9 @@ const parseLocalDate = (dateString: string): Date => {
 };
 
 const TOUR_STEPS_PACIENTE_DETALLE = [
-  { element: '[data-tour="paciente-info"]', popover: { title: 'Información del paciente', description: 'Aquí ves toda la información del paciente: datos, historial de consultas y vacunas.' } },
-  { element: '[data-tour="paciente-nueva-consulta"]', popover: { title: 'Nueva consulta', description: 'Desde este botón puedes iniciar una consulta nueva para este paciente.' } },
+  { element: '[data-tour="paciente-info"]', popover: { title: 'Información del paciente', description: 'Aquí ves toda la información del paciente: datos fisiológicos, historial de consultas, vacunas y evolución de peso.' } },
+  { element: '[data-tour="paciente-editar"]', popover: { title: 'Editar datos', description: 'Actualiza aquí los datos de la mascota y del propietario: si cambia de teléfono, correo o dirección, edítalo desde este botón. Los cambios quedan reflejados de inmediato en nuevas consultas y envíos.' } },
+  { element: '[data-tour="paciente-nueva-consulta"]', popover: { title: 'Nueva consulta', description: 'Inicia una consulta nueva para este paciente, ya con su ficha preseleccionada.' } },
 ];
 
 const DetallePaciente: React.FC = () => {
@@ -422,6 +423,7 @@ const DetallePaciente: React.FC = () => {
                 <h3 className="font-bold text-slate-800 text-sm">Datos Fisiológicos</h3>
                 <button
                   onClick={handleOpenEdit}
+                  data-tour="paciente-editar"
                   className="inline-flex items-center gap-1 text-xs font-bold text-accent hover:underline"
                 >
                   <Edit2 className="h-3.5 w-3.5" />

@@ -35,7 +35,7 @@ const fechaCorta = (iso?: string): string => {
 };
 
 const TOUR_STEPS_VACUNAS = [
-  { element: '[data-tour="vacunas-control"]', popover: { title: 'Control de vacunas', description: 'Aquí controlas el carnet de vacunación de cada paciente y las próximas dosis pendientes.' } },
+  { element: '[data-tour="vacunas-control"]', popover: { title: 'Control de vacunas', description: 'Aquí controlas el carnet de vacunación de cada paciente: qué se aplicó, cuándo, y qué dosis vienen pronto. Filtra por estado, especie o paciente, y marca una vacuna como aplicada en un clic.' } },
   // TODO: El catálogo de vacunas no está expuesto directamente en esta vista de veterinario.
   // { element: '[data-tour="vacunas-catalogo"]', popover: { title: 'Catálogo de vacunas', description: 'Este catálogo te permite registrar rápido las vacunas que aplica tu veterinaria.' } }
 ];

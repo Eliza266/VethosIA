@@ -44,8 +44,8 @@ const ESTADO_CONFIG = {
 };
 
 const TOUR_STEPS_BRIGADAS = [
-  { element: '[data-tour="brigadas-lista"]', popover: { title: 'Listado de brigadas', description: 'Las brigadas agrupan las consultas que atiendes en una jornada de campo.' } },
-  { element: '[data-tour="brigadas-activa"]', popover: { title: 'Brigada activa', description: 'Actívala antes de empezar a atender, y todas tus consultas del día quedarán asociadas automáticamente.' } },
+  { element: '[data-tour="brigadas-lista"]', popover: { title: 'Listado de brigadas', description: 'Las brigadas agrupan las consultas que atiendes en una jornada de campo (por ejemplo, una jornada de vacunación o esterilización fuera de la clínica).' } },
+  { element: '[data-tour="brigadas-activa"]', popover: { title: 'Brigada activa', description: 'Actívala antes de empezar a atender el día de la jornada, y todas las consultas que registres quedarán asociadas automáticamente a esa brigada, sin tener que elegirla cada vez.' } },
 ];
 
 const Brigadas: React.FC = () => {

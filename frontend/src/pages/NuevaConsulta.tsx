@@ -80,9 +80,9 @@ const hasManualClinicalContent = (form: ManualConsultaForm): boolean =>
   ].some((value) => value.trim().length > 0);
 
 const TOUR_STEPS_NUEVA_CONSULTA = [
-  { element: '[data-tour="nueva-consulta-mic"]', popover: { title: 'Grabar consulta', description: 'Presiona aquí para empezar a grabar la consulta. Habla con naturalidad: motivo, hallazgos, diagnóstico y plan.' } },
-  { element: '[data-tour="nueva-consulta-bloques"]', popover: { title: 'Bloques de audio', description: 'Cada bloque dura máximo 20 minutos; si necesitas más tiempo, se cierra solo y puedes seguir grabando otro bloque.' } },
-  { element: '[data-tour="nueva-consulta-info"]', popover: { title: 'IA automática', description: 'Cuando termines, la IA transcribe todo y arma automáticamente la historia clínica en formato SOAP.' } },
+  { element: '[data-tour="nueva-consulta-mic"]', popover: { title: 'Grabar consulta', description: 'Presiona aquí para empezar a grabar. Al iniciar escucharás un aviso hablado de consentimiento de datos. Habla con naturalidad: motivo, hallazgos, diagnóstico y plan. Si el micrófono falla, puedes llenar el formulario manual en su lugar.' } },
+  { element: '[data-tour="nueva-consulta-bloques"]', popover: { title: 'Bloques de audio', description: 'Cada bloque dura máximo 20 minutos, con una alerta sonora poco antes del corte. Si necesitas más tiempo, el bloque se cierra solo y puedes seguir grabando otro bloque sin perder lo ya grabado.' } },
+  { element: '[data-tour="nueva-consulta-info"]', popover: { title: 'IA automática', description: 'Cuando termines, la IA transcribe todo y arma la historia clínica en formato SOAP: signos vitales, diagnóstico y medicamentos sugeridos. Todo queda editable antes de aprobar.' } },
 ];
 
 const NuevaConsulta: React.FC = () => {

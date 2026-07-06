@@ -55,7 +55,7 @@ const CLINICAL_FIELDS: VetFieldConfig[] = [
 ];
 
 const TOUR_STEPS_PERFIL = [
-  { element: '[data-tour="perfil-datos"]', popover: { title: 'Datos personales', description: 'Aquí puedes actualizar tus datos personales y cambiar tu contraseña.' } }
+  { element: '[data-tour="perfil-datos"]', popover: { title: 'Datos personales', description: 'Actualiza tu nombre, teléfono, ciudad, sede, matrícula profesional y cambia tu contraseña. Estos datos aparecen en el PDF de cada historia clínica que generas.' } }
 ];
 
 const Perfil: React.FC = () => {

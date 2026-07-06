@@ -43,9 +43,11 @@ import PacienteDetectadoBanner from '../features/consultas/components/PacienteDe
 import { useToast, useConfirm } from '../components/ui/Primitives';
 
 const TOUR_STEPS_CONSULTA_DETALLE = [
-  { element: '[data-tour="consulta-soap"]', popover: { title: 'Nota SOAP', description: 'Aquí revisas la nota SOAP generada por la IA. Puedes editar cualquier campo antes de aprobarla.' } },
-  { element: '[data-tour="consulta-acciones"]', popover: { title: 'Compartir', description: 'Desde aquí generas el PDF y lo envías por correo o WhatsApp al dueño de la mascota.' } },
-  { element: '[data-tour="consulta-aprobar"]', popover: { title: 'Aprobar', description: 'Cuando todo esté correcto, presiona Aprobar para cerrar la consulta.' } },
+  { element: '[data-tour="consulta-soap"]', popover: { title: 'Nota SOAP', description: 'Aquí revisas la nota SOAP generada por la IA: Subjetivo, Objetivo, Análisis y Plan, más signos vitales, diagnóstico estructurado y medicamentos sugeridos. Puedes editar cualquier campo antes de aprobarla.' } },
+  { element: '[data-tour="consulta-agregar-audio"]', popover: { title: 'Agregar más audio', description: 'Mientras la consulta siga en borrador, puedes grabar un bloque adicional (por ejemplo si olvidaste mencionar algo). La IA vuelve a generar el SOAP con todo el contenido, sin perder lo ya grabado.' } },
+  { element: '[data-tour="consulta-examenes"]', popover: { title: 'Exámenes complementarios', description: 'Sube resultados de laboratorio o imágenes en PDF. La IA los lee y agrega un resumen clínico a la historia, aparte de la nota SOAP.' } },
+  { element: '[data-tour="consulta-acciones"]', popover: { title: 'Compartir', description: 'Desde aquí generas el PDF y lo envías por correo (con el PDF adjunto) o por WhatsApp al dueño de la mascota.' } },
+  { element: '[data-tour="consulta-aprobar"]', popover: { title: 'Aprobar', description: 'Cuando todo esté correcto, presiona Aprobar para cerrar la consulta. Después de aprobada, la nota ya no se puede editar.' } },
 ];
 
 const DetalleConsulta: React.FC = () => {
@@ -630,7 +632,10 @@ const DetalleConsulta: React.FC = () => {
               <PanelMedicamentos consulta={consulta} onAddMedToPlan={handleAddMedToPlan} />
 
               {consulta.estado === 'borrador' && (
-                <div className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-[0_14px_35px_-30px_rgba(15,23,42,0.45)]">
+                <div
+                  className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-[0_14px_35px_-30px_rgba(15,23,42,0.45)]"
+                  data-tour="consulta-agregar-audio"
+                >
                   {mostrarAgregarAudio ? (
                     <AudioRecorder
                       onAudioRecorded={handleAgregarBloque}
@@ -649,7 +654,10 @@ const DetalleConsulta: React.FC = () => {
                 </div>
               )}
 
-              <div className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-[0_14px_35px_-30px_rgba(15,23,42,0.45)] space-y-3">
+              <div
+                className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-[0_14px_35px_-30px_rgba(15,23,42,0.45)] space-y-3"
+                data-tour="consulta-examenes"
+              >
                 <h3 className="text-sm font-extrabold text-slate-800">Exámenes complementarios</h3>
 
                 {consulta.examenes?.length ? (

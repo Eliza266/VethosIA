@@ -36,8 +36,9 @@ const mapCitaApi = (c: CitaApi): Cita => ({
 });
 
 const TOUR_STEPS_PACIENTES = [
-  { element: '[data-tour="pacientes-busqueda"]', popover: { title: 'Buscar pacientes', description: 'Aquí ves todos los pacientes registrados. Usa la búsqueda para encontrar uno rápido.' } },
-  { element: '[data-tour="pacientes-nuevo"]', popover: { title: 'Nuevo paciente', description: 'Este botón te permite registrar un paciente nuevo.' } },
+  { element: '[data-tour="pacientes-busqueda"]', popover: { title: 'Buscar pacientes', description: 'Aquí ves todos los pacientes registrados. Busca por nombre de mascota, dueño o raza, y filtra por especie con los botones de arriba.' } },
+  { element: '[data-tour="pacientes-consulta-rapida"]', popover: { title: 'Consulta rápida', description: 'Úsalo cuando quieras empezar a grabar de una vez, sin buscar antes la ficha de la mascota. Al terminar, la IA detecta el nombre del paciente y del dueño en el audio: si ya existe esa mascota, te ofrece vincular la consulta; si es nueva, confirmas los datos y queda registrada.' } },
+  { element: '[data-tour="pacientes-nuevo"]', popover: { title: 'Nuevo paciente', description: 'Registra una ficha completa antes de la consulta: datos de la mascota, especie, raza y datos del propietario (incluye teléfono con indicativo de país).' } },
 ];
 
 const Pacientes: React.FC = () => {
