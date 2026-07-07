@@ -40,6 +40,14 @@ export const PlanesPanel: React.FC<{
           <input aria-label="Precio anual" type="number" min={0} value={draft.precioAnualCOP} onChange={(e) => setDraft((c) => ({ ...c, precioAnualCOP: Number(e.target.value) }))} style={inputStyle} />
         </label>
         <label className="grid gap-1 text-xs font-black uppercase tracking-wider text-[var(--muted)]">
+          <span>Precio mensual (USD, opcional)</span>
+          <input aria-label="Precio mensual USD" type="number" min={0} value={draft.precioMensualUSD ?? 0} onChange={(e) => setDraft((c) => ({ ...c, precioMensualUSD: Number(e.target.value) }))} style={inputStyle} />
+        </label>
+        <label className="grid gap-1 text-xs font-black uppercase tracking-wider text-[var(--muted)]">
+          <span>Precio anual (USD, opcional)</span>
+          <input aria-label="Precio anual USD" type="number" min={0} value={draft.precioAnualUSD ?? 0} onChange={(e) => setDraft((c) => ({ ...c, precioAnualUSD: Number(e.target.value) }))} style={inputStyle} />
+        </label>
+        <label className="grid gap-1 text-xs font-black uppercase tracking-wider text-[var(--muted)]">
           <span>Asientos (veterinaria/entidad)</span>
           <input aria-label="Asientos máximos" type="number" min={1} value={draft.asientosMax} onChange={(e) => setDraft((c) => ({ ...c, asientosMax: Number(e.target.value) }))} style={inputStyle} />
         </label>
@@ -74,8 +82,14 @@ export const PlanesPanel: React.FC<{
               <Badge estado={plan.activo ? 'activa' : 'inactiva'}>{plan.activo ? 'activo' : 'inactivo'}</Badge>
             </div>
             <div className="flex flex-wrap gap-4 text-sm">
-              <span>${plan.precioMensualCOP.toLocaleString('es-CO')}/mes</span>
-              <span>${plan.precioAnualCOP.toLocaleString('es-CO')}/año</span>
+              <span>${plan.precioMensualCOP.toLocaleString('es-CO')} COP/mes</span>
+              <span>${plan.precioAnualCOP.toLocaleString('es-CO')} COP/año</span>
+              {Boolean(plan.precioMensualUSD) && (
+                <span>US${plan.precioMensualUSD!.toLocaleString('en-US')}/mes</span>
+              )}
+              {Boolean(plan.precioAnualUSD) && (
+                <span>US${plan.precioAnualUSD!.toLocaleString('en-US')}/año</span>
+              )}
               <span>{plan.asientosMax} asientos</span>
               <span>{plan.limiteHistoriasMes} SOAP/mes</span>
               <span>{plan.historiasGratisTrial} trial</span>

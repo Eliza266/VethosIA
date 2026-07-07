@@ -5,6 +5,9 @@ export interface Plan {
   nombre: string;
   precioMensualCOP: number;
   precioAnualCOP: number;
+  // Precio en USD (fase 1: informativo; el cobro real sigue en COP via Wompi).
+  precioMensualUSD?: number;
+  precioAnualUSD?: number;
   asientosMax: number;
   limiteHistoriasMes: number;
   historiasGratisTrial: number;

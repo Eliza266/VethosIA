@@ -6,6 +6,8 @@ export class CrearPlanDto {
   @IsOptional() @IsString() descripcion?: string;
   @IsInt() @Min(0) precioMensualCOP!: number;
   @IsInt() @Min(0) precioAnualCOP!: number;
+  @IsOptional() @IsInt() @Min(0) precioMensualUSD?: number;
+  @IsOptional() @IsInt() @Min(0) precioAnualUSD?: number;
   @IsInt() @Min(1) asientosMax!: number;
   @IsInt() @Min(0) limiteHistoriasMes!: number;
   @IsInt() @Min(0) historiasGratisTrial!: number;
@@ -18,6 +20,8 @@ export class ActualizarPlanDto {
   @IsOptional() @IsString() descripcion?: string;
   @IsOptional() @IsInt() @Min(0) precioMensualCOP?: number;
   @IsOptional() @IsInt() @Min(0) precioAnualCOP?: number;
+  @IsOptional() @IsInt() @Min(0) precioMensualUSD?: number;
+  @IsOptional() @IsInt() @Min(0) precioAnualUSD?: number;
   @IsOptional() @IsInt() @Min(1) asientosMax?: number;
   @IsOptional() @IsInt() @Min(0) limiteHistoriasMes?: number;
   @IsOptional() @IsInt() @Min(0) historiasGratisTrial?: number;

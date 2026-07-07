@@ -115,7 +115,8 @@ const Suscripcion: React.FC = () => {
                   <option value="">Seleccionar plan...</option>
                   {activos.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.nombre} - ${p.precioMensualCOP.toLocaleString('es-CO')}/mes
+                      {p.nombre} - ${p.precioMensualCOP.toLocaleString('es-CO')} COP/mes
+                      {p.precioMensualUSD ? ` (US$${p.precioMensualUSD.toLocaleString('en-US')}/mes)` : ''}
                     </option>
                   ))}
                 </select>
@@ -139,7 +140,11 @@ const Suscripcion: React.FC = () => {
                 <p className="md:col-span-2 text-sm text-slate-500">
                   Precio de referencia ({ciclo}): $
                   {(ciclo === 'anual' ? planSel.precioAnualCOP : planSel.precioMensualCOP).toLocaleString('es-CO')}{' '}
-                  COP. El monto real lo confirma el servidor.
+                  COP
+                  {(ciclo === 'anual' ? planSel.precioAnualUSD : planSel.precioMensualUSD)
+                    ? ` (≈ US$${(ciclo === 'anual' ? planSel.precioAnualUSD! : planSel.precioMensualUSD!).toLocaleString('en-US')})`
+                    : ''}
+                  . El monto real lo confirma el servidor.
                 </p>
               )}
             </div>

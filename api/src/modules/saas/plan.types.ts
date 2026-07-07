@@ -9,6 +9,10 @@ export interface PlanDoc {
   descripcion?: string;
   precioMensualCOP: number;
   precioAnualCOP: number;
+  // Precio en USD (fase 1: solo informativo, definido a mano; el cobro real sigue en
+  // COP via Wompi). Opcional para no romper planes ya creados sin este dato.
+  precioMensualUSD?: number;
+  precioAnualUSD?: number;
   asientosMax: number;
   limiteHistoriasMes: number;
   historiasGratisTrial: number;

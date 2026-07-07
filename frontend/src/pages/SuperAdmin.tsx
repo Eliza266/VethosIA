@@ -54,6 +54,8 @@ const planVacio: Omit<Plan, 'id'> = {
   nombre: '',
   precioMensualCOP: 0,
   precioAnualCOP: 0,
+  precioMensualUSD: 0,
+  precioAnualUSD: 0,
   asientosMax: 1,
   limiteHistoriasMes: 50,
   historiasGratisTrial: 10,
