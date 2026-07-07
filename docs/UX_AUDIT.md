@@ -3,6 +3,11 @@
 > **Fecha:** 2026-06-15  
 > **Alcance:** diagnóstico only; **sin cambios de diseño implementados**.  
 > **Fuentes:** capturas E2E locales (`frontend/e2e-screenshots/`) + revisión de componentes (`Login`, `Navbar`, `DetalleConsulta`, dashboard).
+>
+> ⚠️ **Nota (2026-07-06):** el color de marca mencionado abajo (`#0F6E56`, verde) quedó
+> desactualizado — la app ya usa navy/cian (ver `docs/DESIGN_SYSTEM.md` §2.2). Los
+> problemas de espaciado, jerarquía y responsive descritos aquí siguen siendo válidos
+> como diagnóstico estructural.
 
 ## Capturas de referencia
 

@@ -1,5 +1,11 @@
 # Análisis del proyecto Vethos AI — a hoy (2026-06-26)
 
+> **Nota (2026-07-06):** esta es una foto histórica del 2026-06-26; varios datos ya
+> cambiaron desde entonces — bloques de grabación ahora de **20 min** (no 15), el
+> rediseño de UI terminó en **paleta navy/cian** (no la "dirección C" verde que describe
+> este documento), y hay clínicas nuevas (Animalike, EmiVt). Ver `ALCANCES-VETHOS.md`
+> para el estado vigente de funcionalidades.
+
 ## 🚦 Resumen en una línea
 **MVP funcional, desplegado y con su primer cliente real en pruebas.** Pasó de "demo" a
 "producto temprano" en pocos días. Base sólida; el riesgo ya no es si funciona, sino

@@ -1,12 +1,21 @@
 # Sistema de diseño — Vethos AI (VetIA)
 
+> **Actualizado 2026-07-06:** el rediseño de marca ya se ejecutó y cambió de dirección —
+> la marca actual es **navy (`#072040`) + cian (`#07c7f2`) + lima (`#9ccf3f`)**, no el verde
+> `#0f6e56` que describía este documento originalmente (ese plan quedó registrado como
+> histórico en `docs/design/REDISENO_C_TAREAS.md`). La sección 2 de abajo ya refleja los
+> tokens reales vigentes en `frontend/src/index.css`. Ver también
+> `Vethos - Negocio/Vethos-Diseño-Frontend-Contexto.md` para el brief completo de marca
+> usado por el agente de frontend/diseño.
+>
 > Tema: **claro** (el dark queda preparado en tokens pero inactivo).
-> Objetivo del rediseño: pasar de **navbar superior** a **sidebar** con estética
-> Notion / Linear / Google Calendar, manteniendo la lógica intacta. Bonito y escalable.
+> La navegación ya es **sidebar** (no navbar superior); el resto de principios de este
+> documento (aire, jerarquía, accesibilidad) siguen vigentes.
 > Idioma de la UI y docs: español; identificadores de código en inglés.
 
 Este documento es la fuente de verdad visual. Los mockups IA de referencia están en
-[docs/design/mockups/](design/mockups/).
+[docs/design/mockups/](design/mockups/) (esos mockups son del plan de color viejo — ya
+no representan la paleta actual).
 
 ---
 
@@ -34,9 +43,20 @@ Se conservan los nombres de variables actuales para no romper consumidores:
 `--info`, `--whatsapp`), radios `--radius-*`, sombras `--shadow-*`, espaciado `--space-*`,
 motion `--transition-*`.
 
-### 2.2 Unificación de marca (acción FASE 2)
-Hoy hay 3 valores de verde: PWA `#0f6e56`, `--accent` `#0c6b5a`, y `#0F6E56` hardcodeado en
-~25 archivos. **Unificar todo en `--accent: #0f6e56`** y barrer `#0F6E56` → `var(--accent)`.
+### 2.2 Marca vigente (ejecutada 2026-07-06)
+La unificación de marca ya se hizo, pero con otra paleta a la planeada originalmente:
+
+```css
+--accent: #072040;        /* navy — color primario */
+--accent-strong: #072540; /* hover/estado fuerte */
+--accent-soft: #e5f0fa;
+--clinical-cyan: #07c7f2; /* acento secundario vibrante */
+--clinical-lime: #9ccf3f; /* acento terciario, uso moderado */
+--gradient-hero: linear-gradient(135deg, #072040 0%, #072540 55%, #07c7f2 100%);
+```
+
+No debe quedar ningún `#0F6E56`/`#0f6e56` hardcodeado en componentes — todo sale de
+`var(--accent)` y los tokens de arriba (regla `10-frontend`, ya vigente).
 
 ### 2.3 Escala de neutros (nueva, para superficies planas)
 Añadir una rampa neutra explícita para reemplazar `slate-*` sueltos:

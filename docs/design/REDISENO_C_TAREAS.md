@@ -1,5 +1,11 @@
 # Rediseño UI — Dirección C (Clinical Calendar) — Plan de micro-tareas
 
+> ⚠️ **SUPERADO (2026-07-06):** el rediseño finalmente ejecutado usó otra paleta
+> (navy `#072040` + cian `#07c7f2`), no la unificación en verde `#0f6e56` que planea este
+> documento. Se conserva como registro histórico de cómo se pensó la Fase 2 en su momento;
+> no representa la marca ni los tokens actuales. Ver `docs/DESIGN_SYSTEM.md` §2.2 para lo
+> vigente.
+
 > Dirección elegida: **C — Clinical Calendar** (claro, aireado, color de estados protagonista,
 > agenda tipo Google Calendar, cards redondeadas con sombra suave).
 > Alcance: **toda la Fase 2**, segmentada en micro-tareas con QA en cada paso.

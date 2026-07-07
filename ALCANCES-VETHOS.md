@@ -108,7 +108,17 @@ solo lo suyo). Control de acceso por roles:
 
 ---
 
-## 7. Infraestructura y escalabilidad
+## 7. Identidad de marca (vigente)
+
+- **Colores**: navy `#072040` (color primario), cian `#07c7f2` (acento vibrante) y lima
+  `#9ccf3f` (acento puntual). Reemplazó al verde `#0f6e56` de la marca anterior.
+- **Logo**: el logo actual de Vethos AI, usado en la app, PDFs y guías de uso.
+- Fuente de verdad técnica de los colores: `frontend/src/index.css`. Brief completo para
+  quien diseñe pantallas nuevas: `Vethos - Negocio/Vethos-Diseño-Frontend-Contexto.md`.
+
+---
+
+## 8. Infraestructura y escalabilidad
 
 - **Firebase**: autenticación, base de datos (Firestore) y almacenamiento (audios, fotos, PDFs).
 - **API en Cloud Run** (NestJS): escala según demanda; las claves de IA viven seguras en el servidor (nunca en el navegador).
@@ -117,7 +127,7 @@ solo lo suyo). Control de acceso por roles:
 
 ---
 
-## 8. Estado de madurez a hoy
+## 9. Estado de madurez a hoy
 
 ✅ **Funciona end-to-end** (probado): grabar → transcribir (IA real) → SOAP → editar → aprobar → PDF → enviar por correo.
 ✅ Calendario (incl. vista móvil), catálogo de vacunas, brigadas, signos vitales y diagnóstico estructurado **operativos**.
@@ -130,7 +140,7 @@ solo lo suyo). Control de acceso por roles:
 
 ---
 
-## 9. Alcances futuros / próximos pasos
+## 10. Alcances futuros / próximos pasos
 
 - **Cola de IA robusta** (Cloud Tasks) para alto volumen simultáneo.
 - **Plan de pagos parametrizable** (moneda base COP + USD para otros países), cobro desde la
