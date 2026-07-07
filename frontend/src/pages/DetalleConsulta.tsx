@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTourGuide } from '../hooks/useTourGuide';
-import TourHelpButton from '../components/TourHelpButton';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useConsultas } from '../hooks/useConsultas';
 import { usePacientes } from '../hooks/usePacientes';
@@ -66,7 +65,7 @@ const DetalleConsulta: React.FC = () => {
   } = useConsultas();
   const { toast } = useToast();
   const { confirm } = useConfirm();
-  const { replay } = useTourGuide('consulta-detalle', TOUR_STEPS_CONSULTA_DETALLE);
+  useTourGuide('consulta-detalle', TOUR_STEPS_CONSULTA_DETALLE);
 
   const [consulta, setConsulta] = useState<Consulta | null>(null);
   const [paciente, setPaciente] = useState<Paciente | null>(null);
@@ -184,14 +183,13 @@ const DetalleConsulta: React.FC = () => {
       else throw new Error('No se pudo guardar la nota en la base de datos.');
     } catch (err) {
       console.error(err);
-      setError(getErrorMessage(err, 'Error al actualizar la nota SOAP.'));
+      toast(getErrorMessage(err, 'Error al actualizar la nota SOAP.'), 'error');
     }
   };
 
   const handleAgregarBloque = async (audioBlobs: Blob[]) => {
     if (!consultaId || audioBlobs.length === 0) return;
     setIsAgregandoBloque(true);
-    setError(null);
     try {
       const ok = await agregarBloqueConsulta(consultaId, audioBlobs, consulta?.audioUrls ?? []);
       if (ok) {
@@ -199,11 +197,16 @@ const DetalleConsulta: React.FC = () => {
         setMostrarAgregarAudio(false);
         toast('Bloque agregado, actualizando la historia clínica...', 'success');
       } else {
-        throw new Error('No se pudo agregar el bloque de audio.');
+        // Toast, no setError: esta pantalla ya cargo bien, un fallo al agregar un bloque
+        // no debe reemplazar toda la vista de la consulta (setError dispara esa pantalla
+        // de error a pagina completa mas abajo). agregarBloqueConsulta ya guardo el motivo
+        // real en apiError (viene del backend, p. ej. "Solo se pueden agregar bloques a
+        // una consulta en borrador."), asi que no lo pisamos con un mensaje generico.
+        toast(apiError || 'No se pudo agregar el bloque de audio.', 'error');
       }
     } catch (err) {
       console.error(err);
-      setError(getErrorMessage(err, 'Error al agregar el bloque de audio.'));
+      toast(getErrorMessage(err, 'Error al agregar el bloque de audio.'), 'error');
     } finally {
       setIsAgregandoBloque(false);
     }
@@ -212,7 +215,6 @@ const DetalleConsulta: React.FC = () => {
   const handleSubirExamen = async () => {
     if (!consultaId || !examenArchivo) return;
     setIsSubiendoExamen(true);
-    setError(null);
     try {
       const nombre = examenNombre.trim() || examenArchivo.name;
       const examen = await subirExamenConsulta(consultaId, nombre, examenArchivo);
@@ -224,7 +226,7 @@ const DetalleConsulta: React.FC = () => {
       toast('Resultado de examen agregado a la historia.', 'success');
     } catch (err) {
       console.error(err);
-      setError(getErrorMessage(err, 'Error al subir el resultado del examen.'));
+      toast(getErrorMessage(err, 'Error al subir el resultado del examen.'), 'error');
     } finally {
       setIsSubiendoExamen(false);
     }
@@ -240,7 +242,6 @@ const DetalleConsulta: React.FC = () => {
   const handleVincularPacienteDetectado = async () => {
     if (!consultaId || !pacienteCoincidente?.id) return;
     setIsVinculandoPaciente(true);
-    setError(null);
     try {
       const ok = await vincularConsulta(pacienteCoincidente.id, consultaId);
       if (!ok) throw new Error('No se pudo vincular la consulta al paciente.');
@@ -248,7 +249,7 @@ const DetalleConsulta: React.FC = () => {
       navigate(`/pacientes/${pacienteCoincidente.id}/consultas/${consultaId}`, { replace: true });
     } catch (err) {
       console.error(err);
-      setError(getErrorMessage(err, 'Error al vincular la consulta con el paciente.'));
+      toast(getErrorMessage(err, 'Error al vincular la consulta con el paciente.'), 'error');
     } finally {
       setIsVinculandoPaciente(false);
     }
@@ -257,7 +258,6 @@ const DetalleConsulta: React.FC = () => {
   const handleConfirmarPacienteNuevo = async () => {
     if (!paciente?.id || !consultaId || !consulta?.datosDetectados) return;
     setIsConfirmandoPacienteNuevo(true);
-    setError(null);
     try {
       const d = consulta.datosDetectados;
       const camposPaciente: Partial<Paciente> = { esPlaceholder: false };
@@ -282,7 +282,7 @@ const DetalleConsulta: React.FC = () => {
       toast('Datos del paciente confirmados.', 'success');
     } catch (err) {
       console.error(err);
-      setError(getErrorMessage(err, 'Error al confirmar los datos del paciente.'));
+      toast(getErrorMessage(err, 'Error al confirmar los datos del paciente.'), 'error');
     } finally {
       setIsConfirmandoPacienteNuevo(false);
     }
@@ -296,21 +296,20 @@ const DetalleConsulta: React.FC = () => {
       else throw new Error('No se pudo guardar el diagnostico estructurado.');
     } catch (err) {
       console.error(err);
-      setError(getErrorMessage(err, 'Error al actualizar el diagnostico estructurado.'));
+      toast(getErrorMessage(err, 'Error al actualizar el diagnostico estructurado.'), 'error');
     }
   };
 
   const handleApprove = async () => {
     if (!consultaId) return;
     setIsApproving(true);
-    setError(null);
     try {
       const ok = await aprobarConsulta(consultaId);
       if (ok) setConsulta((prev) => (prev ? { ...prev, estado: 'aprobada' } : null));
       else throw new Error('No se pudo cambiar el estado de la consulta.');
     } catch (err) {
       console.error(err);
-      setError(getErrorMessage(err, 'Error al aprobar la consulta.'));
+      toast(getErrorMessage(err, 'Error al aprobar la consulta.'), 'error');
     } finally {
       setIsApproving(false);
     }
@@ -319,7 +318,6 @@ const DetalleConsulta: React.FC = () => {
   const handleSaveDatos = async () => {
     if (!consultaId) return;
     setIsSavingDatos(true);
-    setError(null);
     try {
       const cleanSv: Record<string, unknown> = {};
       Object.entries(editData.signosVitales).forEach(([k, v]) => {
@@ -336,7 +334,7 @@ const DetalleConsulta: React.FC = () => {
       else throw new Error('No se pudo guardar los datos.');
     } catch (err) {
       console.error(err);
-      setError(getErrorMessage(err, 'Error al guardar los datos clínicos.'));
+      toast(getErrorMessage(err, 'Error al guardar los datos clínicos.'), 'error');
     } finally {
       setIsSavingDatos(false);
     }
@@ -359,7 +357,7 @@ const DetalleConsulta: React.FC = () => {
       else throw new Error('No se pudo eliminar la consulta.');
     } catch (err) {
       console.error(err);
-      setError(getErrorMessage(err, 'Error al eliminar la consulta.'));
+      toast(getErrorMessage(err, 'Error al eliminar la consulta.'), 'error');
     } finally {
       setIsDeleting(false);
     }
@@ -618,19 +616,6 @@ const DetalleConsulta: React.FC = () => {
                   </div>
                 </div>
               )}
-              <SoapViewer
-                data-tour="consulta-soap"
-                soap={consulta.soap}
-                onSave={consulta.estado === 'borrador' ? handleSaveSoap : undefined}
-              />
-              <DiagnosticoEstructuradoPanel
-                value={consulta.diagnosticoEstructurado}
-                analisisTexto={consulta.soap?.analisis ?? ''}
-                editable={consulta.estado === 'borrador'}
-                onChange={consulta.estado === 'borrador' ? handleSaveDiagnosticos : undefined}
-              />
-              <PanelMedicamentos consulta={consulta} onAddMedToPlan={handleAddMedToPlan} />
-
               {consulta.estado === 'borrador' && (
                 <div
                   className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-[0_14px_35px_-30px_rgba(15,23,42,0.45)]"
@@ -653,6 +638,19 @@ const DetalleConsulta: React.FC = () => {
                   )}
                 </div>
               )}
+
+              <SoapViewer
+                data-tour="consulta-soap"
+                soap={consulta.soap}
+                onSave={consulta.estado === 'borrador' ? handleSaveSoap : undefined}
+              />
+              <DiagnosticoEstructuradoPanel
+                value={consulta.diagnosticoEstructurado}
+                analisisTexto={consulta.soap?.analisis ?? ''}
+                editable={consulta.estado === 'borrador'}
+                onChange={consulta.estado === 'borrador' ? handleSaveDiagnosticos : undefined}
+              />
+              <PanelMedicamentos consulta={consulta} onAddMedToPlan={handleAddMedToPlan} />
 
               <div
                 className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-[0_14px_35px_-30px_rgba(15,23,42,0.45)] space-y-3"
@@ -702,7 +700,6 @@ const DetalleConsulta: React.FC = () => {
           )}
         </div>
       </div>
-      <TourHelpButton onReplay={replay} />
     </div>
   );
 };

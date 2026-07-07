@@ -93,3 +93,45 @@
 .rbc-header + .rbc-header {
   border-color: var(--border) !important;
 }
+
+/* Mobile: la barra de herramientas por defecto (3 grupos de botones en fila) queda
+   apretada y desalineada en pantallas angostas. La apilamos en columna, con los
+   botones de navegación y de vista repartidos en todo el ancho. */
+@media (max-width: 640px) {
+  .rbc-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .rbc-toolbar-label {
+    order: -1;
+    padding: 2px 0 6px;
+    font-size: 1rem;
+  }
+
+  .rbc-toolbar .rbc-btn-group {
+    display: flex;
+    width: 100%;
+  }
+
+  .rbc-toolbar .rbc-btn-group button {
+    flex: 1;
+    padding: 8px 4px;
+    font-size: 0.75rem;
+  }
+
+  .rbc-calendar {
+    height: 65vh !important;
+  }
+
+  .rbc-event {
+    font-size: 0.7rem !important;
+    padding: 1px 4px !important;
+  }
+
+  .rbc-agenda-view table.rbc-agenda-table {
+    font-size: 0.8rem;
+  }
+}

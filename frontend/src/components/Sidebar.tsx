@@ -12,8 +12,10 @@ import { NAV_ICON, SUPERADMIN_ITEMS, getSuperAdminActiveSection, getSpeciesEmoji
 import { VET_NAVIGATION, ADMIN_NAVIGATION } from '../config/navigation';
 import { SidebarItem } from './ui/SidebarItem';
 import NotificationBell from './NotificationBell';
+import TourHelpButton from './TourHelpButton';
 import ModeToggle from './ModeToggle';
 import logoVethos from '../assets/logo-vethos.png';
+import { useActiveTour } from '../hooks/useActiveTour';
 
 declare global {
   interface Window {
@@ -39,6 +41,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, onToggleCol
   const { firebaseUser, logout } = useAuth();
   const { data: me, isLoading: meLoading, isFetching } = useMe();
   const { mode, setMode, isAdminVet } = useAdminVetMode();
+  const { replay: tourReplay } = useActiveTour();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -124,6 +127,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, onToggleCol
         </Link>
         <div className="ml-auto flex items-center gap-1">
           {sessionMe && !showCollapsed && <NotificationBell />}
+          {sessionMe && !showCollapsed && tourReplay && <TourHelpButton onReplay={tourReplay} />}
           {!mobile && onToggleCollapse && (
             <button
               type="button"
@@ -295,6 +299,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, onToggleCol
               )}
             </NavLink>
             {showCollapsed && <NotificationBell />}
+            {showCollapsed && tourReplay && <TourHelpButton onReplay={tourReplay} />}
             <button
               type="button"
               onClick={handleLogout}

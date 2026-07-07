@@ -5,9 +5,12 @@ import Sidebar from './Sidebar';
 import CommandPalette from './CommandPalette';
 import OfflineIndicator from './OfflineIndicator';
 import NotificationBell from './NotificationBell';
+import TourHelpButton from './TourHelpButton';
 import WelcomeInstallModal from './WelcomeInstallModal';
 import { useAuth } from '../hooks/useAuth';
 import { useInactivityLogout } from '../hooks/useInactivityLogout';
+import { ActiveTourProvider } from './ActiveTourProvider';
+import { useActiveTour } from '../hooks/useActiveTour';
 
 interface LayoutProps {
   children?: React.ReactNode;
@@ -15,8 +18,15 @@ interface LayoutProps {
 
 const COLLAPSE_KEY = 'veth-sidebar-collapsed';
 
-const Layout: React.FC<LayoutProps> = ({ children }) => {
+const Layout: React.FC<LayoutProps> = (props) => (
+  <ActiveTourProvider>
+    <LayoutContent {...props} />
+  </ActiveTourProvider>
+);
+
+const LayoutContent: React.FC<LayoutProps> = ({ children }) => {
   const { user, logout } = useAuth();
+  const { replay: tourReplay } = useActiveTour();
   useInactivityLogout(() => void logout(), { enabled: !!user });
 
   const [collapsed, setCollapsed] = useState<boolean>(() => {
@@ -114,8 +124,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             </span>
           </Link>
           {user && (
-            <div className="ml-auto">
+            <div className="ml-auto flex items-center gap-1">
               <NotificationBell />
+              {tourReplay && <TourHelpButton onReplay={tourReplay} />}
             </div>
           )}
         </header>

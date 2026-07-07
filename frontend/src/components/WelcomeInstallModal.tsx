@@ -2,22 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { X, Smartphone, Download } from 'lucide-react';
 import { usePwa } from '../hooks/usePwa';
 import logoVethos from '../assets/logo-vethos.png';
-
-const STORAGE_KEY = 'vethos_welcome_install_seen';
+import { WELCOME_INSTALL_SEEN_KEY, WELCOME_INSTALL_CLOSED_EVENT, esStandalone } from '../lib/welcomeInstall';
 
 const esIOS = (): boolean =>
   typeof navigator !== 'undefined' && /iphone|ipad|ipod/i.test(navigator.userAgent);
-
-// standalone = ya abierta como app instalada (no como pestaña de navegador).
-// matchMedia puede no existir (jsdom en tests, navegadores muy viejos); se trata como "no instalada".
-const esStandalone = (): boolean => {
-  if (typeof window === 'undefined') return false;
-  const navegadorIOS = window.navigator as Navigator & { standalone?: boolean };
-  const modoStandalone = typeof window.matchMedia === 'function'
-    ? window.matchMedia('(display-mode: standalone)').matches
-    : false;
-  return modoStandalone || navegadorIOS.standalone === true;
-};
 
 // Popover de bienvenida: se muestra una sola vez por navegador (tras iniciar sesion),
 // invita a usar Vethos desde el celular y ofrece instalarla como app (icono en inicio).
@@ -28,7 +16,7 @@ const WelcomeInstallModal: React.FC = () => {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (esStandalone()) return;
-    if (window.localStorage.getItem(STORAGE_KEY) === 'visto') return;
+    if (window.localStorage.getItem(WELCOME_INSTALL_SEEN_KEY) === 'visto') return;
     const t = window.setTimeout(() => setVisible(true), 900);
     return () => window.clearTimeout(t);
   }, []);
@@ -36,10 +24,13 @@ const WelcomeInstallModal: React.FC = () => {
   const cerrar = (): void => {
     setVisible(false);
     try {
-      window.localStorage.setItem(STORAGE_KEY, 'visto');
+      window.localStorage.setItem(WELCOME_INSTALL_SEEN_KEY, 'visto');
     } catch {
       /* almacenamiento no disponible */
     }
+    // Avisa al tour guiado (useTourGuide) que ya puede arrancar: evita que ambos
+    // popups se muestren encimados al mismo tiempo en la primera visita.
+    window.dispatchEvent(new Event(WELCOME_INSTALL_CLOSED_EVENT));
   };
 
   useEffect(() => {
