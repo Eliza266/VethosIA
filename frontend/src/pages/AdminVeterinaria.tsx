@@ -14,7 +14,6 @@ import {
   obtenerVeterinariaBackoffice,
   setBloqueoMiembroBackoffice,
 } from '../features/backoffice/api';
-import { MetricsPanel } from '../features/metricas/MetricsPanel';
 import { BusinessOverview } from '../features/saas/BusinessOverview';
 import { Button, Card, EmptyState, SectionHeader } from '../components/ui/Primitives';
 import { puedeVerSuscripcion, rolLabel } from '../lib/rbac';
@@ -302,8 +301,7 @@ const AdminVeterinaria: React.FC = () => {
         </div>
       )}
 
-      <section className="grid gap-5 xl:grid-cols-[1fr_0.9fr]">
-        <MetricsPanel rol={rol} />
+      <section>
         <BusinessOverview rol={rol} profile={me ?? null} />
       </section>
 
@@ -327,7 +325,7 @@ const AdminVeterinaria: React.FC = () => {
         </div>
       </Card>
 
-      <Card className="premium-card" data-tour="admin-vet-datos">
+      <Card className="premium-card" id="admin-vet-datos" data-tour="admin-vet-datos">
         <SectionHeader
           title="Datos de clínica"
           description="Información básica de la veterinaria asociada a tu cuenta."
@@ -504,7 +502,7 @@ const AdminVeterinaria: React.FC = () => {
         )}
       </Card>
 
-      <Card className="premium-card" data-tour="admin-vet-equipo">
+      <Card className="premium-card" id="admin-vet-equipo" data-tour="admin-vet-equipo">
         <SectionHeader
           title="Equipo clínico"
           description="Miembros visibles dentro de esta veterinaria y acciones seguras de activación."
@@ -582,7 +580,7 @@ const AdminVeterinaria: React.FC = () => {
         </ul>
       </Card>
 
-      <Card className="premium-card" data-tour="admin-vet-solicitudes">
+      <Card className="premium-card" id="admin-vet-solicitudes" data-tour="admin-vet-solicitudes">
         <SectionHeader
           title="Solicitudes técnicas"
           description="Vinculaciones con conflicto quedan visibles para seguimiento mientras Área Técnica las resuelve."
@@ -611,7 +609,7 @@ const AdminVeterinaria: React.FC = () => {
       </Card>
       </section>
 
-      <Card className="premium-card" data-tour="admin-vet-catalogo">
+      <Card className="premium-card" id="admin-vet-catalogo" data-tour="admin-vet-catalogo">
         <SectionHeader
           title="Catálogo de vacunas personalizado"
           description="Administra el catálogo de vacunas custom de tu clínica. Las vacunas base provistas por el sistema son de sólo lectura."

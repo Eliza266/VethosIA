@@ -38,7 +38,8 @@ import Suscripcion from './pages/Suscripcion';
 import AdminVeterinaria from './pages/AdminVeterinaria';
 import Notificaciones from './pages/Notificaciones';
 import DocumentosClinicos from './pages/DocumentosClinicos';
-import { ModulePlaceholder, NotFound } from './pages/RouteFallback';
+import Metricas from './pages/Metricas';
+import { NotFound } from './pages/RouteFallback';
 
 function App() {
   return (
@@ -73,15 +74,7 @@ function App() {
                     <Route path="/notificaciones" element={<Notificaciones />} />
                     <Route path="/como-funciona" element={<ComoFunciona />} />
                     <Route path="/invitacion" element={<Invitacion />} />
-                    <Route
-                      path="/metricas"
-                      element={
-                        <ModulePlaceholder
-                          title="Metricas"
-                          description="El resumen de métricas está disponible en los dashboards por rol. Esta ruta queda reservada para el módulo dedicado."
-                        />
-                      }
-                    />
+                    <Route path="/metricas" element={<Metricas />} />
                     <Route element={<SubscriptionRoute />}>
                       <Route path="/suscripcion" element={<Suscripcion />} />
                       <Route path="/mi-plan" element={<Suscripcion />} />

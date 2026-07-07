@@ -9,7 +9,7 @@ import { getNavbarItemsForProfile } from '../lib/roleNavigation';
 import { rolLabel } from '../lib/rbac';
 import type { NavIcon } from '../lib/rbac';
 import { NAV_ICON, SUPERADMIN_ITEMS, getSuperAdminActiveSection, getSpeciesEmoji } from '../lib/navModel';
-import { VET_NAVIGATION } from '../config/navigation';
+import { VET_NAVIGATION, ADMIN_NAVIGATION } from '../config/navigation';
 import { SidebarItem } from './ui/SidebarItem';
 import NotificationBell from './NotificationBell';
 import ModeToggle from './ModeToggle';
@@ -67,13 +67,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, onToggleCol
   const ctaItem = rawItems?.find((i) => i.icon === 'nuevo') ?? null;
   const navItems = rawItems?.filter((i) => i.icon !== 'nuevo') ?? [];
 
+  const isAdminMode = meRole === 'admin_veterinaria' && mode === 'admin';
+
   const matchPatient = location.pathname.match(/^\/pacientes\/([^/]+)/);
   const isLevel3 = isVet && matchPatient && matchPatient[1] !== 'nuevo';
   const patientId = isLevel3 ? matchPatient![1] : null;
   const activeModule = isVet
     ? VET_NAVIGATION.find((m) => m.path !== '/' && location.pathname.startsWith(m.path))
-    : null;
-  const isLevel2 = isVet && !isLevel3 && !!activeModule && activeModule.subModules.length > 0;
+    : isAdminMode
+      ? ADMIN_NAVIGATION.find((m) => m.path !== '/' && location.pathname.startsWith(m.path))
+      : null;
+  const isLevel2 = !isLevel3 && !!activeModule && activeModule.subModules.length > 0;
 
   const handleLogout = async () => {
     try {
@@ -125,6 +129,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, onToggleCol
               type="button"
               onClick={onToggleCollapse}
               aria-label={collapsed ? 'Expandir menú' : 'Colapsar menú'}
+              title={collapsed ? 'Expandir menú' : 'Colapsar menú'}
               className="hidden h-8 w-8 items-center justify-center rounded-lg lg:flex"
               style={{ color: 'var(--muted)' }}
             >
@@ -226,6 +231,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, onToggleCol
             </div>
             <div className="mt-1 space-y-0.5">
               {activeModule.subModules.map((sub) => {
+                if (sub.anchor) {
+                  // Admin: misma pagina, hace scroll a la seccion (no cambia de vista).
+                  return (
+                    <a
+                      key={sub.id}
+                      href={`${activeModule.path}#${sub.anchor}`}
+                      onClick={onNavigate}
+                      className="block rounded-lg px-3 py-2 text-sm font-medium transition-colors veth-sidebar-item"
+                    >
+                      {sub.label}
+                    </a>
+                  );
+                }
                 const active = (new URLSearchParams(location.search).get('tab') || activeModule.subModules[0].tabValue) === sub.tabValue;
                 return (
                   <Link

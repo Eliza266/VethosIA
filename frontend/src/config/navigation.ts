@@ -1,10 +1,13 @@
-import { Home, Users, Calendar, Syringe, Activity } from 'lucide-react';
+import { Home, Users, Calendar, Syringe, Activity, Building2 } from 'lucide-react';
 import type { ComponentType } from 'react';
 
 export interface SubModule {
   id: string;
   label: string;
-  tabValue: string;
+  // Vet: cambia de vista via ?tab= (queda una sola pantalla, varias sub-vistas).
+  tabValue?: string;
+  // Admin: hace scroll a una seccion dentro de la misma pagina (#ancla), no cambia de vista.
+  anchor?: string;
 }
 
 export interface ModuleConfig {
@@ -61,6 +64,24 @@ export const VET_NAVIGATION: ModuleConfig[] = [
     subModules: [
       { id: 'listar', label: 'Listar', tabValue: 'listar' },
       { id: 'metricas', label: 'Métricas', tabValue: 'metricas' },
+    ],
+  },
+];
+
+// Sub-navegación de Admin Veterinaria (modo "admin"). "Mi veterinaria" es una sola pagina
+// larga con varias secciones; los sub-items hacen scroll a un ancla en vez de cambiar de
+// vista (a diferencia de VET_NAVIGATION, que sí cambia de vista via ?tab=).
+export const ADMIN_NAVIGATION: ModuleConfig[] = [
+  {
+    id: 'veterinaria',
+    label: 'Mi veterinaria',
+    path: '/veterinaria',
+    icon: Building2,
+    subModules: [
+      { id: 'ficha', label: 'Ficha de la clínica', anchor: 'admin-vet-datos' },
+      { id: 'equipo', label: 'Equipo clínico', anchor: 'admin-vet-equipo' },
+      { id: 'solicitudes', label: 'Solicitudes técnicas', anchor: 'admin-vet-solicitudes' },
+      { id: 'catalogo', label: 'Catálogo de vacunas', anchor: 'admin-vet-catalogo' },
     ],
   },
 ];

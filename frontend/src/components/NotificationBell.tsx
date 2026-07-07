@@ -168,6 +168,7 @@ const NotificationBell: React.FC = () => {
     <div ref={anchorRef} className="relative shrink-0">
       <button
         aria-label={`Notificaciones (${noLeidas} sin leer)`}
+        title={`Notificaciones${noLeidas > 0 ? ` (${noLeidas} sin leer)` : ''}`}
         aria-expanded={abierto}
         onClick={() => setAbierto((v) => !v)}
         style={{

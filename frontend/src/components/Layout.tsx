@@ -5,6 +5,7 @@ import Sidebar from './Sidebar';
 import CommandPalette from './CommandPalette';
 import OfflineIndicator from './OfflineIndicator';
 import NotificationBell from './NotificationBell';
+import WelcomeInstallModal from './WelcomeInstallModal';
 import { useAuth } from '../hooks/useAuth';
 import { useInactivityLogout } from '../hooks/useInactivityLogout';
 
@@ -58,6 +59,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     <div className="flex min-h-screen veth-page-shell">
       <CommandPalette />
       <OfflineIndicator />
+      <WelcomeInstallModal />
 
       {/* Sidebar fija (desktop) */}
       <aside className="sticky top-0 hidden h-screen shrink-0 lg:block">
@@ -95,6 +97,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             type="button"
             onClick={() => setMobileOpen((v) => !v)}
             aria-label="Abrir menú"
+            title="Abrir menú"
             aria-expanded={mobileOpen}
             aria-controls="mobile-sidebar"
             className="flex h-9 w-9 items-center justify-center rounded-lg"
