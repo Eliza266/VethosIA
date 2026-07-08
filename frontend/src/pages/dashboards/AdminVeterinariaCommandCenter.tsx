@@ -1,6 +1,5 @@
 import React from 'react';
 import { useTourGuide } from '../../hooks/useTourGuide';
-import TourHelpButton from '../../components/TourHelpButton';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Activity, Calendar, ClipboardList, Mic, Users } from 'lucide-react';
@@ -29,7 +28,7 @@ const TOUR_STEPS_ADMIN_VET = [
 ];
 
 const AdminVeterinariaCommandCenter: React.FC<AdminVeterinariaCommandCenterProps> = ({ me }) => {
-  const { replay } = useTourGuide('admin-vet-inicio', TOUR_STEPS_ADMIN_VET);
+  useTourGuide('admin-vet-inicio', TOUR_STEPS_ADMIN_VET);
   const { pacientes, loading } = usePacientes();
   const metricas = useQuery({
     queryKey: ['metricas-dashboard'],
@@ -89,7 +88,6 @@ const AdminVeterinariaCommandCenter: React.FC<AdminVeterinariaCommandCenterProps
           </Link>
         </div>
       </InsightPanel>
-      <TourHelpButton onReplay={replay} />
     </CommandCenterShell>
   );
 };

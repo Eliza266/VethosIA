@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useTourGuide } from '../hooks/useTourGuide';
-import TourHelpButton from '../components/TourHelpButton';
 import { Link } from 'react-router-dom';
 import { Calendar, CreditCard, Stethoscope, Users } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -76,7 +75,7 @@ const veterinariaFormInicial = {
 };
 
 const AdminVeterinaria: React.FC = () => {
-  const { replay } = useTourGuide('admin-vet-mi-veterinaria', TOUR_STEPS_ADMIN_VETERINARIA);
+  useTourGuide('admin-vet-mi-veterinaria', TOUR_STEPS_ADMIN_VETERINARIA);
   const { data: me } = useMe();
   const qc = useQueryClient();
   const accionesVisibles = acciones.filter((accion) => accion.to !== '/suscripcion' || puedeVerSuscripcion(me ?? null));
@@ -850,7 +849,6 @@ const AdminVeterinaria: React.FC = () => {
           );
         })}
       </section>
-      <TourHelpButton onReplay={replay} />
     </div>
   );
 };

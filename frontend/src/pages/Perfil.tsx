@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useTourGuide } from '../hooks/useTourGuide';
-import TourHelpButton from '../components/TourHelpButton';
 import { useAuth } from '../hooks/useAuth';
 import { db, auth, storage } from '../services/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
@@ -60,7 +59,7 @@ const TOUR_STEPS_PERFIL = [
 
 const Perfil: React.FC = () => {
   const { user } = useAuth();
-  const { replay } = useTourGuide('perfil', TOUR_STEPS_PERFIL);
+  useTourGuide('perfil', TOUR_STEPS_PERFIL);
   const queryClient = useQueryClient();
   const [fields, setFields] = useState<VetFields>({
     nombre: '',
@@ -497,7 +496,6 @@ const Perfil: React.FC = () => {
           </form>
         </div>
       </div>
-      <TourHelpButton onReplay={replay} />
     </div>
   );
 };

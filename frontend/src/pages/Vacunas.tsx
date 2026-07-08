@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import { useTourGuide } from '../hooks/useTourGuide';
-import TourHelpButton from '../components/TourHelpButton';
 import { Link, useLocation } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, CheckCircle2, Filter, ListChecks, Syringe, ShieldAlert } from 'lucide-react';
@@ -50,7 +49,7 @@ const Vacunas: React.FC = () => {
   const [tipo, setTipo] = useState('');
 
   const currentTab = new URLSearchParams(location.search).get('tab') || 'control';
-  const { replay } = useTourGuide('vacunas', TOUR_STEPS_VACUNAS);
+  useTourGuide('vacunas', TOUR_STEPS_VACUNAS);
 
   const filtros = useMemo(
     () => ({
@@ -349,7 +348,6 @@ const Vacunas: React.FC = () => {
           </Card>
         </>
       )}
-      <TourHelpButton onReplay={replay} />
     </div>
   );
 };

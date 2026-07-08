@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useTourGuide } from '../hooks/useTourGuide';
-import TourHelpButton from '../components/TourHelpButton';
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { usePacientes } from '../hooks/usePacientes';
 import { useConsultas } from '../hooks/useConsultas';
@@ -95,7 +94,7 @@ const NuevaConsulta: React.FC = () => {
   const { crearConsulta, actualizarConsulta, procesarAudioConsulta, error: apiError } = useConsultas();
   const { user } = useAuth();
   const { brigadas } = useBrigadas();
-  const { replay } = useTourGuide('nueva-consulta', TOUR_STEPS_NUEVA_CONSULTA);
+  useTourGuide('nueva-consulta', TOUR_STEPS_NUEVA_CONSULTA);
 
   const [paciente, setPaciente] = useState<Paciente | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -475,7 +474,6 @@ const NuevaConsulta: React.FC = () => {
           </ul>
         </div>
       </div>
-      <TourHelpButton onReplay={replay} />
     </div>
   );
 };

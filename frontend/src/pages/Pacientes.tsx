@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useTourGuide } from '../hooks/useTourGuide';
-import TourHelpButton from '../components/TourHelpButton';
 import { Link, useLocation } from 'react-router-dom';
 import { usePacientes } from '../hooks/usePacientes';
 import { listarCitas, type Cita as CitaApi } from '../features/citas/api';
@@ -53,7 +52,7 @@ const Pacientes: React.FC = () => {
   const location = useLocation();
 
   const currentTab = new URLSearchParams(location.search).get('tab') || 'listar';
-  const { replay } = useTourGuide('pacientes-lista', TOUR_STEPS_PACIENTES);
+  useTourGuide('pacientes-lista', TOUR_STEPS_PACIENTES);
 
   const especies = [
     { value: 'todos', label: 'Todos', emoji: '🐾' },
@@ -401,7 +400,6 @@ const Pacientes: React.FC = () => {
           )}
         </>
       )}
-      <TourHelpButton onReplay={replay} />
     </div>
   );
 };

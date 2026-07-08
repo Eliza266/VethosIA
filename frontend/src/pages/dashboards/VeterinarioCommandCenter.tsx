@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import { useTourGuide } from '../../hooks/useTourGuide';
-import TourHelpButton from '../../components/TourHelpButton';
 import { Link } from 'react-router-dom';
 import { FileText, Mic, Plus, Search, Calendar, ChevronRight } from 'lucide-react';
 import { listarCitas, type Cita as CitaApi } from '../../features/citas/api';
@@ -165,7 +164,7 @@ const VeterinarioCommandCenter: React.FC<VeterinarioCommandCenterProps> = ({ me,
 
   const nombre = displayUserLabel({ nombre: me?.nombre ?? user?.nombre, email: me?.email ?? user?.email });
   const { mode } = useAdminVetMode();
-  const { replay } = useTourGuide('inicio', TOUR_STEPS_INICIO);
+  useTourGuide('inicio', TOUR_STEPS_INICIO);
   const modules = getDashboardModulesForProfile(me ?? null, mode);
   const primaryModules = pickModules(modules, PRIMARY_MODULE_IDS);
   const secondaryModules = pickModules(modules, SECONDARY_MODULE_IDS);
@@ -336,7 +335,6 @@ const VeterinarioCommandCenter: React.FC<VeterinarioCommandCenterProps> = ({ me,
           </div>
         </InsightPanel>
       </div>
-      <TourHelpButton onReplay={replay} />
     </CommandCenterShell>
   );
 };

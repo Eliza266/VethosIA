@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTourGuide } from '../hooks/useTourGuide';
-import TourHelpButton from '../components/TourHelpButton';
 import { useParams, Link, useLocation } from 'react-router-dom';
 import { usePacientes } from '../hooks/usePacientes';
 import { useConsultas } from '../hooks/useConsultas';
@@ -65,7 +64,7 @@ const DetallePaciente: React.FC = () => {
   const { getPaciente, pacientes, fetchPacientes, actualizarPaciente } = usePacientes();
   const { fetchConsultasPorPaciente } = useConsultas();
   const { data: me } = useMe();
-  const { replay } = useTourGuide('paciente-detalle', TOUR_STEPS_PACIENTE_DETALLE);
+  useTourGuide('paciente-detalle', TOUR_STEPS_PACIENTE_DETALLE);
 
   const [paciente, setPaciente] = useState<Paciente | null>(null);
   const [consultasPaciente, setConsultasPaciente] = useState<Consulta[]>([]);
@@ -908,7 +907,6 @@ const DetallePaciente: React.FC = () => {
           </div>
         </div>
       )}
-      <TourHelpButton onReplay={replay} />
     </div>
   );
 };

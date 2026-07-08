@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import { useTourGuide } from '../hooks/useTourGuide';
-import TourHelpButton from '../components/TourHelpButton';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { CalendarClock, CalendarDays, CheckCircle2, Link2, Plus, Users, X, Save, TrendingUp, AlertTriangle } from 'lucide-react';
 import { useCitas } from '../features/citas/hooks';
@@ -33,7 +32,7 @@ const TOUR_STEPS_AGENDA = [
 const Agenda: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { replay } = useTourGuide('agenda', TOUR_STEPS_AGENDA);
+  useTourGuide('agenda', TOUR_STEPS_AGENDA);
   const { data, isLoading, crear, cambiarEstado, vincularPaciente } = useCitas();
   const { pacientes } = usePacientes();
 
@@ -562,8 +561,6 @@ const Agenda: React.FC = () => {
           </div>
         </div>
       )}
-
-      <TourHelpButton onReplay={replay} />
     </div>
   );
 };

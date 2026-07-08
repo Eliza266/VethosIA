@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTourGuide } from '../hooks/useTourGuide';
-import TourHelpButton from '../components/TourHelpButton';
 import { useLocation } from 'react-router-dom';
 import { Activity, AlertCircle, Calendar, CheckCircle2, ClipboardList, MapPin, Plus, Stethoscope, Users, X } from 'lucide-react';
 import { useBrigadas } from '../hooks/useBrigadas';
@@ -54,7 +53,7 @@ const Brigadas: React.FC = () => {
   const { brigadas, loading, error, crearBrigada, actualizarBrigada } = useBrigadas();
   const location = useLocation();
   const currentTab = new URLSearchParams(location.search).get('tab') || 'listar';
-  const { replay } = useTourGuide('brigadas', TOUR_STEPS_BRIGADAS);
+  useTourGuide('brigadas', TOUR_STEPS_BRIGADAS);
 
   const [sedes, setSedes] = useState<BackofficeVeterinaria[]>([]);
   const [miembros, setMiembros] = useState<BackofficeMiembro[]>([]);
@@ -606,7 +605,6 @@ const Brigadas: React.FC = () => {
       )}
       </>
       )}
-      <TourHelpButton onReplay={replay} />
     </div>
   );
 };
