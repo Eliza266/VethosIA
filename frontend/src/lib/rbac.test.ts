@@ -242,9 +242,9 @@ describe('rbac (matriz de modulos por rol)', () => {
     expect(modulosInicioPorRol('asistente')).toEqual([]);
   });
 
-  it('nueva-consulta describe flujo desde listado de pacientes', () => {
+  it('nueva-consulta lleva directo a grabar consulta', () => {
     const modulo = modulosInicioPorRol('admin_veterinaria').find((m) => m.id === 'nueva-consulta');
     expect(modulo?.label).toBe('Nueva consulta');
-    expect(modulo?.path).toBe('/pacientes');
+    expect(modulo?.path).toBe('/consultas/nueva-rapida');
   });
 });

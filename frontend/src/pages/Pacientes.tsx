@@ -4,7 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { usePacientes } from '../hooks/usePacientes';
 import { listarCitas, type Cita as CitaApi } from '../features/citas/api';
 import PacienteCard from '../components/PacienteCard';
-import { Search, Plus, Filter, AlertCircle, LayoutGrid, List, Users, Scale, Activity, Mic } from 'lucide-react';
+import { Search, Plus, Filter, AlertCircle, LayoutGrid, List, Users, Scale, Activity } from 'lucide-react';
 import type { Cita } from '../types';
 import { KpiCard, Card, SectionHeader, PageHeader } from '../components/ui/Primitives';
 
@@ -36,7 +36,6 @@ const mapCitaApi = (c: CitaApi): Cita => ({
 
 const TOUR_STEPS_PACIENTES = [
   { element: '[data-tour="pacientes-busqueda"]', popover: { title: 'Buscar pacientes', description: 'Aquí ves todos los pacientes registrados. Busca por nombre de mascota, dueño o raza, y filtra por especie con los botones de arriba.' } },
-  { element: '[data-tour="pacientes-consulta-rapida"]', popover: { title: 'Consulta rápida', description: 'Úsalo cuando quieras empezar a grabar de una vez, sin buscar antes la ficha de la mascota. Al terminar, la IA detecta el nombre del paciente y del dueño en el audio: si ya existe esa mascota, te ofrece vincular la consulta; si es nueva, confirmas los datos y queda registrada.' } },
   { element: '[data-tour="pacientes-nuevo"]', popover: { title: 'Nuevo paciente', description: 'Registra una ficha completa antes de la consulta: datos de la mascota, especie, raza y datos del propietario (incluye teléfono con indicativo de país).' } },
 ];
 
@@ -115,15 +114,6 @@ const Pacientes: React.FC = () => {
         description="Gestiona los expedientes clínicos de todas las mascotas registradas."
         action={
           <div className="flex flex-wrap items-center gap-2">
-            <Link
-              to="/consultas/nueva-rapida"
-              data-tour="pacientes-consulta-rapida"
-              title="Empieza a grabar sin elegir mascota; la IA detecta los datos en el audio."
-              className="inline-flex items-center gap-1.5 rounded-xl border border-accent/30 bg-white px-4 py-2.5 text-sm font-bold text-accent shadow-sm hover:bg-accent/5 transition-all hover:scale-[1.01]"
-            >
-              <Mic className="h-4 w-4" />
-              Consulta rápida
-            </Link>
             <Link
               to="/pacientes/nuevo"
               data-tour="pacientes-nuevo"

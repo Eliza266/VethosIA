@@ -138,6 +138,6 @@ describe('VeterinarioCommandCenter', () => {
     renderCenter();
 
     expect(await screen.findByTestId('veterinario-command-center')).toBeInTheDocument();
-    expect(screen.getAllByRole('link', { name: /Nueva consulta/i })[0]).toHaveAttribute('href', '/pacientes');
+    expect(screen.getAllByRole('link', { name: /Nueva consulta/i })[0]).toHaveAttribute('href', '/consultas/nueva-rapida');
   });
 });

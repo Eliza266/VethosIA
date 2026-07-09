@@ -120,7 +120,7 @@ const ConsultaRecienteRow: React.FC<{
 
 const TOUR_STEPS_INICIO = [
   { element: '[data-tour="inicio-panel"]', popover: { title: 'Tu panel principal', description: 'Este es tu panel principal. Aquí ves un resumen rápido de tu día: consultas recientes, pacientes atendidos y tus próximas citas de agenda.' } },
-  { element: '[data-tour="inicio-nueva-consulta"]', popover: { title: 'Nueva consulta', description: 'Elige un paciente e inicia la grabación en un clic. Si no quieres buscar la mascota antes, usa "Consulta rápida" desde la pantalla de Pacientes.' } },
+  { element: '[data-tour="inicio-nueva-consulta"]', popover: { title: 'Nueva consulta', description: 'Empieza a grabar de una vez. Si ya sabes cuál es el paciente, búscalo por nombre o dueño; si no, la IA detecta los datos del audio.' } },
 ];
 
 const VeterinarioCommandCenter: React.FC<VeterinarioCommandCenterProps> = ({ me, user }) => {
@@ -203,7 +203,7 @@ const VeterinarioCommandCenter: React.FC<VeterinarioCommandCenterProps> = ({ me,
         </div>
         <div className="flex shrink-0 flex-wrap gap-2">
           <Link
-            to="/pacientes"
+            to="/consultas/nueva-rapida"
             data-tour="inicio-nueva-consulta"
             className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2.5 text-sm font-bold text-white shadow-md shadow-accent/10 hover:bg-accent-strong transition-all hover:scale-[1.01]"
           >

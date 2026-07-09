@@ -27,7 +27,8 @@ export type CapabilityIcon =
   | 'entidad'
   | 'veterinaria'
   | 'suscripcion'
-  | 'soporte';
+  | 'soporte'
+  | 'configuracion';
 
 export type CapabilityAccessModulo =
   | 'entidades'
@@ -441,8 +442,8 @@ export const ROLE_CAPABILITY_MODULES: readonly CapabilityModule[] = [
   {
     id: 'nueva-consulta',
     label: 'Nueva consulta',
-    description: 'Elige un paciente para iniciar audio, modo manual, SOAP e historia médica.',
-    path: '/pacientes',
+    description: 'Graba de una vez; busca un paciente existente o deja que la IA detecte los datos del audio.',
+    path: '/consultas/nueva-rapida',
     icon: 'nuevo',
     roles: ['admin_veterinaria', 'veterinario'],
     status: 'active',
@@ -560,6 +561,21 @@ export const ROLE_CAPABILITY_MODULES: readonly CapabilityModule[] = [
     showInDashboard: false,
     requiresTenant: false,
     rbacModulo: 'notificaciones',
+  },
+  {
+    id: 'ajustes',
+    label: 'Configuración',
+    description: 'Tu perfil y preferencias personales.',
+    path: '/ajustes',
+    icon: 'configuracion',
+    roles: ['veterinario'],
+    status: 'active',
+    category: 'operations',
+    priority: 910,
+    showInNavbar: true,
+    showInDashboard: false,
+    requiresTenant: false,
+    rbacModulo: 'configuracion',
   },
 ];
 

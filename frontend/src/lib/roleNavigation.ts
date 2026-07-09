@@ -109,8 +109,8 @@ const ADMIN_VET_CATALOG: Record<AdminVetMode, RoleModule[]> = {
     {
       id: 'nueva-consulta',
       label: 'Nueva consulta',
-      description: 'Elige un paciente para iniciar audio, modo manual, SOAP e historia médica.',
-      path: '/pacientes',
+      description: 'Graba de una vez; busca un paciente existente o deja que la IA detecte los datos del audio.',
+      path: '/consultas/nueva-rapida',
       icon: 'nuevo',
       roles: ['veterinario'],
       status: 'active',
@@ -187,8 +187,8 @@ const ADMIN_VET_CATALOG: Record<AdminVetMode, RoleModule[]> = {
     {
       id: 'nueva-consulta',
       label: 'Nueva consulta',
-      description: 'Elige un paciente para iniciar audio, modo manual, SOAP e historia médica.',
-      path: '/pacientes',
+      description: 'Graba de una vez; busca un paciente existente o deja que la IA detecte los datos del audio.',
+      path: '/consultas/nueva-rapida',
       icon: 'nuevo',
       roles: ['admin_veterinaria'],
       status: 'active',

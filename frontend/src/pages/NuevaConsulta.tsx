@@ -5,7 +5,8 @@ import { usePacientes } from '../hooks/usePacientes';
 import { useConsultas } from '../hooks/useConsultas';
 import type { Paciente, SignosVitales } from '../types';
 import AudioRecorder from '../components/AudioRecorder';
-import { AlertCircle, Sparkles, HelpCircle, FileText } from 'lucide-react';
+import { AlertCircle, Sparkles, HelpCircle, FileText, Search } from 'lucide-react';
+import { getSpeciesEmoji } from '../lib/navModel';
 import { PageHeader } from '../components/ui/Primitives';
 import { getErrorMessage } from '../lib/errors';
 import { useAuth } from '../features/auth/hooks';
@@ -90,7 +91,7 @@ const NuevaConsulta: React.FC = () => {
   const citaId = searchParams.get('citaId') ?? undefined;
   const navigate = useNavigate();
 
-  const { getPaciente, loading: loadingPaciente } = usePacientes();
+  const { getPaciente, pacientes, loading: loadingPaciente } = usePacientes();
   const { crearConsulta, actualizarConsulta, procesarAudioConsulta, error: apiError } = useConsultas();
   const { user } = useAuth();
   const { brigadas } = useBrigadas();
@@ -105,6 +106,7 @@ const NuevaConsulta: React.FC = () => {
   const [progressPct, setProgressPct] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [brigadaSeleccionadaId, setBrigadaSeleccionadaId] = useState<string>('');
+  const [buscarPaciente, setBuscarPaciente] = useState('');
 
   const hoyStr = (() => {
     const hoy = new Date();
@@ -120,6 +122,26 @@ const NuevaConsulta: React.FC = () => {
     const participa = user?.uid ? b.veterinarioIds?.includes(user.uid) : true;
     return esDeHoy && esActiva && participa;
   });
+
+  const resultadosBusqueda = (() => {
+    const q = buscarPaciente.trim().toLowerCase();
+    if (!q || !paciente?.esPlaceholder) return [];
+    return pacientes
+      .filter((p): p is Paciente & { id: string } => !!p.id && !p.esPlaceholder && p.id !== pacienteId)
+      .filter(
+        (p) =>
+          p.nombre.toLowerCase().includes(q) ||
+          (p.propietario?.nombre ?? '').toLowerCase().includes(q),
+      )
+      .slice(0, 6);
+  })();
+
+  const handleSeleccionarPacienteExistente = (idExistente: string) => {
+    navigate(
+      `/pacientes/${idExistente}/consultas/nueva${citaId ? `?citaId=${citaId}` : ''}`,
+      { replace: true },
+    );
+  };
 
   useEffect(() => {
     const loadPaciente = async () => {
@@ -273,15 +295,57 @@ const NuevaConsulta: React.FC = () => {
         </div>
       )}
 
-      {/* Recordatorio para consulta rapida: sin datos de paciente, la IA los detecta del audio */}
+      {/* Recordatorio para consulta rapida: sin datos de paciente, la IA los detecta del audio,
+          o se puede buscar y vincular un paciente ya existente antes de grabar. */}
       {paciente.esPlaceholder && (
-        <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-          <Sparkles className="h-5 w-5 shrink-0 text-amber-500" />
-          <div>
-            <span className="font-bold">Consulta rápida:</span> no elegiste un paciente antes de grabar.
-            No olvides decir en voz alta el <b>nombre y especie de la mascota</b>, y el{' '}
-            <b>nombre y teléfono del propietario</b> — la IA los detecta del audio para armar la ficha.
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 space-y-3">
+          <div className="flex items-start gap-2 text-sm text-amber-800">
+            <Sparkles className="h-5 w-5 shrink-0 text-amber-500" />
+            <div>
+              <span className="font-bold">Consulta rápida:</span> no elegiste un paciente antes de grabar.
+              Si es una mascota ya registrada, búscala abajo. Si no, no olvides decir en voz alta el{' '}
+              <b>nombre y especie de la mascota</b>, y el <b>nombre y teléfono del propietario</b> — la IA
+              los detecta del audio para armar la ficha.
+            </div>
           </div>
+
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-amber-500" />
+            <input
+              type="text"
+              value={buscarPaciente}
+              onChange={(e) => setBuscarPaciente(e.target.value)}
+              placeholder="Buscar paciente por nombre o dueño..."
+              aria-label="Buscar paciente existente"
+              className="w-full rounded-lg border border-amber-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-800 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15"
+            />
+          </div>
+
+          {resultadosBusqueda.length > 0 && (
+            <ul className="grid gap-1.5">
+              {resultadosBusqueda.map((p) => (
+                <li key={p.id}>
+                  <button
+                    type="button"
+                    onClick={() => handleSeleccionarPacienteExistente(p.id)}
+                    className="flex w-full items-center gap-2 rounded-lg border border-amber-100 bg-white px-3 py-2 text-left text-sm transition-colors hover:border-accent hover:bg-accent/5"
+                  >
+                    <span className="text-lg shrink-0">{getSpeciesEmoji(p.especie)}</span>
+                    <span className="min-w-0">
+                      <span className="block truncate font-bold text-slate-800">{p.nombre}</span>
+                      <span className="block truncate text-xs text-slate-500">
+                        Dueño: {p.propietario?.nombre || 'Sin dato'}
+                      </span>
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {buscarPaciente.trim() && resultadosBusqueda.length === 0 && (
+            <p className="text-xs text-amber-700">No encontramos ningún paciente con ese nombre o dueño.</p>
+          )}
         </div>
       )}
 
