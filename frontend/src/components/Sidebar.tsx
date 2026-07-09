@@ -187,6 +187,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, onToggleCol
               })
             : navItems.map((item) => {
                 const Icon = typeof item.icon === 'string' ? NAV_ICON[item.icon as NavIcon] : item.icon;
+                // Desplegable debajo del item activo (no una caja aparte): el detalle de
+                // paciente (nivel 3) cuelga de "Pacientes"; los sub-modulos (nivel 2)
+                // cuelgan de su propio modulo (Agenda, Vacunas, Mi veterinaria, etc.).
+                const showPatientTabsHere = !showCollapsed && isLevel3 && item.id === 'pacientes';
+                const showSubModulesHere = !showCollapsed && isLevel2 && activeModule?.id === item.id;
                 return (
                   <li key={item.id}>
                     <SidebarItem
@@ -197,73 +202,63 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, onToggleCol
                       collapsed={showCollapsed}
                       onNavigate={onNavigate}
                     />
+                    {showPatientTabsHere && (
+                      <div className="mt-1 ml-4 space-y-0.5 border-l pl-2" style={{ borderColor: 'var(--border)' }}>
+                        <div className="flex items-center gap-1.5 px-3 py-1 text-xs font-bold" style={{ color: 'var(--accent-strong)' }}>
+                          <span>{getSpeciesEmoji(currentPaciente?.especie)}</span>
+                          <span className="truncate">{currentPaciente?.nombre || 'Expediente'}</span>
+                        </div>
+                        {PATIENT_TABS.map((tab) => {
+                          const active = (new URLSearchParams(location.search).get('tab') || 'perfil') === tab.val;
+                          return (
+                            <Link
+                              key={tab.val}
+                              to={`/pacientes/${patientId}?tab=${tab.val}`}
+                              onClick={onNavigate}
+                              className={`block rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${active ? 'veth-sidebar-item-active' : 'veth-sidebar-item'}`}
+                              aria-current={active ? 'page' : undefined}
+                            >
+                              {tab.label}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+                    {showSubModulesHere && activeModule && (
+                      <div className="mt-1 ml-4 space-y-0.5 border-l pl-2" style={{ borderColor: 'var(--border)' }}>
+                        {activeModule.subModules.map((sub) => {
+                          if (sub.anchor) {
+                            // Admin: misma pagina, hace scroll a la seccion (no cambia de vista).
+                            return (
+                              <a
+                                key={sub.id}
+                                href={`${activeModule.path}#${sub.anchor}`}
+                                onClick={onNavigate}
+                                className="block rounded-lg px-3 py-1.5 text-sm font-medium transition-colors veth-sidebar-item"
+                              >
+                                {sub.label}
+                              </a>
+                            );
+                          }
+                          const active = (new URLSearchParams(location.search).get('tab') || activeModule.subModules[0].tabValue) === sub.tabValue;
+                          return (
+                            <Link
+                              key={sub.id}
+                              to={`${activeModule.path}?tab=${sub.tabValue}`}
+                              onClick={onNavigate}
+                              className={`block rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${active ? 'veth-sidebar-item-active' : 'veth-sidebar-item'}`}
+                              aria-current={active ? 'page' : undefined}
+                            >
+                              {sub.label}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
                   </li>
                 );
               })}
         </ul>
-
-        {/* Navegación contextual del veterinario (niveles 2/3) */}
-        {!showCollapsed && isLevel3 && (
-          <div className="mt-4 rounded-xl border p-2" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
-            <div className="flex items-center gap-1.5 px-2 py-1 text-xs font-bold" style={{ color: 'var(--accent-strong)' }}>
-              <span>{getSpeciesEmoji(currentPaciente?.especie)}</span>
-              <span className="truncate">{currentPaciente?.nombre || 'Expediente'}</span>
-            </div>
-            <div className="mt-1 space-y-0.5">
-              {PATIENT_TABS.map((tab) => {
-                const active = (new URLSearchParams(location.search).get('tab') || 'perfil') === tab.val;
-                return (
-                  <Link
-                    key={tab.val}
-                    to={`/pacientes/${patientId}?tab=${tab.val}`}
-                    onClick={onNavigate}
-                    className={`block rounded-lg px-3 py-2 text-sm font-medium transition-colors ${active ? 'veth-sidebar-item-active' : 'veth-sidebar-item'}`}
-                    aria-current={active ? 'page' : undefined}
-                  >
-                    {tab.label}
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {!showCollapsed && isLevel2 && activeModule && (
-          <div className="mt-4 rounded-xl border p-2" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
-            <div className="px-2 py-1 text-[11px] font-bold uppercase tracking-wide" style={{ color: 'var(--muted)' }}>
-              {activeModule.label}
-            </div>
-            <div className="mt-1 space-y-0.5">
-              {activeModule.subModules.map((sub) => {
-                if (sub.anchor) {
-                  // Admin: misma pagina, hace scroll a la seccion (no cambia de vista).
-                  return (
-                    <a
-                      key={sub.id}
-                      href={`${activeModule.path}#${sub.anchor}`}
-                      onClick={onNavigate}
-                      className="block rounded-lg px-3 py-2 text-sm font-medium transition-colors veth-sidebar-item"
-                    >
-                      {sub.label}
-                    </a>
-                  );
-                }
-                const active = (new URLSearchParams(location.search).get('tab') || activeModule.subModules[0].tabValue) === sub.tabValue;
-                return (
-                  <Link
-                    key={sub.id}
-                    to={`${activeModule.path}?tab=${sub.tabValue}`}
-                    onClick={onNavigate}
-                    className={`block rounded-lg px-3 py-2 text-sm font-medium transition-colors ${active ? 'veth-sidebar-item-active' : 'veth-sidebar-item'}`}
-                    aria-current={active ? 'page' : undefined}
-                  >
-                    {sub.label}
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        )}
       </nav>
 
       {/* Footer: perfil + logout */}

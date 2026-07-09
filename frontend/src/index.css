@@ -522,9 +522,3 @@ body {
 .driver-popover-done-btn:hover {
   background: var(--accent-strong);
 }
-
-/* El desenfoque solo aplica en navegadores que soportan backdrop-filter sobre
-   el overlay SVG de driver.js; donde no, queda el oscurecido igual. */
-.driver-overlay {
-  backdrop-filter: blur(2px);
-}
