@@ -23,7 +23,7 @@ interface AdminVeterinariaCommandCenterProps {
 const TOUR_STEPS_ADMIN_VET = [
   { element: '[data-tour="admin-vet-panel"]', popover: { title: 'Tu panel de gerencia', description: 'Un vistazo rápido: pacientes, consultas, agenda y consumo del período. El detalle completo está en "Métricas".' } },
   { element: '[data-tour="admin-vet-nueva-consulta"]', popover: { title: 'Nueva consulta', description: 'Inicia una consulta de una vez, igual que lo haría un veterinario, sin cambiar de panel.' } },
-  { element: '[data-tour="admin-vet-mi-veterinaria"]', popover: { title: 'Mi veterinaria', description: 'Gestiona el perfil de tu sede, el equipo clínico (veterinarios vinculados), invitaciones nuevas y solicitudes técnicas pendientes.' } },
+  { element: '[data-tour="admin-vet-mi-veterinaria"]', popover: { title: 'Configuración', description: 'Gestiona el perfil de tu sede, el equipo clínico (veterinarios vinculados), el catálogo de vacunas y las solicitudes técnicas pendientes.' } },
   { element: '[data-tour="admin-vet-accesos"]', popover: { title: 'Accesos rápidos', description: 'Atajos directos a Agenda, Pacientes y Brigadas de tu sede, para revisar o coordinar sin perder tiempo navegando el menú.' } },
 ];
 
@@ -52,7 +52,7 @@ const AdminVeterinariaCommandCenter: React.FC<AdminVeterinariaCommandCenterProps
               Nueva consulta
             </PrimaryLink>
             <PrimaryLink to="/veterinaria" icon={<Users className="h-4 w-4" />} data-tour="admin-vet-mi-veterinaria">
-              Mi veterinaria
+              Configuración
             </PrimaryLink>
           </>
         }

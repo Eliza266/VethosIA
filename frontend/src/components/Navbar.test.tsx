@@ -160,15 +160,15 @@ describe('Navbar (roles y entidad)', () => {
     
     const adminVetView = renderNavbar();
     expect(screen.getByText('Admin Veterinaria')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /veterinaria/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /configuraci[oó]n/i })).toHaveAttribute('href', '/veterinaria');
     expect(screen.queryByRole('link', { name: /pacientes/i })).not.toBeInTheDocument();
     adminVetView.unmount();
 
-    // Mode: veterinario
+    // Mode: veterinario ("Configuración" ahora apunta a /ajustes en vez de /veterinaria)
     mockUseAdminVetMode.mockReturnValue({ mode: 'veterinario', setMode: vi.fn(), isAdminVet: true });
     renderNavbar();
     expect(screen.getByRole('link', { name: /pacientes/i })).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /veterinaria/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /configuraci[oó]n/i })).toHaveAttribute('href', '/ajustes');
   });
 
   it('usa role V2 admin_veterinaria sobre rol legacy admin', () => {
@@ -189,7 +189,7 @@ describe('Navbar (roles y entidad)', () => {
     
     renderNavbar();
     expect(screen.getByText('Admin Veterinaria')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /veterinaria/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /configuraci[oó]n/i })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /pacientes/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /vista entidad/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /soporte plataforma/i })).not.toBeInTheDocument();

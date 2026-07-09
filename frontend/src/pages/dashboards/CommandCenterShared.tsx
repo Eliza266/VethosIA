@@ -8,6 +8,7 @@ import {
   CreditCard,
   FileText,
   PlusCircle,
+  Settings,
   ShieldCheck,
   Syringe,
   Users,
@@ -28,6 +29,7 @@ const MODULE_ICON: Record<NavIcon, LucideIcon> = {
   veterinaria: Building2,
   suscripcion: CreditCard,
   soporte: ShieldCheck,
+  configuracion: Settings,
 };
 
 export interface CommandStat {

@@ -110,15 +110,15 @@ describe('Sidebar (roles y RBAC)', () => {
 
     const { unmount } = renderSidebar();
     expect(screen.getByText('Admin Veterinaria')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /veterinaria/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /configuraci[oó]n/i })).toHaveAttribute('href', '/veterinaria');
     expect(screen.queryByRole('link', { name: /pacientes/i })).not.toBeInTheDocument();
     unmount();
 
-    // Modo veterinario
+    // Modo veterinario ("Configuración" ahora apunta a /ajustes en vez de /veterinaria)
     mockUseAdminVetMode.mockReturnValue({ mode: 'veterinario', setMode: vi.fn(), isAdminVet: true });
     renderSidebar();
     expect(screen.getByRole('link', { name: /pacientes/i })).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /veterinaria/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /configuraci[oó]n/i })).toHaveAttribute('href', '/ajustes');
   });
 
   it('superadmin muestra las 9 secciones de plataforma', () => {

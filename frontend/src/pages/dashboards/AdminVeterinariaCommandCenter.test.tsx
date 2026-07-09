@@ -69,7 +69,7 @@ describe('AdminVeterinariaCommandCenter', () => {
     expect(screen.getByText(/Operaci[oó]n de Cl[ií]nica/i)).toBeInTheDocument();
     expect(screen.getByText(/Control de sede/i)).toBeInTheDocument();
     expect(screen.getAllByText(/Nueva consulta/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Mi veterinaria/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Configuraci[oó]n/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Pacientes de sede/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/Plan, consumo y estado/i)).toBeInTheDocument();
     expect(screen.queryByText(/Vista entidad/i)).not.toBeInTheDocument();

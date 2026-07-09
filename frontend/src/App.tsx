@@ -27,6 +27,7 @@ import NuevaConsulta from './pages/NuevaConsulta';
 import NuevaConsultaRapida from './pages/NuevaConsultaRapida';
 import DetalleConsulta from './pages/DetalleConsulta';
 import Perfil from './pages/Perfil';
+import Ajustes from './pages/Ajustes';
 import Agenda from './pages/Agenda';
 import Vacunas from './pages/Vacunas';
 import Brigadas from './pages/Brigadas';
@@ -71,6 +72,7 @@ function App() {
                       <Route path="/brigadas" element={<Brigadas />} />
                     </Route>
                     <Route path="/perfil" element={<Perfil />} />
+                    <Route path="/ajustes" element={<Ajustes />} />
                     <Route path="/notificaciones" element={<Notificaciones />} />
                     <Route path="/como-funciona" element={<ComoFunciona />} />
                     <Route path="/invitacion" element={<Invitacion />} />

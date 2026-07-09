@@ -49,11 +49,11 @@ vi.mock('../features/saas/BusinessOverview', () => ({
   BusinessOverview: () => <section aria-label="Resumen de negocio" />,
 }));
 
-function renderAdminVeterinaria() {
+function renderAdminVeterinaria(initialPath = '/veterinaria') {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={qc}>
-      <MemoryRouter>
+      <MemoryRouter initialEntries={[initialPath]}>
         <AdminVeterinaria />
       </MemoryRouter>
     </QueryClientProvider>,
@@ -123,19 +123,20 @@ describe('AdminVeterinaria', () => {
     mockSetBloqueoMiembroBackoffice.mockResolvedValue({ id: 'm_vet1', uid: 'vet1', bloqueado: true });
   });
 
-  it('muestra modulos de veterinaria sin Vista Entidad ni soporte', () => {
+  it('muestra el hub de Configuración con sus tarjetas, sin Vista Entidad ni soporte', () => {
     renderAdminVeterinaria();
 
-    expect(screen.getByText('Mi veterinaria')).toBeInTheDocument();
-    expect(screen.getByText('Pacientes de la veterinaria')).toBeInTheDocument();
-    expect(screen.getByText('Agenda operativa')).toBeInTheDocument();
+    expect(screen.getByText('Configuración')).toBeInTheDocument();
+    expect(screen.getByText('Datos de la clínica')).toBeInTheDocument();
+    expect(screen.getByText('Catálogo de vacunas')).toBeInTheDocument();
+    expect(screen.getByText('Solicitudes técnicas y plan')).toBeInTheDocument();
     expect(screen.getAllByText(/Equipo cl[ií]nico/i).length).toBeGreaterThan(0);
     expect(screen.queryByText(/Vista Entidad/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Soporte Plataforma/i)).not.toBeInTheDocument();
   });
 
   it('invita veterinario usando el scope de su veterinaria', async () => {
-    renderAdminVeterinaria();
+    renderAdminVeterinaria('/veterinaria?tab=equipo');
 
     fireEvent.change(screen.getByLabelText('Email del veterinario'), {
       target: { value: 'nuevo@clinica.com' },
@@ -155,8 +156,8 @@ describe('AdminVeterinaria', () => {
     expect(await screen.findByText(/tok_vet/)).toBeInTheDocument();
   });
 
-  it('muestra datos, miembros y consumo filtrados de la clinica', async () => {
-    renderAdminVeterinaria();
+  it('muestra los datos de la clinica en la pestaña ficha', async () => {
+    renderAdminVeterinaria('/veterinaria?tab=ficha');
 
     expect(await screen.findByDisplayValue('Clinica Norte')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Calle 1 #2-3')).toBeInTheDocument();
@@ -165,6 +166,11 @@ describe('AdminVeterinaria', () => {
     expect(screen.getByDisplayValue('+57 300 111 2233')).toBeInTheDocument();
     expect(screen.getByDisplayValue('contacto@clinicanorte.com')).toBeInTheDocument();
     expect(screen.getByDisplayValue('https://cdn.test/clinica-norte.png')).toBeInTheDocument();
+  });
+
+  it('muestra miembros y consumo filtrados de la clinica en la pestaña equipo', async () => {
+    renderAdminVeterinaria('/veterinaria?tab=equipo');
+
     expect(await screen.findByText(/vet1@clinica\.com/)).toBeInTheDocument();
     expect(screen.getByText('Activo')).toBeInTheDocument();
     expect(screen.getByText(/Consolidado cl[ií]nica/i)).toBeInTheDocument();
@@ -178,7 +184,7 @@ describe('AdminVeterinaria', () => {
   });
 
   it('guarda el perfil completo de la veterinaria', async () => {
-    renderAdminVeterinaria();
+    renderAdminVeterinaria('/veterinaria?tab=ficha');
 
     await screen.findByDisplayValue('Clinica Norte');
     fireEvent.change(screen.getByLabelText('Nombre de la clinica'), {
@@ -218,7 +224,7 @@ describe('AdminVeterinaria', () => {
       },
     ]);
 
-    renderAdminVeterinaria();
+    renderAdminVeterinaria('/veterinaria?tab=equipo');
 
     const selfAction = await screen.findByRole('button', { name: /tu cuenta/i });
     expect(selfAction).toBeDisabled();

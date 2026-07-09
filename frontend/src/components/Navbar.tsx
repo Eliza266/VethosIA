@@ -48,6 +48,7 @@ const NAV_ICON: Record<NavIcon, LucideIcon> = {
   veterinaria: Building2,
   suscripcion: CreditCard,
   soporte: ShieldCheck,
+  configuracion: Settings,
 };
 
 /** Perfil del header: una sola fuente (/v1/me) para evitar mezclar nombre stale con rol nuevo. */

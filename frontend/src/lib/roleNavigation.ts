@@ -152,6 +152,21 @@ const ADMIN_VET_CATALOG: Record<AdminVetMode, RoleModule[]> = {
       requiresTenant: true,
       modulo: 'pacientes',
     },
+    {
+      id: 'ajustes',
+      label: 'Configuración',
+      description: 'Tu perfil y preferencias personales.',
+      path: '/ajustes',
+      icon: 'configuracion',
+      roles: ['veterinario'],
+      status: 'active',
+      category: 'operations',
+      priority: 200,
+      showInNavbar: true,
+      showInDashboard: false,
+      requiresTenant: false,
+      modulo: 'configuracion',
+    },
   ],
   admin: [
     {
@@ -187,8 +202,8 @@ const ADMIN_VET_CATALOG: Record<AdminVetMode, RoleModule[]> = {
     },
     {
       id: 'veterinarias',
-      label: 'Mi veterinaria',
-      description: 'Ficha, equipo clínico, solicitudes técnicas y catálogo de vacunas de la sede.',
+      label: 'Configuración',
+      description: 'Ficha, equipo clínico, catálogo de vacunas y solicitudes técnicas de la sede.',
       path: '/veterinaria',
       icon: 'veterinaria',
       roles: ['admin_veterinaria'],
@@ -395,6 +410,7 @@ export function canAccessPath(
 ): boolean {
   const path = pathname.replace(/\/+$/, '') || '/';
   if (path === '/' || path === '/perfil' || path === '/notificaciones') return !!effectiveRole(profile);
+  if (path === '/ajustes') return canAccessClinicalRoutes(profile);
   if (path === '/admin') return canAccessModule(profile, 'soporte');
   if (path === '/entidad') return canAccessModule(profile, 'entidad');
   if (path === '/veterinaria') return canAccessModule(profile, 'veterinarias');

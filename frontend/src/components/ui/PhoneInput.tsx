@@ -47,7 +47,7 @@ export default function PhoneInput({
   }, [abierto]);
 
   return (
-    <div>
+    <div id={id}>
       <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
         {label}
       </label>

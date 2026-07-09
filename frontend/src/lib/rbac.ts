@@ -57,7 +57,8 @@ export type NavIcon =
   | 'entidad'
   | 'veterinaria'
   | 'suscripcion'
-  | 'soporte';
+  | 'soporte'
+  | 'configuracion';
 
 export interface RoleModule {
   id: string;
