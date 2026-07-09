@@ -4,7 +4,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useConsultas } from '../hooks/useConsultas';
 import { usePacientes } from '../hooks/usePacientes';
 import { useAuth } from '../hooks/useAuth';
-import { buscarPacienteCoincidente, mapEspecieDetectada } from '../features/pacientes/matching';
+import { buscarPacienteCoincidente } from '../features/pacientes/matching';
 import type {
   Consulta,
   DiagnosticoEstructurado,
@@ -38,7 +38,9 @@ import ConsultaActions from '../features/consultas/components/ConsultaActions';
 import ColumnaIzquierda from '../features/consultas/components/ColumnaIzquierda';
 import PanelMedicamentos from '../features/consultas/components/PanelMedicamentos';
 import DiagnosticoEstructuradoPanel from '../features/consultas/components/DiagnosticoEstructuradoPanel';
-import PacienteDetectadoBanner from '../features/consultas/components/PacienteDetectadoBanner';
+import PacienteDetectadoBanner, {
+  type DatosPacienteNuevo,
+} from '../features/consultas/components/PacienteDetectadoBanner';
 import { useToast, useConfirm } from '../components/ui/Primitives';
 
 const TOUR_STEPS_CONSULTA_DETALLE = [
@@ -255,22 +257,21 @@ const DetalleConsulta: React.FC = () => {
     }
   };
 
-  const handleConfirmarPacienteNuevo = async () => {
-    if (!paciente?.id || !consultaId || !consulta?.datosDetectados) return;
+  const handleConfirmarPacienteNuevo = async (datos: DatosPacienteNuevo) => {
+    if (!paciente?.id || !consultaId) return;
     setIsConfirmandoPacienteNuevo(true);
     try {
-      const d = consulta.datosDetectados;
-      const camposPaciente: Partial<Paciente> = { esPlaceholder: false };
-      if (d.nombrePaciente) camposPaciente.nombre = d.nombrePaciente;
-      if (d.especie) camposPaciente.especie = mapEspecieDetectada(d.especie);
-      if (d.raza) camposPaciente.raza = d.raza;
-      if (d.nombrePropietario || d.telefonoPropietario) {
-        camposPaciente.propietario = {
+      const camposPaciente: Partial<Paciente> = {
+        esPlaceholder: false,
+        nombre: datos.nombre.trim(),
+        especie: datos.especie,
+        raza: datos.raza.trim() || undefined,
+        propietario: {
           ...paciente.propietario,
-          ...(d.nombrePropietario ? { nombre: d.nombrePropietario } : {}),
-          ...(d.telefonoPropietario ? { telefono: d.telefonoPropietario } : {}),
-        };
-      }
+          ...(datos.nombrePropietario.trim() ? { nombre: datos.nombrePropietario.trim() } : {}),
+          ...(datos.telefonoPropietario.trim() ? { telefono: datos.telefonoPropietario.trim() } : {}),
+        },
+      };
       const okPaciente = await actualizarPaciente(paciente.id, camposPaciente);
       if (!okPaciente) throw new Error('No se pudo actualizar el paciente.');
 

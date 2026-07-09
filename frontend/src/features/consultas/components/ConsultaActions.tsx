@@ -113,16 +113,28 @@ const ConsultaActions: React.FC<Props> = ({
       )}
 
       {!esAprobada && consulta.soap && puedeAprobarConsulta && (
-        <Button
-          variant="primary"
-          size="lg"
-          onClick={onApprove}
-          disabled={isApproving}
-          data-tour="consulta-aprobar"
-        >
-          <CheckCircle2 className="h-5 w-5" />
-          {isApproving ? 'Aprobando...' : 'Aprobar Consulta'}
-        </Button>
+        <div className="flex flex-col items-end gap-1">
+          <Button
+            variant="primary"
+            size="lg"
+            onClick={onApprove}
+            disabled={isApproving || consulta.pacientePendienteConfirmar}
+            title={
+              consulta.pacientePendienteConfirmar
+                ? 'Confirma o vincula el paciente detectado por la IA antes de aprobar'
+                : undefined
+            }
+            data-tour="consulta-aprobar"
+          >
+            <CheckCircle2 className="h-5 w-5" />
+            {isApproving ? 'Aprobando...' : 'Aprobar Consulta'}
+          </Button>
+          {consulta.pacientePendienteConfirmar && (
+            <span className="text-xs font-semibold text-amber-600">
+              Confirma el paciente arriba antes de aprobar
+            </span>
+          )}
+        </div>
       )}
     </ActionBar>
   );

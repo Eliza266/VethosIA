@@ -273,6 +273,18 @@ const NuevaConsulta: React.FC = () => {
         </div>
       )}
 
+      {/* Recordatorio para consulta rapida: sin datos de paciente, la IA los detecta del audio */}
+      {paciente.esPlaceholder && (
+        <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+          <Sparkles className="h-5 w-5 shrink-0 text-amber-500" />
+          <div>
+            <span className="font-bold">Consulta rápida:</span> no elegiste un paciente antes de grabar.
+            No olvides decir en voz alta el <b>nombre y especie de la mascota</b>, y el{' '}
+            <b>nombre y teléfono del propietario</b> — la IA los detecta del audio para armar la ficha.
+          </div>
+        </div>
+      )}
+
       {/* Selector de Brigada */}
       {brigadasDeHoy.length > 0 && (
         <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm">

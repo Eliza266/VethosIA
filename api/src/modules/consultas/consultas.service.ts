@@ -68,6 +68,11 @@ export class ConsultasService {
       estado: 'borrador',
       ...(dto.numeroHC ? { numeroHC: dto.numeroHC } : {}),
       ...(dto.citaId ? { citaId: dto.citaId } : {}),
+      // Consulta rapida: si el paciente es un placeholder (creado sin elegirlo antes),
+      // marcamos la consulta como pendiente de confirmar paciente. El frontend usa esto
+      // para mostrar el aviso de vincular/crear el paciente real y bloquear "Aprobar"
+      // hasta que se resuelva.
+      ...(pacData.esPlaceholder ? { pacientePendienteConfirmar: true } : {}),
     };
     const creada = await this.consultas.crear(doc);
     if (dto.citaId) {
