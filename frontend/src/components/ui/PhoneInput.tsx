@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ComponentType } from 'react';
-import { PAISES_INDICATIVO, buscarPaisPorNombre, type PaisIndicativo } from '../../lib/phone';
+import { PAISES_INDICATIVO, type PaisIndicativo } from '../../lib/phone';
 
 interface PhoneInputProps {
   id: string;
@@ -12,8 +12,10 @@ interface PhoneInputProps {
   onChangeNumero: (numero: string) => void;
 }
 
-// Campo de telefono reutilizable: el pais se escribe por nombre (con autocompletado del
-// navegador vía <datalist>) y el indicativo (+57) se resuelve solo y se muestra debajo.
+// Campo de telefono reutilizable: selector compacto de pais (bandera + indicativo) que se
+// despliega mostrando bandera + nombre completo para elegir, y el numero con todo el ancho
+// que le sobra a un lado. Antes el pais se escribia como texto libre en una caja ancha fija,
+// lo que le quitaba casi todo el espacio al numero.
 export default function PhoneInput({
   id,
   label,
@@ -23,14 +25,26 @@ export default function PhoneInput({
   onChangePais,
   onChangeNumero,
 }: PhoneInputProps) {
-  const [textoPais, setTextoPais] = useState(pais.nombre);
-  const datalistId = `paises-${id}`;
+  const [abierto, setAbierto] = useState(false);
+  const contenedorRef = useRef<HTMLDivElement>(null);
 
-  const handlePaisChange = (valor: string) => {
-    setTextoPais(valor);
-    const encontrado = buscarPaisPorNombre(valor);
-    if (encontrado) onChangePais(encontrado);
-  };
+  useEffect(() => {
+    if (!abierto) return;
+    const handleClickFuera = (e: MouseEvent) => {
+      if (contenedorRef.current && !contenedorRef.current.contains(e.target as Node)) {
+        setAbierto(false);
+      }
+    };
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setAbierto(false);
+    };
+    document.addEventListener('mousedown', handleClickFuera);
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('mousedown', handleClickFuera);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [abierto]);
 
   return (
     <div>
@@ -38,21 +52,36 @@ export default function PhoneInput({
         {label}
       </label>
       <div className="flex gap-2">
-        <div className="w-40 shrink-0">
-          <input
-            list={datalistId}
-            value={textoPais}
-            onChange={(e) => handlePaisChange(e.target.value)}
-            placeholder="País"
+        <div ref={contenedorRef} className="relative w-24 shrink-0">
+          <button
+            type="button"
+            onClick={() => setAbierto((v) => !v)}
             aria-label={`País (${label})`}
-            className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-700 bg-white focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-shadow"
-          />
-          <datalist id={datalistId}>
-            {PAISES_INDICATIVO.map((p) => (
-              <option key={p.code} value={p.nombre} />
-            ))}
-          </datalist>
-          <p className="mt-1 text-[11px] font-semibold text-slate-400">{pais.code}</p>
+            aria-expanded={abierto}
+            className="flex w-full items-center justify-center gap-1.5 px-2 py-2.5 border border-slate-200 rounded-xl text-sm bg-white hover:border-accent focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-shadow"
+          >
+            <span>{pais.bandera}</span>
+            <span className="font-semibold text-slate-700">{pais.code}</span>
+          </button>
+          {abierto && (
+            <div className="absolute z-20 mt-1 max-h-56 w-60 overflow-y-auto rounded-xl border border-slate-200 bg-white py-1 shadow-lg">
+              {PAISES_INDICATIVO.map((p) => (
+                <button
+                  key={p.code}
+                  type="button"
+                  onClick={() => {
+                    onChangePais(p);
+                    setAbierto(false);
+                  }}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors hover:bg-slate-50"
+                >
+                  <span>{p.bandera}</span>
+                  <span className="flex-1 truncate text-slate-700">{p.nombre}</span>
+                  <span className="text-slate-400">{p.code}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
         <div className="relative flex-1">
           {Icon && (
