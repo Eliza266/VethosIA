@@ -55,12 +55,6 @@ export function formatoNumeroHcV2(n: number): string {
   return `HC${String(n).padStart(6, '0')}`;
 }
 
-export function legacyCallableUsesGlobalHcCounter(source: string): boolean {
-  const generarNumeroHc = source.match(/exports\.generarNumeroHC[\s\S]*?return \{ numeroHC:[\s\S]*?\n\}\);/);
-  const body = generarNumeroHc?.[0] ?? source;
-  return body.includes("doc('configuracion/contadorHC')") && !body.includes('accountId');
-}
-
 function isNonEmpty(value?: string): value is string {
   return typeof value === 'string' && value.trim().length > 0;
 }

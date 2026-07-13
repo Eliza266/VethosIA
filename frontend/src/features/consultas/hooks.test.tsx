@@ -22,7 +22,6 @@ vi.mock('./data', () => ({
 let mockUseApiIa = false;
 vi.mock('../../lib/featureFlags', () => ({
   getFeatureFlags: () => ({
-    useApiHC: false,
     useApiIA: mockUseApiIa,
     useApiDocs: false,
     useApiCRUD: false,

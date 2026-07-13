@@ -19,6 +19,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { getErrorMessage } from '../lib/errors';
 import { getFeatureFlags } from '../lib/featureFlags';
+import { joinPhone } from '../lib/phone';
 import { obtenerMe } from '../features/tenant/api';
 import { apiClient } from '../lib/apiClient';
 import {
@@ -90,6 +91,7 @@ const DetalleConsulta: React.FC = () => {
   const [mostrarAgregarAudio, setMostrarAgregarAudio] = useState(false);
   const [isAgregandoBloque, setIsAgregandoBloque] = useState(false);
 
+  const [mostrarSubirExamen, setMostrarSubirExamen] = useState(false);
   const [examenNombre, setExamenNombre] = useState('');
   const [examenArchivo, setExamenArchivo] = useState<File | null>(null);
   const [isSubiendoExamen, setIsSubiendoExamen] = useState(false);
@@ -225,6 +227,7 @@ const DetalleConsulta: React.FC = () => {
       );
       setExamenNombre('');
       setExamenArchivo(null);
+      setMostrarSubirExamen(false);
       toast('Resultado de examen agregado a la historia.', 'success');
     } catch (err) {
       console.error(err);
@@ -261,15 +264,23 @@ const DetalleConsulta: React.FC = () => {
     if (!paciente?.id || !consultaId) return;
     setIsConfirmandoPacienteNuevo(true);
     try {
+      const telefono = joinPhone(datos.telefonoPais, datos.telefonoNumero);
       const camposPaciente: Partial<Paciente> = {
         esPlaceholder: false,
         nombre: datos.nombre.trim(),
         especie: datos.especie,
         raza: datos.raza.trim() || undefined,
+        color: datos.color.trim() || undefined,
+        chip: datos.chip.trim() || undefined,
+        sexo: datos.sexo,
+        estadoReproductivo: datos.estadoReproductivo,
+        fechaNacimiento: datos.fechaNacimiento || undefined,
+        notasGenerales: datos.notasGenerales.trim() || undefined,
         propietario: {
           ...paciente.propietario,
           ...(datos.nombrePropietario.trim() ? { nombre: datos.nombrePropietario.trim() } : {}),
-          ...(datos.telefonoPropietario.trim() ? { telefono: datos.telefonoPropietario.trim() } : {}),
+          ...(telefono ? { telefono } : {}),
+          ...(datos.emailPropietario.trim() ? { email: datos.emailPropietario.trim() } : {}),
         },
       };
       const okPaciente = await actualizarPaciente(paciente.id, camposPaciente);
@@ -426,23 +437,14 @@ const DetalleConsulta: React.FC = () => {
 
     setIsSendingEmail(true);
     try {
-      const { useApiDocs } = getFeatureFlags();
-      const emailPayload = {
+      // El envio de correo siempre pasa por la API: el PDF se resuelve server-side,
+      // no hace falta generarlo/subirlo desde el navegador antes de enviar.
+      await enviarHistorialEmail(consultaId!, {
         emailDestinatario: paciente.propietario.email,
         nombrePropietario: paciente.propietario.nombre,
         nombrePaciente: paciente.nombre,
         nombreVet: user?.nombre || 'Veterinario',
-      };
-      if (!useApiDocs) {
-        const input = buildPdfInput();
-        if (!input) throw new Error('No se pudo generar el PDF');
-        const urlPdf = await obtenerUrlPDF(consultaId!, () =>
-          renderHistoriaClinicaPDF(input).output('blob')
-        );
-        await enviarHistorialEmail(consultaId!, { ...emailPayload, pdfUrl: urlPdf });
-      } else {
-        await enviarHistorialEmail(consultaId!, emailPayload);
-      }
+      });
       toast('Correo enviado exitosamente.', 'success');
     } catch (err) {
       console.error(err);
@@ -672,30 +674,41 @@ const DetalleConsulta: React.FC = () => {
                   <p className="text-xs text-slate-400">Sin exámenes subidos todavía.</p>
                 )}
 
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                  <input
-                    type="text"
-                    value={examenNombre}
-                    onChange={(e) => setExamenNombre(e.target.value)}
-                    placeholder="Nombre del examen (opcional)"
-                    className="min-h-9 flex-1 rounded-lg border border-slate-200 px-3 text-xs outline-none focus:border-accent"
-                  />
-                  <input
-                    type="file"
-                    accept="application/pdf"
-                    onChange={(e) => setExamenArchivo(e.target.files?.[0] ?? null)}
-                    className="text-xs"
-                  />
+                {mostrarSubirExamen ? (
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                    <input
+                      type="text"
+                      value={examenNombre}
+                      onChange={(e) => setExamenNombre(e.target.value)}
+                      placeholder="Nombre del examen (opcional)"
+                      className="min-h-9 flex-1 rounded-lg border border-slate-200 px-3 text-xs outline-none focus:border-accent"
+                    />
+                    <input
+                      type="file"
+                      accept="application/pdf,image/*"
+                      onChange={(e) => setExamenArchivo(e.target.files?.[0] ?? null)}
+                      className="text-xs"
+                    />
+                    <button
+                      type="button"
+                      disabled={!examenArchivo || isSubiendoExamen}
+                      onClick={handleSubirExamen}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-2 text-xs font-bold text-white transition hover:bg-accent-strong disabled:opacity-50"
+                    >
+                      <Upload className="h-3.5 w-3.5" />
+                      {isSubiendoExamen ? 'Subiendo...' : 'Subir resultado'}
+                    </button>
+                  </div>
+                ) : (
                   <button
                     type="button"
-                    disabled={!examenArchivo || isSubiendoExamen}
-                    onClick={handleSubirExamen}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-2 text-xs font-bold text-white transition hover:bg-accent-strong disabled:opacity-50"
+                    onClick={() => setMostrarSubirExamen(true)}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 py-3 text-sm font-bold text-slate-600 transition hover:border-accent hover:text-accent"
                   >
-                    <Upload className="h-3.5 w-3.5" />
-                    {isSubiendoExamen ? 'Subiendo...' : 'Subir resultado'}
+                    <Upload className="h-4 w-4" />
+                    Agregar resultado de examen (PDF o imagen)
                   </button>
-                </div>
+                )}
               </div>
             </>
           )}

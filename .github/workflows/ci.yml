@@ -1,9 +1,10 @@
 name: CI
 
-# Corre en cada PR y en push a main. Tres frentes independientes en paralelo:
+# Corre en cada PR y en push a main. Dos frentes independientes en paralelo:
 #  - api:      typecheck + lint + build + unit tests, y rules/integration contra el emulador.
-#  - functions: install + syntax check de las Cloud Functions.
 #  - frontend: invoca SOLO los scripts npm del frontend (NO creamos config dentro de frontend/).
+# (La carpeta functions/ de Cloud Functions legacy se elimino: HC y email ya migraron
+# por completo a la API, sin dejar codigo que validar aqui.)
 on:
   pull_request:
   push:
@@ -65,22 +66,6 @@ jobs:
           # emulators:exec ya setea los *_EMULATOR_HOST, pero lo dejamos explicito por claridad.
           GCLOUD_PROJECT: vethosia-5895b
 
-  functions:
-    name: Cloud Functions
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: functions
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - run: npm ci --no-audit --no-fund
-      # functions es JS plano: validamos sintaxis de los modulos principales.
-      - run: node --check index.js
-      - run: node --check email.js
-
   frontend:
     name: Frontend (lint + typecheck + build)
     runs-on: ubuntu-latest
@@ -94,7 +79,6 @@ jobs:
       VITE_FIREBASE_MEASUREMENT_ID: ""
       VITE_USE_FIREBASE_EMULATORS: "false"
       VITE_API_BASE_URL: https://vetia-api-awdlgzrxkq-uc.a.run.app
-      VITE_USE_API_HC: "true"
       VITE_USE_API_IA: "true"
       VITE_USE_API_DOCS: "true"
       VITE_USE_API_CRUD: "true"

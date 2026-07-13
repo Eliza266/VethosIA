@@ -7,7 +7,6 @@ const { flagState, api } = vi.hoisted(() => ({
 }));
 vi.mock('../../lib/featureFlags', () => ({
   getFeatureFlags: () => ({
-    useApiHC: false,
     useApiIA: false,
     useApiDocs: false,
     useApiCRUD: flagState.useApiCRUD,

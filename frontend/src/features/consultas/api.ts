@@ -1,4 +1,3 @@
-import { getFunctions, httpsCallable } from 'firebase/functions';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '../../lib/firebase';
 import { apiClient } from '../../lib/apiClient';
@@ -8,8 +7,8 @@ import { normalizeResultadoSOAP } from './soapNormalize';
 import type { ResultadoSOAP, ExamenConsulta } from '../../types';
 
 // Capa de API de consultas. La IA (transcripcion + SOAP) va SIEMPRE por /v1 con las claves
-// server-side: NUNCA desde el navegador (eso exponia la API key de Gemini). HC y docs aun
-// pueden caer al camino legacy (Cloud Functions) por flag, pero eso no expone claves.
+// server-side: NUNCA desde el navegador (eso exponia la API key de Gemini). El numero de HC
+// y el envio de correo ya migraron por completo de las Cloud Functions legacy a la API.
 
 const blobToBase64 = (blob: Blob): Promise<string> =>
   new Promise((resolve, reject) => {
@@ -24,23 +23,15 @@ const blobToBase64 = (blob: Blob): Promise<string> =>
 
 // ─── NUMERO DE HISTORIA CLINICA ────────────────────────────
 /**
- * Genera el numero de HC. Legacy: Cloud Function callable 'generarNumeroHC' (sin id).
- * API: POST /v1/consultas/:id/hc -> {numeroHC}. Devuelve '' si no se pudo (igual que
- * el codigo viejo, que dejaba la consulta sin numero antes que romper).
+ * Genera el numero de HC. POST /v1/consultas/:id/hc -> {numeroHC}. Devuelve '' si no se
+ * pudo (igual que el codigo viejo, que dejaba la consulta sin numero antes que romper).
  */
 export const generarNumeroHC = async (consultaId: string): Promise<string> => {
-  const { useApiHC } = getFeatureFlags();
   // Ya NO tragamos el error con `return ''`: si falla, propagamos un AppError manejable
   // para que la UI muestre el problema en vez de dejar la consulta sin numero en silencio.
   try {
-    if (useApiHC) {
-      const res = await apiClient.post<{ numeroHC: string }>(`/v1/consultas/${consultaId}/hc`);
-      return res.data?.numeroHC ?? '';
-    }
-    const functions = getFunctions();
-    const generarHC = httpsCallable<unknown, { numeroHC: string }>(functions, 'generarNumeroHC');
-    const resultado = await generarHC({});
-    return resultado.data?.numeroHC ?? '';
+    const res = await apiClient.post<{ numeroHC: string }>(`/v1/consultas/${consultaId}/hc`);
+    return res.data?.numeroHC ?? '';
   } catch (err) {
     throw toAppError(err, 'hc/generar', 'No se pudo generar el número de historia clínica.');
   }
@@ -87,21 +78,22 @@ export const procesarConsultaConIA = async (
   }
 };
 
-// ─── EXAMENES (PDF) ────────────────────────────────────────
+// ─── EXAMENES (PDF o imagen) ───────────────────────────────
 /**
- * Sube un PDF de resultados de examen y devuelve el resumen de IA ya guardado en la consulta.
- * POST /v1/consultas/:id/examenes {nombre, pdfBase64} -> ExamenConsulta.
+ * Sube un resultado de examen (PDF o foto) y devuelve el resumen de IA ya guardado en la consulta.
+ * POST /v1/consultas/:id/examenes {nombre, pdfBase64, mimeType} -> ExamenConsulta.
  */
 export const subirExamenConsulta = async (
   consultaId: string,
   nombre: string,
-  pdfFile: Blob
+  archivo: Blob
 ): Promise<ExamenConsulta> => {
   try {
-    const pdfBase64 = await blobToBase64(pdfFile);
+    const pdfBase64 = await blobToBase64(archivo);
     const res = await apiClient.post<ExamenConsulta>(`/v1/consultas/${consultaId}/examenes`, {
       nombre,
       pdfBase64,
+      mimeType: archivo.type || 'application/pdf',
     });
     return res.data;
   } catch (err) {
@@ -156,37 +148,22 @@ export interface EmailHistorialPayload {
   nombrePropietario: string;
   nombrePaciente: string;
   nombreVet: string;
-  /** Solo camino legacy (Cloud Function); la API resuelve el PDF server-side. */
-  pdfUrl?: string;
 }
 
 /**
- * Envia el historial por email. Legacy: Cloud Function callable 'enviarHistorialEmail'.
- * API: POST /v1/consultas/:id/email -> {success}.
+ * Envia el historial por email. POST /v1/consultas/:id/email -> {success}.
+ * La API resuelve el PDF server-side, no hace falta mandarlo.
  */
 export const enviarHistorialEmail = async (
   consultaId: string,
   payload: EmailHistorialPayload
 ): Promise<boolean> => {
-  const { useApiDocs } = getFeatureFlags();
   try {
-    if (useApiDocs) {
-      const res = await apiClient.post<{ success: boolean }>(
-        `/v1/consultas/${consultaId}/email`,
-        payload
-      );
-      return res.data?.success ?? false;
-    }
-    const functions = getFunctions();
-    const enviarEmail = httpsCallable<EmailHistorialPayload, { success?: boolean }>(
-      functions,
-      'enviarHistorialEmail'
+    const res = await apiClient.post<{ success: boolean }>(
+      `/v1/consultas/${consultaId}/email`,
+      payload
     );
-    if (!payload.pdfUrl) {
-      throw new Error('pdfUrl requerido para el envio legacy por Cloud Function.');
-    }
-    await enviarEmail(payload);
-    return true;
+    return res.data?.success ?? false;
   } catch (err) {
     throw toAppError(err, 'docs/email', 'Error al enviar el correo.');
   }

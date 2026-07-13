@@ -1,10 +1,4 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import {
-  formatoNumeroHcV2,
-  legacyCallableUsesGlobalHcCounter,
-  resolveHcCounterV2,
-} from '../../src/modules/consultas/hc-v2';
+import { formatoNumeroHcV2, resolveHcCounterV2 } from '../../src/modules/consultas/hc-v2';
 
 describe('HC V2 accountId counter helpers', () => {
   it('particiona contador de vet independiente por accountId', () => {
@@ -57,10 +51,5 @@ describe('HC V2 accountId counter helpers', () => {
   it('mantiene formato historico HC000001', () => {
     expect(formatoNumeroHcV2(1)).toBe('HC000001');
     expect(formatoNumeroHcV2(42)).toBe('HC000042');
-  });
-
-  it('caracteriza que callable legacy usa contador global y no contador V2 por accountId', () => {
-    const source = fs.readFileSync(path.resolve(__dirname, '../../../functions/index.js'), 'utf8');
-    expect(legacyCallableUsesGlobalHcCounter(source)).toBe(true);
   });
 });

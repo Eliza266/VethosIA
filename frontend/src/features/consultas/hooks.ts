@@ -77,19 +77,10 @@ export const useConsultas = () => {
     }
     setError(null);
     try {
-      const flags = getFeatureFlags();
-      // Legacy: la callable de HC no necesita id de consulta, asi que pedimos el
-      // numero ANTES y lo metemos en el addDoc (identico al comportamiento viejo).
-      // API: necesitamos el id primero -> creamos y luego pedimos/parcheamos el HC.
-      let numeroHC = '';
-      if (!flags.useApiHC) {
-        numeroHC = await generarNumeroHC('');
-      }
-      const id = await crearConsultaDoc(user.uid, pacienteId, numeroHC || undefined, citaId);
-      if (flags.useApiHC) {
-        const hc = await generarNumeroHC(id);
-        if (hc) await actualizarConsultaDoc(id, { numeroHC: hc });
-      }
+      // Creamos primero (necesitamos el id) y luego pedimos/parcheamos el numero de HC.
+      const id = await crearConsultaDoc(user.uid, pacienteId, undefined, citaId);
+      const hc = await generarNumeroHC(id);
+      if (hc) await actualizarConsultaDoc(id, { numeroHC: hc });
       return id;
     } catch (err) {
       console.error('Error creating consultation:', err);

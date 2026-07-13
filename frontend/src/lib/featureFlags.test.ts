@@ -5,13 +5,11 @@ afterEach(() => vi.unstubAllEnvs());
 
 describe('getFeatureFlags', () => {
   it('por defecto TODO apagado (comportamiento legacy)', () => {
-    vi.stubEnv('VITE_USE_API_HC', '');
     vi.stubEnv('VITE_USE_API_IA', '');
     vi.stubEnv('VITE_USE_API_DOCS', '');
     vi.stubEnv('VITE_USE_API_CRUD', '');
     vi.stubEnv('VITE_EMAIL_REAL_ENABLED', '');
     expect(getFeatureFlags()).toEqual({
-      useApiHC: false,
       useApiIA: false,
       useApiDocs: false,
       useApiCRUD: false,
@@ -25,10 +23,10 @@ describe('getFeatureFlags', () => {
   });
 
   it('reconoce variantes (1, on, yes, mayusculas)', () => {
-    vi.stubEnv('VITE_USE_API_HC', '1');
+    vi.stubEnv('VITE_USE_API_CRUD', '1');
     vi.stubEnv('VITE_USE_API_DOCS', 'ON');
     const f = getFeatureFlags();
-    expect(f.useApiHC).toBe(true);
+    expect(f.useApiCRUD).toBe(true);
     expect(f.useApiDocs).toBe(true);
   });
 

@@ -8,7 +8,6 @@ const { flagState, api } = vi.hoisted(() => ({
 
 vi.mock('../../lib/featureFlags', () => ({
   getFeatureFlags: () => ({
-    useApiHC: true,
     useApiIA: true,
     useApiDocs: flagState.useApiDocs,
     useApiCRUD: true,
@@ -21,10 +20,6 @@ vi.mock('firebase/storage', () => ({
   ref: vi.fn(),
   uploadBytes: vi.fn(),
   getDownloadURL: vi.fn(),
-}));
-vi.mock('firebase/functions', () => ({
-  getFunctions: vi.fn(),
-  httpsCallable: vi.fn(),
 }));
 
 import { enviarHistorialEmail } from './api';

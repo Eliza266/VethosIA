@@ -12,8 +12,6 @@ const parseBool = (value: string | undefined): boolean => {
 };
 
 export interface FeatureFlags {
-  /** Generar numero de HC via API en vez de la Cloud Function callable */
-  useApiHC: boolean;
   /** Transcripcion + SOAP via API en vez de pegarle a Gemini desde el navegador */
   useApiIA: boolean;
   /** Generacion/envio de documentos (PDF, email) via API */
@@ -25,7 +23,6 @@ export interface FeatureFlags {
 }
 
 export const getFeatureFlags = (): FeatureFlags => ({
-  useApiHC: parseBool(import.meta.env.VITE_USE_API_HC),
   useApiIA: parseBool(import.meta.env.VITE_USE_API_IA),
   useApiDocs: parseBool(import.meta.env.VITE_USE_API_DOCS),
   useApiCRUD: parseBool(import.meta.env.VITE_USE_API_CRUD),
@@ -33,7 +30,6 @@ export const getFeatureFlags = (): FeatureFlags => ({
 });
 
 // Helpers puntuales por si en algun lado solo interesa un flag.
-export const useApiHC = (): boolean => getFeatureFlags().useApiHC;
 export const useApiIA = (): boolean => getFeatureFlags().useApiIA;
 export const useApiDocs = (): boolean => getFeatureFlags().useApiDocs;
 export const useApiCRUD = (): boolean => getFeatureFlags().useApiCRUD;
