@@ -1,12 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTourGuide } from '../hooks/useTourGuide';
-import { useLocation } from 'react-router-dom';
-import { Activity, AlertCircle, Calendar, CheckCircle2, ClipboardList, MapPin, Plus, Stethoscope, Users, X } from 'lucide-react';
+import {
+  Activity, AlertCircle, Calendar, CheckCircle2, ChevronDown, ClipboardList,
+  Filter, MapPin, Plus, Search, Stethoscope, Users, X,
+} from 'lucide-react';
 import { useBrigadas } from '../hooks/useBrigadas';
 import { useMe } from '../features/tenant/hooks';
 import { normalizarRol } from '../lib/rbac';
 import { getErrorMessage } from '../lib/errors';
-import { KpiCard, Card, SectionHeader, PageHeader } from '../components/ui/Primitives';
 import type { Brigada, BrigadaAtencion, BrigadaConsolidado } from '../types';
 import {
   listarAtencionesBrigada,
@@ -42,6 +43,38 @@ const ESTADO_CONFIG = {
   finalizada: { label: 'Finalizada', classes: 'bg-blue-50 text-blue-700 border-blue-200', dot: 'bg-blue-500' },
 };
 
+/** Pildora de filtro rapido: icono en circulo solido + valor + etiqueta, clicable para
+ * filtrar el listado por estado (reemplaza la fila de tarjetas KPI grandes). */
+const FilterPill: React.FC<{
+  icon: React.ReactNode;
+  value: React.ReactNode;
+  label: string;
+  accent: string;
+  accentBg: string;
+  active: boolean;
+  onClick: () => void;
+}> = ({ icon, value, label, accent, accentBg, active, onClick }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className={`inline-flex items-center gap-2 rounded-full py-1 pl-1 pr-3 text-xs font-bold transition-all ${
+      active ? 'opacity-100' : 'opacity-60 hover:opacity-90'
+    }`}
+    style={{
+      background: accentBg,
+      color: accent,
+      border: `1px solid color-mix(in srgb, ${accent} ${active ? '45%' : '20%'}, transparent)`,
+      boxShadow: active ? '0 2px 6px rgba(15, 23, 42, 0.12)' : '0 1px 2px rgba(15, 23, 42, 0.06)',
+    }}
+  >
+    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-white" style={{ background: accent }}>
+      {icon}
+    </span>
+    <span className="font-black">{value}</span>
+    <span className="font-semibold opacity-80">{label}</span>
+  </button>
+);
+
 const TOUR_STEPS_BRIGADAS = [
   { element: '[data-tour="brigadas-lista"]', popover: { title: 'Listado de brigadas', description: 'Las brigadas agrupan las consultas que atiendes en una jornada de campo (por ejemplo, una jornada de vacunación o esterilización fuera de la clínica).' } },
   { element: '[data-tour="brigadas-activa"]', popover: { title: 'Brigada activa', description: 'Actívala antes de empezar a atender el día de la jornada, y todas las consultas que registres quedarán asociadas automáticamente a esa brigada, sin tener que elegirla cada vez.' } },
@@ -51,8 +84,6 @@ const Brigadas: React.FC = () => {
   const { data: me } = useMe();
   const rol = normalizarRol(me?.role ?? me?.rol ?? null);
   const { brigadas, loading, error, crearBrigada, actualizarBrigada } = useBrigadas();
-  const location = useLocation();
-  const currentTab = new URLSearchParams(location.search).get('tab') || 'listar';
   useTourGuide('brigadas', TOUR_STEPS_BRIGADAS);
 
   const [sedes, setSedes] = useState<BackofficeVeterinaria[]>([]);
@@ -67,6 +98,10 @@ const Brigadas: React.FC = () => {
   const [atenciones, setAtenciones] = useState<BrigadaAtencion[]>([]);
   const [consolidado, setConsolidado] = useState<BrigadaConsolidado | null>(null);
   const [detailError, setDetailError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [estadoFilter, setEstadoFilter] = useState<'todas' | Brigada['estado']>('todas');
+  const [cityFilter, setCityFilter] = useState('todas');
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const canManage = rol === 'admin_entidad' || rol === 'admin_veterinaria';
   const canChooseSede = rol === 'admin_entidad';
@@ -214,131 +249,142 @@ const Brigadas: React.FC = () => {
 
   const brigadasActivas = brigadas.filter((b) => b.estado === 'en_curso').length;
   const brigadasPlanificadas = brigadas.filter((b) => b.estado === 'planificada').length;
-  const participantesTotal = brigadas.reduce((total, b) => total + (b.veterinarioIds ?? []).length, 0);
+  const brigadasFinalizadas = brigadas.filter((b) => b.estado === 'finalizada').length;
+
+  const ciudades = useMemo(
+    () => Array.from(new Set(brigadas.map((b) => b.ubicacion.ciudad).filter(Boolean))).sort(),
+    [brigadas],
+  );
+
+  const filteredBrigadas = brigadas.filter((b) => {
+    const matchesEstado = estadoFilter === 'todas' || b.estado === estadoFilter;
+    const matchesCiudad = cityFilter === 'todas' || b.ubicacion.ciudad === cityFilter;
+    const term = searchTerm.trim().toLowerCase();
+    const matchesSearch =
+      !term ||
+      b.nombre.toLowerCase().includes(term) ||
+      b.ubicacion.ciudad.toLowerCase().includes(term);
+    return matchesEstado && matchesCiudad && matchesSearch;
+  });
+
+  const activeFilterCount = (cityFilter !== 'todas' ? 1 : 0) + (searchTerm.trim() ? 1 : 0);
   const gridBrigadasClass =
-    brigadas.length === 1
-      ? 'grid grid-cols-1 gap-5'
-      : 'grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3';
+    filteredBrigadas.length === 1
+      ? 'grid grid-cols-1 gap-4'
+      : 'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4';
 
   return (
-    <div className="space-y-6 animate-fade-in py-6">
-      <PageHeader
-        badge="Operación territorial"
-        title="Brigadas de Salud"
-        description="Jornadas operativas, participantes y atenciones agrupadas por campaña o sede."
-        action={
-          canManage ? (
+    <div className="space-y-3 animate-fade-in py-4">
+      {/* Titulo + accion primaria: una sola fila (envuelve en celular). */}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <h1 className="text-xl font-black text-slate-900">Brigadas de Salud</h1>
+        {canManage && (
+          <button
+            onClick={openCreate}
+            className="ml-auto inline-flex items-center gap-1.5 rounded-xl bg-accent px-3.5 py-2 text-sm font-bold text-white shadow-sm hover:bg-accent-strong transition-all"
+          >
+            <Plus className="h-4 w-4" />
+            Nueva brigada
+          </button>
+        )}
+      </div>
+
+      {/* Filtros rapidos por estado: pildoras clicables que reemplazan la fila de KPIs grandes. */}
+      <div className="flex flex-wrap items-center gap-2">
+        <FilterPill
+          icon={<Users className="h-3.5 w-3.5" />}
+          value={brigadas.length}
+          label="Todas"
+          accent="var(--accent)"
+          accentBg="var(--accent-soft)"
+          active={estadoFilter === 'todas'}
+          onClick={() => setEstadoFilter('todas')}
+        />
+        <FilterPill
+          icon={<Calendar className="h-3.5 w-3.5" />}
+          value={brigadasPlanificadas}
+          label="Planificadas"
+          accent="#475569"
+          accentBg="#f1f5f9"
+          active={estadoFilter === 'planificada'}
+          onClick={() => setEstadoFilter('planificada')}
+        />
+        <FilterPill
+          icon={<Activity className="h-3.5 w-3.5" />}
+          value={brigadasActivas}
+          label="En curso"
+          accent="var(--success)"
+          accentBg="var(--success-soft)"
+          active={estadoFilter === 'en_curso'}
+          onClick={() => setEstadoFilter('en_curso')}
+        />
+        <FilterPill
+          icon={<CheckCircle2 className="h-3.5 w-3.5" />}
+          value={brigadasFinalizadas}
+          label="Finalizadas"
+          accent="var(--info)"
+          accentBg="var(--info-soft)"
+          active={estadoFilter === 'finalizada'}
+          onClick={() => setEstadoFilter('finalizada')}
+        />
+      </div>
+
+      {/* Busqueda + filtro de ciudad: una sola fila compacta (mismo patron que Pacientes). */}
+      <div className="command-panel p-2.5">
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Buscar por nombre o ciudad..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-white/80 py-2 pl-9 pr-3 text-sm text-slate-700 outline-none transition-all placeholder:text-slate-400 focus:border-accent focus:bg-white focus:ring-2 focus:ring-accent/12"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => setFiltersOpen((v) => !v)}
+            aria-expanded={filtersOpen}
+            className="flex shrink-0 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 transition-all hover:border-slate-300"
+          >
+            <Filter className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Filtros</span>
+            {activeFilterCount > 0 && (
+              <span className="rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-black text-white">{activeFilterCount}</span>
+            )}
+            <ChevronDown className={`h-3.5 w-3.5 transition-transform ${filtersOpen ? 'rotate-180' : ''}`} />
+          </button>
+        </div>
+
+        {filtersOpen && ciudades.length > 0 && (
+          <div className="mt-2 flex flex-wrap items-center gap-1.5 border-t border-slate-100 pt-2">
             <button
-              onClick={openCreate}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2.5 text-sm font-bold text-white shadow-md shadow-accent/10 hover:bg-accent-strong transition-all hover:scale-[1.01] shrink-0"
+              onClick={() => setCityFilter('todas')}
+              className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${
+                cityFilter === 'todas'
+                  ? 'bg-accent text-white border-accent shadow-sm'
+                  : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+              }`}
             >
-              <Plus className="h-4 w-4" />
-              Nueva brigada
+              Todas las ciudades
             </button>
-          ) : undefined
-        }
-      />
-
-      {/* KPI strip — only shown on list view */}
-      {currentTab === 'listar' && !selected && (
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
-          {[
-            ['Jornadas', brigadas.length],
-            ['En curso', brigadasActivas],
-            ['Planificadas', brigadasPlanificadas],
-            ['Participantes', participantesTotal],
-          ].map(([label, value]) => (
-            <div key={String(label)} className="p-3 bg-slate-50 rounded-xl border border-slate-100/50">
-              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">{label}</p>
-              <strong className="mt-1 block text-2xl font-black text-slate-800">{value}</strong>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {currentTab === 'metricas' ? (
-        /* Real Metrics Dashboard view */
-        <div className="space-y-6 animate-fade-in">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <KpiCard
-              label="Total de Brigadas"
-              value={brigadas.length}
-              hint="Jornadas territoriales registradas"
-              icon={<Users className="h-5 w-5" />}
-              accent="info"
-            />
-            <KpiCard
-              label="Brigadas En Curso"
-              value={brigadasActivas}
-              hint="Jornadas operando actualmente"
-              icon={<Activity className="h-5 w-5" />}
-              accent="success"
-            />
-            <KpiCard
-              label="Participantes Totales"
-              value={participantesTotal}
-              hint="Veterinarios asignados a brigadas"
-              icon={<Stethoscope className="h-5 w-5" />}
-              accent="warn"
-            />
+            {ciudades.map((ciudad) => (
+              <button
+                key={ciudad}
+                onClick={() => setCityFilter(ciudad)}
+                className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${
+                  cityFilter === ciudad
+                    ? 'bg-accent text-white border-accent shadow-sm'
+                    : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                }`}
+              >
+                {ciudad}
+              </button>
+            ))}
           </div>
-
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <Card padding="lg">
-              <SectionHeader
-                title="Consolidado Operativo"
-                description="Distribución de brigadas territoriales por estado de ejecución."
-              />
-              <div className="mt-6 space-y-4">
-                {[
-                  { label: 'Planificadas', count: brigadasPlanificadas, color: 'bg-blue-500' },
-                  { label: 'En curso', count: brigadasActivas, color: 'bg-emerald-500' },
-                  { label: 'Finalizadas', count: brigadas.filter(b => b.estado === 'finalizada').length, color: 'bg-slate-400' },
-                ].map((item) => {
-                  const pct = brigadas.length ? Math.round((item.count / brigadas.length) * 100) : 0;
-                  return (
-                    <div key={item.label} className="space-y-2">
-                      <div className="flex justify-between text-xs font-bold text-slate-700">
-                        <span>{item.label}</span>
-                        <span>{item.count} ({pct}%)</span>
-                      </div>
-                      <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full ${item.color} rounded-full transition-all`}
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </Card>
-
-            <Card padding="lg">
-              <SectionHeader
-                title="Monitoreo Territorial"
-                description="Información de impacto de brigadas."
-              />
-              <div className="mt-6 space-y-6">
-                <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl">
-                  <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Impacto Social</h4>
-                  <p className="text-xs text-slate-500 leading-relaxed">
-                    Las brigadas de salud permiten descentralizar la atención médica veterinaria hacia comunidades rurales y sectores vulnerables. La trazabilidad de atenciones garantiza la continuidad de la salud pública regional.
-                  </p>
-                </div>
-                <div className="flex items-center justify-between p-4 bg-accent/5 border border-accent/10 rounded-2xl">
-                  <div>
-                    <h5 className="text-xs font-extrabold text-accent uppercase tracking-wider">Atenciones consolidadas</h5>
-                    <p className="text-[10px] text-slate-500 mt-0.5">Mascotas atendidas en brigada</p>
-                  </div>
-                  <span className="text-lg font-black text-accent bg-white px-3 py-1 rounded-xl shadow-sm border border-accent/10">100%</span>
-                </div>
-              </div>
-            </Card>
-          </div>
-        </div>
-      ) : (
-        <>
+        )}
+      </div>
 
       {(error || catalogError) && (
         <div className="flex items-start gap-2 bg-red-50 text-red-700 text-sm p-4 rounded-xl border border-red-100">
@@ -372,21 +418,30 @@ const Brigadas: React.FC = () => {
             )}
           </div>
         </div>
+      ) : filteredBrigadas.length === 0 ? (
+        <div className="premium-card p-12 text-center">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-50 text-slate-400 mb-4">
+            <Filter className="h-6 w-6" />
+          </div>
+          <h3 className="text-base font-bold text-slate-800 mb-1">No se encontraron brigadas</h3>
+          <p className="text-xs text-slate-500 max-w-sm mx-auto">
+            Intenta cambiar el estado, la ciudad o el término de búsqueda aplicados.
+          </p>
+        </div>
       ) : (
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
-          <div className={`${gridBrigadasClass} self-start`} data-tour="brigadas-lista">
-          {brigadas.map((brigada) => {
+        <div className={gridBrigadasClass} data-tour="brigadas-lista">
+          {filteredBrigadas.map((brigada) => {
             const estado = ESTADO_CONFIG[brigada.estado] || ESTADO_CONFIG.planificada;
             return (
               <button
                 key={brigada.id}
                 type="button"
                 onClick={() => void loadDetail(brigada)}
-                className="premium-card premium-card-hover text-left p-5"
+                className="premium-card premium-card-hover text-left p-4"
               >
-                <div className="flex items-start justify-between gap-3 mb-4">
-                  <div className="h-10 w-10 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
-                    <Activity className="h-5 w-5 text-accent" />
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div className="h-9 w-9 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
+                    <Activity className="h-4.5 w-4.5 text-accent" />
                   </div>
                   <span className={`inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-lg border ${estado.classes}`}>
                     <span className={`h-1.5 w-1.5 rounded-full ${estado.dot}`} />
@@ -413,35 +468,6 @@ const Brigadas: React.FC = () => {
               </button>
             );
           })}
-          </div>
-          <aside className="premium-card h-fit p-5">
-            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[var(--accent)]">Contexto operativo</p>
-            <h2 className="mt-2 text-lg font-black text-slate-900">Jornada bajo control</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-500">
-              Selecciona una brigada para revisar consolidado, participantes y atenciones sin crear datos adicionales.
-            </p>
-            <div className="mt-5 grid gap-3">
-              {brigadas.length === 1 && (
-                <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-3">
-                  <span className="text-xs font-bold text-emerald-700">Operación focalizada</span>
-                  <strong className="mt-1 block text-sm text-slate-900">
-                    Una jornada activa en vista ejecutiva
-                  </strong>
-                  <p className="mt-1 text-xs leading-5 text-slate-500">
-                    El detalle mantiene el foco en estado, participantes y próxima acción sin abrir módulos incompletos.
-                  </p>
-                </div>
-              )}
-              <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-3">
-                <span className="text-xs font-bold text-slate-500">Estado siguiente</span>
-                <strong className="mt-1 block text-sm text-slate-900">Planificar, iniciar o finalizar</strong>
-              </div>
-              <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-3">
-                <span className="text-xs font-bold text-slate-500">Atenciones</span>
-                <strong className="mt-1 block text-sm text-slate-900">Lectura segura por scope</strong>
-              </div>
-            </div>
-          </aside>
         </div>
       )}
 
@@ -602,8 +628,6 @@ const Brigadas: React.FC = () => {
             </div>
           </div>
         </div>
-      )}
-      </>
       )}
     </div>
   );
