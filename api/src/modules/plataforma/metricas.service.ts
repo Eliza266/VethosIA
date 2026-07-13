@@ -69,6 +69,11 @@ export interface Metricas {
   vacunasProximas: number;
   vacunasVencidas: number;
   cumplimientoVacunacion: number;
+  brigadas: number;
+  brigadasPlanificadas: number;
+  brigadasEnCurso: number;
+  brigadasFinalizadas: number;
+  brigadasParticipantes: number;
   topDiagnosticos: TopDiagnostico[];
   distribucionEspecies: ConteoPorClave[];
   consumoIaPorVeterinario: ConsumoPorVeterinario[];
@@ -100,13 +105,18 @@ export class MetricasService {
   async resumen(user: AuthUser, periodo: PeriodoMetricas = {}): Promise<Metricas> {
     const alcance = this.alcanceDe(user);
     const consumoPeriodo = periodoActual(periodo.hoy ?? new Date());
-    const [pacientesAll, consultasAll, citasAll, vacunasAll, consumosAll] = await Promise.all([
+    const [pacientesAllConPlaceholders, consultasAll, citasAll, vacunasAll, consumosAll, brigadasAll] = await Promise.all([
       this.listarColeccion(COLLECTIONS.pacientes),
       this.listarColeccion(COLLECTIONS.consultas),
       this.listarColeccion(COLLECTIONS.citas),
       this.listarColeccion(COLLECTIONS.vacunas),
       this.listarColeccion(COLLECTIONS.consumos),
+      this.listarColeccion(COLLECTIONS.brigadas),
     ]);
+    // Los placeholders de "consulta rapida" (paciente temporal sin confirmar) no son
+    // pacientes reales; el listado de Pacientes ya los excluye y las metricas deben
+    // coincidir con ese mismo conteo, no inflarlo.
+    const pacientesAll = pacientesAllConPlaceholders.filter((r) => r.data.esPlaceholder !== true);
 
     const porVeterinario = (r: Registro) =>
       !periodo.veterinarioId || this.str(r.data.veterinarioId) === periodo.veterinarioId;
@@ -144,6 +154,16 @@ export class MetricasService {
       .filter(porVeterinarioConsumo)
       .filter(porVeterinariaConsumo)
       .filter((r) => this.str(r.data.periodo) === consumoPeriodo || !this.str(r.data.periodo));
+    // Las brigadas no tienen un veterinarioId singular (son varios participantes en
+    // veterinarioIds), por eso el filtro de "ver un veterinario puntual" se hace distinto
+    // al resto de colecciones.
+    const porVeterinarioBrigada = (r: Registro) =>
+      !periodo.veterinarioId || this.stringArray(r.data.veterinarioIds).includes(periodo.veterinarioId);
+    const brigadas = brigadasAll
+      .filter((r) => this.visiblePara(user, alcance, r.data))
+      .filter(porVeterinarioBrigada)
+      .filter(porVeterinaria)
+      .filter((r) => this.enPeriodo(r.data, periodo));
 
     const consultasAprobadas = consultas.filter((r) => r.data.estado === 'aprobada');
     const soapGenerados = consultas.filter((r) => this.tieneSoap(r.data)).length;
@@ -152,6 +172,7 @@ export class MetricasService {
     ).size;
     const vacunasResumen = this.resumenVacunas(vacunas, periodo.hoy);
     const citasResumen = this.resumenCitas(citas);
+    const brigadasResumen = this.resumenBrigadas(brigadas);
     const consumoResumen = await this.resumenConsumo(user, alcance, consumos, soapGenerados);
 
     return {
@@ -175,6 +196,8 @@ export class MetricasService {
       ...citasResumen,
       vacunas: vacunas.length,
       ...vacunasResumen,
+      brigadas: brigadas.length,
+      ...brigadasResumen,
       topDiagnosticos: this.topDiagnosticos(consultasAprobadas),
       distribucionEspecies: this.distribucionEspecies(pacientes),
       consumoIaPorVeterinario: this.consumoPorVeterinario(consumos),
@@ -271,12 +294,25 @@ export class MetricasService {
 
   private fechaRegistro(data: Record<string, unknown>): Date | null {
     for (const key of ['fechaHora', 'fecha', 'aplicada', 'creadoEn', 'createdAt', 'actualizadoEn', 'updatedAt']) {
-      const value = data[key];
-      if (typeof value === 'string') {
-        const date = new Date(value);
-        if (!Number.isNaN(date.getTime())) return date;
-      }
-      if (value instanceof Date) return value;
+      const fecha = this.aFecha(data[key]);
+      if (fecha) return fecha;
+    }
+    return null;
+  }
+
+  // Los campos de auditoria (creadoEn, actualizadoEn, ...) se escriben con
+  // admin.firestore.FieldValue.serverTimestamp() y vuelven como Timestamp de Firestore,
+  // no como string ni como Date — sin este caso las metricas mensuales quedaban en cero
+  // para cualquier registro que solo tuviera esos campos de auditoria.
+  private aFecha(value: unknown): Date | null {
+    if (typeof value === 'string') {
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? null : date;
+    }
+    if (value instanceof Date) return value;
+    if (value && typeof value === 'object' && typeof (value as { toDate?: unknown }).toDate === 'function') {
+      const date = (value as { toDate: () => Date }).toDate();
+      return date instanceof Date && !Number.isNaN(date.getTime()) ? date : null;
     }
     return null;
   }
@@ -318,6 +354,27 @@ export class MetricasService {
       citasRealizadas: citas.filter((r) => r.data.estado === 'realizada').length,
       citasNoAsistio: citas.filter((r) => r.data.estado === 'no_asistio').length,
       citasCanceladas: citas.filter((r) => r.data.estado === 'cancelada').length,
+    };
+  }
+
+  private resumenBrigadas(
+    brigadas: Registro[],
+  ): Pick<Metricas, 'brigadasPlanificadas' | 'brigadasEnCurso' | 'brigadasFinalizadas' | 'brigadasParticipantes'> {
+    const participantes = new Set<string>();
+    let planificadas = 0;
+    let enCurso = 0;
+    let finalizadas = 0;
+    for (const { data } of brigadas) {
+      if (data.estado === 'planificada') planificadas += 1;
+      else if (data.estado === 'en_curso') enCurso += 1;
+      else if (data.estado === 'finalizada') finalizadas += 1;
+      for (const vetId of this.stringArray(data.veterinarioIds)) participantes.add(vetId);
+    }
+    return {
+      brigadasPlanificadas: planificadas,
+      brigadasEnCurso: enCurso,
+      brigadasFinalizadas: finalizadas,
+      brigadasParticipantes: participantes.size,
     };
   }
 

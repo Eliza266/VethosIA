@@ -23,6 +23,11 @@ export interface Metricas {
   vacunasProximas: number;
   vacunasVencidas: number;
   cumplimientoVacunacion: number;
+  brigadas?: number;
+  brigadasPlanificadas?: number;
+  brigadasEnCurso?: number;
+  brigadasFinalizadas?: number;
+  brigadasParticipantes?: number;
   topDiagnosticos: Array<{ nombre: string; total: number }>;
   distribucionEspecies?: Array<{ clave: string; total: number }>;
   consumoIaPorVeterinario?: Array<{

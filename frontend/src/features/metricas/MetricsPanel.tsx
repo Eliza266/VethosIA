@@ -19,7 +19,7 @@ import { obtenerMetricas, obtenerConsumo } from './api';
 import { listarVeterinariosBackoffice, listarVeterinariasBackoffice } from '../backoffice/api';
 import { Card, SectionHeader, Skeleton } from '../../components/ui/Primitives';
 import type { Rol } from '../../lib/rbac';
-import { NAVY, CYAN, LIME, RED, ESPECIES_COLORS, VACUNAS_COLORS, AGENDA_COLORS } from '../../lib/chartColors';
+import { NAVY, CYAN, LIME, RED, ESPECIES_COLORS, VACUNAS_COLORS, AGENDA_COLORS, BRIGADAS_COLORS } from '../../lib/chartColors';
 
 const RANGOS = [
   { value: '30', label: 'Últimos 30 días' },
@@ -55,7 +55,12 @@ interface DonutDatum {
   valor: number;
 }
 
-const DonutCard: React.FC<{ titulo: string; datos: DonutDatum[]; colores: string[] }> = ({ titulo, datos, colores }) => {
+const DonutCard: React.FC<{ titulo: string; subtitulo?: string; datos: DonutDatum[]; colores: string[] }> = ({
+  titulo,
+  subtitulo,
+  datos,
+  colores,
+}) => {
   const conDatos = datos.filter((d) => d.valor > 0);
   const total = conDatos.reduce((acc, d) => acc + d.valor, 0);
   const principal = conDatos[0];
@@ -63,6 +68,7 @@ const DonutCard: React.FC<{ titulo: string; datos: DonutDatum[]; colores: string
   return (
     <Card className="premium-card" padding="sm">
       <h3 className="text-sm font-black text-[var(--text)]">{titulo}</h3>
+      {subtitulo && <p className="text-[11px] font-semibold text-[var(--muted)]">{subtitulo}</p>}
       {conDatos.length > 0 ? (
         <>
           <div className="relative mt-2 h-36">
@@ -156,6 +162,8 @@ const MetricsPanel: React.FC<{ rol?: Rol | null }> = ({ rol }) => {
   const consultasPorVet = m.consultasPorVeterinario ?? [];
   const consumoPorVet = m.consumoIaPorVeterinario ?? [];
   const consolidadoSedes = m.consolidadoVeterinarias ?? [];
+  const nombresSedes = new Map((sedes.data ?? []).map((v) => [v.id, v.nombre]));
+  const sedeLabel = (id: string) => nombresSedes.get(id) ?? id;
   const nombresEquipo = new Map((equipo.data ?? []).map((v) => [v.uid, v.email ?? v.uid]));
   const equipoLabel = (id: string) => nombresEquipo.get(id) ?? (id === 'sin_veterinario' ? 'Sin asignar' : id);
   const consumoPorVetMap = new Map(consumoPorVet.map((v) => [v.veterinarioId, v.usados]));
@@ -176,6 +184,11 @@ const MetricsPanel: React.FC<{ rol?: Rol | null }> = ({ rol }) => {
     { nombre: 'Programadas', valor: m.citasProgramadas ?? 0 },
     { nombre: 'No asistió', valor: m.citasNoAsistio ?? 0 },
     { nombre: 'Canceladas', valor: m.citasCanceladas ?? 0 },
+  ];
+  const brigadasDatos: DonutDatum[] = [
+    { nombre: 'Planificadas', valor: m.brigadasPlanificadas ?? 0 },
+    { nombre: 'En curso', valor: m.brigadasEnCurso ?? 0 },
+    { nombre: 'Finalizadas', valor: m.brigadasFinalizadas ?? 0 },
   ];
 
   const usadosIa = m.soapUsados ?? c?.usados ?? 0;
@@ -305,12 +318,21 @@ const MetricsPanel: React.FC<{ rol?: Rol | null }> = ({ rol }) => {
         </Card>
       </div>
 
-      <div className={`grid gap-4 sm:grid-cols-2 ${mostrarRendimiento ? 'xl:grid-cols-4' : 'lg:grid-cols-3'}`}>
+      {/* 4 donas base en una fila de hasta 4 columnas; la 5ta tarjeta (rendimiento de
+          equipo, solo admin_veterinaria con drill-down) cae a su propia fila en vez de
+          apretar 5 columnas en la misma linea. */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <DonutCard titulo="Distribución por especie" datos={especies} colores={ESPECIES_COLORS} />
         <DonutCard titulo="Estado de vacunación" datos={vacunacionDatos} colores={VACUNAS_COLORS} />
         <DonutCard titulo="Eficiencia de agenda" datos={agendaDatos} colores={AGENDA_COLORS} />
+        <DonutCard
+          titulo="Estado de brigadas"
+          subtitulo={`${m.brigadasParticipantes ?? 0} ${m.brigadasParticipantes === 1 ? 'participante' : 'participantes'} en total`}
+          datos={brigadasDatos}
+          colores={BRIGADAS_COLORS}
+        />
         {mostrarRendimiento && (
-          <Card className="premium-card" padding="sm">
+          <Card className="premium-card sm:col-span-2 lg:col-span-4" padding="sm">
             <h3 className="text-sm font-black text-[var(--text)]">Rendimiento y uso de IA</h3>
             <div className="mt-2 h-36">
               <ResponsiveContainer width="100%" height="100%">
@@ -328,12 +350,15 @@ const MetricsPanel: React.FC<{ rol?: Rol | null }> = ({ rol }) => {
         )}
       </div>
 
-      {!veterinariaId && consolidadoSedes.length > 0 && (
+      {/* Solo tiene sentido comparar sedes cuando hay mas de una — con una sola sede
+          (el caso de la mayoria de admin_veterinaria/veterinario) esto seria una sola
+          barra comparandose contra si misma, sin valor informativo. */}
+      {!veterinariaId && consolidadoSedes.length > 1 && (
         <Card className="premium-card">
           <SectionHeader title="Consolidado por sede" description="Pacientes y consultas de cada veterinaria." />
           <div className="mt-4 h-52">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={consolidadoSedes.map((s) => ({ nombre: s.veterinariaId, Pacientes: s.pacientes, Consultas: s.consultas }))}>
+              <BarChart data={consolidadoSedes.map((s) => ({ nombre: sedeLabel(s.veterinariaId), Pacientes: s.pacientes, Consultas: s.consultas }))}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                 <XAxis dataKey="nombre" tick={axisTick} axisLine={false} tickLine={false} />
                 <YAxis tick={axisTick} axisLine={false} tickLine={false} width={25} allowDecimals={false} />
