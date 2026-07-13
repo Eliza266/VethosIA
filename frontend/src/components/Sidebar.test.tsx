@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Sidebar from './Sidebar';
@@ -143,5 +144,22 @@ describe('Sidebar (roles y RBAC)', () => {
     renderSidebar('/pacientes/abc123?tab=vacunas');
     expect(screen.getByRole('link', { name: /^perfil$/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /^consultas$/i })).toBeInTheDocument();
+  });
+
+  it('tocar un módulo del drawer móvil no lo cierra (solo el clic afuera cierra)', async () => {
+    mockUseMe.mockReturnValue({ data: { ...meAdmin, rol: 'vet' }, isLoading: false, isFetching: false });
+    const onNavigate = vi.fn();
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const user = userEvent.setup();
+    render(
+      <QueryClientProvider client={qc}>
+        <MemoryRouter initialEntries={['/']}>
+          <Sidebar mobile onNavigate={onNavigate} />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    await user.click(screen.getByRole('link', { name: /agenda/i }));
+    expect(onNavigate).not.toHaveBeenCalled();
   });
 });

@@ -155,7 +155,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, onToggleCol
         <div className="px-3 pt-3">
           <Link
             to={ctaItem.path}
-            onClick={onNavigate}
             title={showCollapsed ? ctaItem.label : undefined}
             className="flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-white transition-colors"
             style={{ background: 'var(--accent)' }}
@@ -180,7 +179,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, onToggleCol
                       icon={<Icon className="h-[18px] w-[18px]" />}
                       active={activeSection === item.id}
                       collapsed={showCollapsed}
-                      onNavigate={onNavigate}
                     />
                   </li>
                 );
@@ -200,7 +198,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, onToggleCol
                       icon={Icon ? <Icon className="h-[18px] w-[18px]" /> : undefined}
                       active={isItemActive(item)}
                       collapsed={showCollapsed}
-                      onNavigate={onNavigate}
                     />
                     {showPatientTabsHere && (
                       <div className="mt-1 ml-4 space-y-0.5 border-l pl-2" style={{ borderColor: 'var(--border)' }}>
@@ -214,7 +211,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, onToggleCol
                             <Link
                               key={tab.val}
                               to={`/pacientes/${patientId}?tab=${tab.val}`}
-                              onClick={onNavigate}
                               className={`block rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${active ? 'veth-sidebar-item-active' : 'veth-sidebar-item'}`}
                               aria-current={active ? 'page' : undefined}
                             >
@@ -233,7 +229,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, onToggleCol
                               <a
                                 key={sub.id}
                                 href={`${activeModule.path}#${sub.anchor}`}
-                                onClick={onNavigate}
                                 className="block rounded-lg px-3 py-1.5 text-sm font-medium transition-colors veth-sidebar-item"
                               >
                                 {sub.label}
@@ -245,7 +240,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, onToggleCol
                             <Link
                               key={sub.id}
                               to={`${activeModule.path}?tab=${sub.tabValue}`}
-                              onClick={onNavigate}
                               className={`block rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${active ? 'veth-sidebar-item-active' : 'veth-sidebar-item'}`}
                               aria-current={active ? 'page' : undefined}
                             >
