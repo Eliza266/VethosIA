@@ -8,41 +8,6 @@
   color: var(--text);
 }
 
-/* Botones de toolbar */
-.rbc-toolbar button {
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-xs);
-  padding: 6px 12px;
-  font-weight: 500;
-  background-color: var(--surface);
-  transition: background-color var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
-}
-
-.rbc-toolbar button:hover {
-  background-color: var(--accent-soft) !important;
-  color: var(--accent-strong) !important;
-  border-color: color-mix(in srgb, var(--accent) 40%, var(--border)) !important;
-}
-
-.rbc-toolbar button.rbc-active {
-  background-color: var(--accent) !important;
-  color: #fff !important;
-  border-color: var(--accent) !important;
-}
-
-.rbc-toolbar button:active,
-.rbc-toolbar button:focus {
-  background-color: var(--accent-strong) !important;
-  color: #fff !important;
-  border-color: var(--accent-strong) !important;
-}
-
-.rbc-toolbar-label {
-  font-weight: 700;
-  color: var(--text);
-}
-
 /* Indicador de "hoy" en la cuadrícula */
 .rbc-today {
   background-color: color-mix(in srgb, var(--accent) 6%, transparent) !important;
@@ -94,34 +59,9 @@
   border-color: var(--border) !important;
 }
 
-/* Mobile: la barra de herramientas por defecto (3 grupos de botones en fila) queda
-   apretada y desalineada en pantallas angostas. La apilamos en columna, con los
-   botones de navegación y de vista repartidos en todo el ancho. */
+/* Mobile: la toolbar propia ya se apila via flex-wrap; solo achicamos el calendario
+   y los eventos para que quepan en pantallas angostas. */
 @media (max-width: 640px) {
-  .rbc-toolbar {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
-    margin-bottom: 12px;
-  }
-
-  .rbc-toolbar-label {
-    order: -1;
-    padding: 2px 0 6px;
-    font-size: 1rem;
-  }
-
-  .rbc-toolbar .rbc-btn-group {
-    display: flex;
-    width: 100%;
-  }
-
-  .rbc-toolbar .rbc-btn-group button {
-    flex: 1;
-    padding: 8px 4px;
-    font-size: 0.75rem;
-  }
-
   .rbc-calendar {
     height: 65vh !important;
   }
