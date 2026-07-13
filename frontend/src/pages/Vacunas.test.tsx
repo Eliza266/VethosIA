@@ -83,9 +83,9 @@ describe('Vacunas page', () => {
     renderPage();
     await screen.findByText('Rabia');
 
-    await user.selectOptions(screen.getByLabelText('Filtrar por estado'), 'vencida');
+    await user.click(screen.getByRole('tab', { name: 'Vencidas' }));
     await user.selectOptions(screen.getByLabelText('Filtrar por especie'), 'gato');
-    await user.selectOptions(screen.getByLabelText('Filtrar por paciente'), 'p2');
+    await user.type(screen.getByLabelText('Filtrar por paciente'), 'Michi');
     await user.type(screen.getByLabelText('Filtrar por tipo'), 'Triple felina');
 
     await waitFor(() => {
