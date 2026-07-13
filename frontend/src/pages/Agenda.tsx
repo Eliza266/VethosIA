@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useTourGuide } from '../hooks/useTourGuide';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { CalendarClock, CalendarDays, CheckCircle2, Link2, Plus, Users, X, Save, TrendingUp, AlertTriangle } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { CalendarClock, CheckCircle2, Link2, Plus, X, Save } from 'lucide-react';
 import { useCitas } from '../features/citas/hooks';
 import {
   motivoCita,
@@ -9,7 +9,7 @@ import {
   type Cita,
 } from '../features/citas/api';
 import { usePacientes } from '../hooks/usePacientes';
-import { Card, Button, Badge, Skeleton, EmptyState, KpiCard, SectionHeader, PageHeader } from '../components/ui/Primitives';
+import { Card, Button, Badge, Skeleton, EmptyState, SectionHeader, PageHeader } from '../components/ui/Primitives';
 
 const CalendarioCitas = React.lazy(() => import('../features/citas/CalendarioCitas'));
 
@@ -31,14 +31,11 @@ const TOUR_STEPS_AGENDA = [
 
 const Agenda: React.FC = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   useTourGuide('agenda', TOUR_STEPS_AGENDA);
   const { data, isLoading, crear, cambiarEstado, vincularPaciente } = useCitas();
   const { pacientes } = usePacientes();
 
-  const currentTab = new URLSearchParams(location.search).get('tab') || 'calendario';
-
-  const [subTab, setSubTab] = useState<'calendario' | 'citas_dia'>('calendario');
+  const [panelOpen, setPanelOpen] = useState(true);
   const [selectedCita, setSelectedCita] = useState<Cita | null>(null);
 
   // Modal State for new appointment
@@ -84,10 +81,6 @@ const Agenda: React.FC = () => {
     const todayStr = new Date().toDateString();
     return (data ?? []).filter(c => new Date(c.fecha).toDateString() === todayStr);
   }, [data]);
-
-  const citasProgramadas = (data ?? []).filter((c) => c.estado === 'programada').length;
-  const citasVinculadas = (data ?? []).filter((c) => Boolean(c.pacienteId)).length;
-  const citasAtendidas = (data ?? []).filter((c) => c.estado === 'realizada' || Boolean(c.consultaId)).length;
 
   const atender = async (cita: Cita) => {
     if (!cita.pacienteId) return;
@@ -166,20 +159,12 @@ const Agenda: React.FC = () => {
     setIsModalOpen(false);
   };
 
-  // Calculate real metrics
-  const totalCitas = data?.length ?? 0;
-  const programadasCount = data?.filter((c) => c.estado === 'programada').length ?? 0;
-  const enAtencionCount = data?.filter((c) => c.estado === 'en_atencion').length ?? 0;
-  const realizadasCount = data?.filter((c) => c.estado === 'realizada').length ?? 0;
-  const canceladasCount = data?.filter((c) => c.estado === 'cancelada').length ?? 0;
-  const noAsistioCount = data?.filter((c) => c.estado === 'no_asistio').length ?? 0;
-
-  const totalCerradas = realizadasCount + noAsistioCount;
-  const asistenciaPct = totalCerradas ? Math.round((realizadasCount / totalCerradas) * 100) : 100;
+  const modalAbierto = isModalOpen || Boolean(selectedCita);
 
   return (
+    <>
     <div className="mx-auto grid max-w-6xl gap-6 animate-fade-in py-4">
-      
+      <div aria-hidden={modalAbierto || undefined} className={modalAbierto ? 'pointer-events-none' : undefined}>
       <PageHeader
         badge="Operación clínica"
         title="Agenda Médica"
@@ -192,179 +177,53 @@ const Agenda: React.FC = () => {
         }
       />
 
-      {currentTab === 'metricas' ? (
-        /* Real Metrics Dashboard view */
-        <div className="space-y-6 animate-fade-in">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <KpiCard
-              label="Total de Citas"
-              value={totalCitas}
-              hint="Histórico de citas gestionadas"
-              icon={<CalendarDays className="h-5 w-5" />}
-              accent="info"
-            />
-            <KpiCard
-              label="Tasa de Asistencia"
-              value={`${asistenciaPct}%`}
-              hint={`${realizadasCount} asistidas de ${totalCerradas} cerradas`}
-              icon={<TrendingUp className="h-5 w-5" />}
-              accent="success"
-            />
-            <KpiCard
-              label="Citas Canceladas / No asistió"
-              value={canceladasCount + noAsistioCount}
-              hint={`${canceladasCount} canceladas · ${noAsistioCount} ausentes`}
-              icon={<AlertTriangle className="h-5 w-5" />}
-              accent="danger"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <Card padding="lg">
-              <SectionHeader
-                title="Distribución de Estados"
-                description="Estado actual de todas las citas agendadas."
-              />
-              <div className="mt-6 space-y-4">
-                {[
-                  { label: 'Programadas', count: programadasCount, color: 'bg-blue-500' },
-                  { label: 'En atención', count: enAtencionCount, color: 'bg-amber-500' },
-                  { label: 'Realizadas', count: realizadasCount, color: 'bg-emerald-500' },
-                  { label: 'Canceladas', count: canceladasCount, color: 'bg-slate-400' },
-                  { label: 'No asistió', count: noAsistioCount, color: 'bg-red-500' },
-                ].map((item) => {
-                  const pct = totalCitas ? Math.round((item.count / totalCitas) * 100) : 0;
-                  return (
-                    <div key={item.label} className="space-y-2">
-                      <div className="flex justify-between text-xs font-bold text-slate-700">
-                        <span>{item.label}</span>
-                        <span>{item.count} ({pct}%)</span>
-                      </div>
-                      <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full ${item.color} rounded-full transition-all`}
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
+      {/* Vista Calendario: calendario + panel lateral colapsable de citas de hoy.
+          Las métricas se ven ahora en el Dashboard, no aquí. */}
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+        <div className="min-w-0 flex-1">
+            {isLoading ? (
+              <div className="grid gap-3">
+                <Skeleton height={60} />
+                <Skeleton height={60} />
+                <Skeleton height={60} />
               </div>
-            </Card>
-
-            <Card padding="lg">
-              <SectionHeader
-                title="Eficiencia de la Agenda"
-                description="Métricas operativas del flujo de consultas."
-              />
-              <div className="mt-6 space-y-6">
-                <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl">
-                  <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Tasa de Ausentismo</h4>
-                  <p className="text-xs text-slate-500 leading-relaxed">
-                    Las citas marcadas como "No asistió" o "Cancelada" representan tiempo clínico desaprovechado. Recomendamos enviar confirmaciones automáticas de citas 24h antes para optimizar el flujo.
-                  </p>
-                </div>
-                <div className="flex items-center justify-between p-4 bg-accent/5 border border-accent/10 rounded-2xl">
-                  <div>
-                    <h5 className="text-xs font-extrabold text-accent uppercase tracking-wider">Citas del día programadas</h5>
-                    <p className="text-[10px] text-slate-500 mt-0.5">Pendientes de atención hoy</p>
+            ) : (
+              <div data-tour="agenda-calendario">
+                <React.Suspense fallback={
+                  <div className="grid gap-3">
+                    <Skeleton height={60} />
+                    <Skeleton height={60} />
+                    <Skeleton height={60} />
                   </div>
-                  <span className="text-lg font-black text-accent bg-white px-3 py-1 rounded-xl shadow-sm border border-accent/10">
-                    {hoyCitas.filter(c => c.estado === 'programada').length}
-                  </span>
-                </div>
+                }>
+                  <CalendarioCitas
+                    citas={data ?? []}
+                    onSelectCita={(cita) => setSelectedCita(cita)}
+                    onSelectSlot={handleSelectSlot}
+                    citasHoyCount={hoyCitas.length}
+                    panelOpen={panelOpen}
+                    onTogglePanel={() => setPanelOpen((v) => !v)}
+                  />
+                </React.Suspense>
               </div>
-            </Card>
-          </div>
-        </div>
-      ) : (
-        /* Default Calendar View */
-        <>
-          {/* Level 2 Sub-Tabs */}
-          <div className="flex border-b border-slate-200">
-            <button
-              onClick={() => setSubTab('calendario')}
-              className={`px-6 py-3 font-bold text-sm border-b-2 transition-all ${
-                subTab === 'calendario'
-                  ? 'border-accent text-accent'
-                  : 'border-transparent text-slate-500 hover:text-slate-700'
-              }`}
-            >
-              Calendario
-            </button>
-            <button
-              onClick={() => setSubTab('citas_dia')}
-              className={`px-6 py-3 font-bold text-sm border-b-2 transition-all ${
-                subTab === 'citas_dia'
-                  ? 'border-accent text-accent'
-                  : 'border-transparent text-slate-500 hover:text-slate-700'
-              }`}
-            >
-              Citas del día ({hoyCitas.length})
-            </button>
+            )}
           </div>
 
-          {/* Conditional View Rendering */}
-          {subTab === 'calendario' ? (
-            <div className="space-y-6">
-              
-              {/* KPI Dashboard */}
-              <div className="grid gap-4 md:grid-cols-3">
-                <KpiCard
-                  label="Citas visibles"
-                  value={totalCitas}
-                  hint={`${citasProgramadas} programadas`}
-                  icon={<CalendarDays className="h-5 w-5" />}
-                  accent="info"
-                />
-                <KpiCard
-                  label="Pacientes vinculados"
-                  value={`${citasVinculadas}/${totalCitas || 0}`}
-                  hint="Listas para abrir consulta"
-                  icon={<Users className="h-5 w-5" />}
-                  accent="success"
-                />
-                <KpiCard
-                  label="Atención cerrada"
-                  value={citasAtendidas}
-                  hint="Consulta creada o realizada"
-                  icon={<CheckCircle2 className="h-5 w-5" />}
-                  accent="warn"
-                />
-              </div>
-
-              {isLoading ? (
-                <div className="grid gap-3">
-                  <Skeleton height={60} />
-                  <Skeleton height={60} />
-                  <Skeleton height={60} />
-                </div>
-              ) : (
-                <div data-tour="agenda-calendario">
-                  <React.Suspense fallback={
-                    <div className="grid gap-3">
-                      <Skeleton height={60} />
-                      <Skeleton height={60} />
-                      <Skeleton height={60} />
-                    </div>
-                  }>
-                    <CalendarioCitas
-                      citas={data ?? []}
-                      onSelectCita={(cita) => setSelectedCita(cita)}
-                      onSelectSlot={handleSelectSlot}
-                    />
-                  </React.Suspense>
-                </div>
-              )}
-            </div>
-          ) : (
-            /* Citas del Día view */
-            <Card padding="lg">
-              <div className="flex justify-between items-center mb-6">
+          {panelOpen && (
+            <Card padding="md" className="w-full shrink-0 lg:w-80">
+              <div className="mb-4 flex items-start justify-between gap-2">
                 <SectionHeader
-                  title="Citas para el día de hoy"
+                  title="Citas de hoy"
                   description="Flujo de atenciones planificadas para hoy."
                 />
+                <button
+                  type="button"
+                  onClick={() => setPanelOpen(false)}
+                  aria-label="Cerrar panel de citas de hoy"
+                  className="shrink-0 rounded-lg p-1.5 text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-700"
+                >
+                  <X className="h-4 w-4" />
+                </button>
               </div>
 
               {hoyCitas.length === 0 ? (
@@ -378,25 +237,25 @@ const Agenda: React.FC = () => {
                   {hoyCitas.map((c) => (
                     <div
                       key={c.id}
-                      className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 bg-white border border-slate-200/80 rounded-2xl shadow-[0_2px_8px_-3px_rgba(15,23,42,0.05)] hover:border-accent/30 transition-all duration-200"
+                      className="flex flex-col gap-3 p-3 bg-white border border-slate-200/80 rounded-xl shadow-[0_2px_8px_-3px_rgba(15,23,42,0.05)] hover:border-accent/30 transition-all duration-200"
                     >
-                      <div className="flex items-start gap-3">
-                        <div className="p-2.5 bg-accent/5 text-accent rounded-xl shrink-0 mt-0.5">
+                      <div className="flex items-start gap-2.5">
+                        <div className="p-2 bg-accent/5 text-accent rounded-lg shrink-0 mt-0.5">
                           <CalendarClock className="h-4 w-4" />
                         </div>
                         <div className="min-w-0">
-                          <div className="flex flex-wrap items-center gap-2">
+                          <div className="flex flex-wrap items-center gap-1.5">
                             <strong className="text-slate-800 text-sm">{c.pacienteNombre ?? c.titulo}</strong>
                             <Badge estado={c.estado}>{ESTADO_LABEL[c.estado] || c.estado}</Badge>
                           </div>
                           <p className="text-xs text-slate-500 mt-1 flex items-center gap-1.5">
                             <span>🕒 {formatHora(c.fecha)}</span>
                             <span>•</span>
-                            <span>📝 {c.motivo ?? c.titulo}</span>
+                            <span className="truncate">📝 {c.motivo ?? c.titulo}</span>
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 self-end md:self-center">
+                      <div className="flex flex-wrap items-center gap-2">
                         {renderAcciones(c)}
                         {c.estado !== 'realizada' && c.estado !== 'cancelada' && (
                           <Button
@@ -414,9 +273,8 @@ const Agenda: React.FC = () => {
               )}
             </Card>
           )}
-        </>
-      )}
-
+        </div>
+      </div>
       {/* New Appointment Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -562,6 +420,7 @@ const Agenda: React.FC = () => {
         </div>
       )}
     </div>
+    </>
   );
 };
 
