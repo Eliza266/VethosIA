@@ -39,7 +39,6 @@ import Suscripcion from './pages/Suscripcion';
 import AdminVeterinaria from './pages/AdminVeterinaria';
 import Notificaciones from './pages/Notificaciones';
 import DocumentosClinicos from './pages/DocumentosClinicos';
-import Metricas from './pages/Metricas';
 import { NotFound } from './pages/RouteFallback';
 
 function App() {
@@ -76,7 +75,6 @@ function App() {
                     <Route path="/notificaciones" element={<Notificaciones />} />
                     <Route path="/como-funciona" element={<ComoFunciona />} />
                     <Route path="/invitacion" element={<Invitacion />} />
-                    <Route path="/metricas" element={<Metricas />} />
                     <Route element={<SubscriptionRoute />}>
                       <Route path="/suscripcion" element={<Suscripcion />} />
                       <Route path="/mi-plan" element={<Suscripcion />} />

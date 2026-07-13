@@ -1,29 +1,17 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { Activity, CreditCard, Settings, ShieldCheck } from 'lucide-react';
-import { obtenerMetricas } from '../../features/metricas/api';
+import { Activity, CreditCard, ShieldCheck } from 'lucide-react';
+import { MetricsPanel } from '../../features/metricas/MetricsPanel';
 import { getDashboardModulesForProfile, getModuleStatusLabel } from '../../lib/roleNavigation';
 import type { RbacProfileLike } from '../../lib/rbac';
-import {
-  CommandCenterShell,
-  CommandHero,
-  InsightPanel,
-  ModuleGrid,
-  PrimaryLink,
-  StatStrip,
-} from './CommandCenterShared';
+import { CommandCenterShell, InsightPanel, ModuleGrid } from './CommandCenterShared';
 
 interface SuperAdminCommandCenterProps {
   me?: RbacProfileLike & { nombre?: string | null };
 }
 
 const SuperAdminCommandCenter: React.FC<SuperAdminCommandCenterProps> = ({ me }) => {
-  const metricas = useQuery({
-    queryKey: ['metricas-dashboard'],
-    queryFn: () => obtenerMetricas(),
-    retry: false,
-  });
+  const rol = me?.role ?? me?.rol ?? null;
   const modules = getDashboardModulesForProfile(me ?? null);
   const platformModules = modules.filter((module) => module.category === 'platform' || module.category === 'support');
   const billingModules = modules.filter((module) => module.category === 'billing');
@@ -31,31 +19,7 @@ const SuperAdminCommandCenter: React.FC<SuperAdminCommandCenterProps> = ({ me })
 
   return (
     <CommandCenterShell testId="superadmin-command-center">
-      <CommandHero
-        variant="platform"
-        eyebrow="Operación Plataforma"
-        title="Soporte global sin operar como tenant clínico."
-        description="Panel para administrar entidades, veterinarias, usuarios, planes, suscripciones, auditoría y configuración. Las integraciones no activas se muestran como estados premium, no como placeholders rotos."
-        action={
-          <>
-            <PrimaryLink to="/admin" icon={<ShieldCheck className="h-4 w-4" />}>
-              Soporte plataforma
-            </PrimaryLink>
-            <PrimaryLink to="/configuracion" icon={<Settings className="h-4 w-4" />}>
-              Configuración
-            </PrimaryLink>
-          </>
-        }
-      />
-
-      <StatStrip
-        stats={[
-          { label: 'Módulos globales', value: modules.length, hint: 'Capacidades visibles', tone: 'accent' },
-          { label: 'Configurables', value: pendingModules.length, hint: 'Pendientes o listos para habilitar', tone: 'warn' },
-          { label: 'Consultas globales', value: metricas.data?.consultas ?? 0, hint: 'Lectura de plataforma', tone: 'info' },
-          { label: 'Auditoría', value: 'Activa', hint: 'Ruta controlada', tone: 'success' },
-        ]}
-      />
+      <MetricsPanel rol={rol} />
 
       <ModuleGrid
         title="Gestión centralizada"

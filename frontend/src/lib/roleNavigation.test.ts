@@ -58,8 +58,9 @@ describe('roleNavigation', () => {
     // Test admin mode (default)
     const adminIds = getNavbarItemsForProfile(profile).map((item) => item.id);
     expect(adminIds).toEqual(
-      expect.arrayContaining(['dashboard', 'nueva-consulta', 'veterinarias', 'metricas']),
+      expect.arrayContaining(['dashboard', 'nueva-consulta', 'veterinarias']),
     );
+    expect(adminIds).not.toContain('metricas');
     expect(adminIds).not.toContain('pacientes');
 
     // Test veterinario mode

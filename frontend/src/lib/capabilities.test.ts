@@ -77,11 +77,11 @@ describe('capabilities central matrix', () => {
         'freelancers-entidad',
         'brigadas',
         'consumo-entidad',
-        'metricas-entidad',
         'cobertura-territorial',
       ]),
     );
     expect(findCapabilityModule('cobertura-territorial')?.status).toBe('pending');
+    expect(ids).not.toContain('metricas-entidad');
     expect(ids).not.toContain('soporte');
     expect(ids).not.toContain('veterinarias');
   });

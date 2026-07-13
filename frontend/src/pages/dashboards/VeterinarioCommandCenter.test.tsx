@@ -1,43 +1,8 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import VeterinarioCommandCenter from './VeterinarioCommandCenter';
-
-const { mockFetchTodasConsultas } = vi.hoisted(() => ({
-  mockFetchTodasConsultas: vi.fn(),
-}));
-
-vi.mock('../../hooks/usePacientes', () => ({
-  usePacientes: () => ({
-    pacientes: [
-      {
-        id: 'p1',
-        nombre: 'Luna',
-        especie: 'perro',
-        sexo: 'hembra',
-        estadoReproductivo: 'entero',
-        propietario: { nombre: 'Demo', telefono: '300' },
-        veterinarioId: 'vet1',
-        creadoEn: new Date(),
-      },
-    ],
-    loading: false,
-  }),
-}));
-
-vi.mock('../../hooks/useConsultas', () => ({
-  useConsultas: () => ({ fetchTodasConsultas: mockFetchTodasConsultas }),
-}));
-
-vi.mock('../../features/citas/api', () => ({
-  listarCitas: vi.fn().mockResolvedValue([]),
-  listarCitasProximas2h: vi.fn().mockResolvedValue([]),
-}));
-
-vi.mock('../../features/vacunas/api', () => ({
-  resumenVacunasPendientes: vi.fn().mockResolvedValue({ proximas: 1, vencidas: 0 }),
-}));
 
 vi.mock('../../features/metricas/api', () => ({
   obtenerMetricas: vi.fn().mockResolvedValue({
@@ -53,6 +18,15 @@ vi.mock('../../features/metricas/api', () => ({
     vacunasVencidas: 0,
     cumplimientoVacunacion: 100,
     topDiagnosticos: [],
+  }),
+  obtenerConsumo: vi.fn().mockResolvedValue({
+    periodo: '2026-07',
+    usados: 2,
+    limite: 30,
+    restante: 28,
+    porcentaje: 7,
+    alcanzo80: false,
+    bloqueado: false,
   }),
 }));
 
@@ -71,64 +45,23 @@ function renderCenter() {
 }
 
 describe('VeterinarioCommandCenter', () => {
-  beforeEach(() => {
-    mockFetchTodasConsultas.mockResolvedValue([
-      {
-        id: 'c1',
-        pacienteId: 'p1',
-        estado: 'aprobada',
-        fechaHora: new Date().toISOString(),
-        soap: { subjetivo: 'ok' },
-      },
-      {
-        id: 'c2',
-        pacienteId: 'p1',
-        estado: 'borrador',
-        fechaHora: new Date(Date.now() - 86_400_000).toISOString(),
-      },
-    ]);
-  });
-
-  it('prioriza flujo clinico y oculta modulos admin', async () => {
+  it('va directo a las métricas sin encabezado ni accesos rápidos', async () => {
     renderCenter();
 
     expect(await screen.findByTestId('veterinario-command-center')).toBeInTheDocument();
-    expect(screen.getByText(/Centro cl[ií]nico/i)).toBeInTheDocument();
-    expect(screen.getByText(/Prioridad cl[ií]nica/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/Nueva consulta/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/^Pacientes$/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/^Agenda$/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/^Vacunas$/i).length).toBeGreaterThan(0);
-    expect(screen.getByText(/^Consulta SOAP$/i)).toBeInTheDocument();
-    expect(screen.queryByText(/Documentos controlados/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/^PDF cl[ií]nico$/i)).not.toBeInTheDocument();
+    expect(await screen.findByText(/Cantidad de pacientes/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Centro cl[ií]nico/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Prioridad cl[ií]nica/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Vista entidad/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Soporte plataforma/i)).not.toBeInTheDocument();
   });
 
-  it('muestra acciones documentales compactas en consultas aprobadas', async () => {
+  it('muestra el panel de metricas con graficos', async () => {
     renderCenter();
 
-    const row = await screen.findByTestId('consulta-reciente-c1');
-    expect(within(row).getByRole('link', { name: /^Ver SOAP$/i })).toHaveAttribute(
-      'href',
-      '/pacientes/p1/consultas/c1',
-    );
-    expect(within(row).getByRole('link', { name: /^PDF$/i })).toHaveAttribute(
-      'href',
-      '/pacientes/p1/consultas/c1?documento=pdf',
-    );
-    expect(within(row).getByRole('link', { name: /^Email demo$/i })).toHaveAttribute(
-      'href',
-      '/pacientes/p1/consultas/c1?documento=email',
-    );
-    expect(within(row).getByRole('link', { name: /^WhatsApp seguro$/i })).toHaveAttribute(
-      'href',
-      '/pacientes/p1/consultas/c1?documento=whatsapp',
-    );
-
-    const borrador = await screen.findByTestId('consulta-reciente-c2');
-    expect(within(borrador).getByText(/Documentos disponibles despu[eé]s de aprobaci[oó]n cl[ií]nica/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Cantidad de pacientes/i)).toBeInTheDocument();
+    expect(screen.getByText(/Cantidad de consultas/i)).toBeInTheDocument();
+    expect(screen.getByText(/Cupo de IA/i)).toBeInTheDocument();
   });
 
   it('renderiza sin romper en ancho mobile', async () => {
@@ -138,6 +71,6 @@ describe('VeterinarioCommandCenter', () => {
     renderCenter();
 
     expect(await screen.findByTestId('veterinario-command-center')).toBeInTheDocument();
-    expect(screen.getAllByRole('link', { name: /Nueva consulta/i })[0]).toHaveAttribute('href', '/consultas/nueva-rapida');
+    expect(await screen.findByText(/Cantidad de pacientes/i)).toBeInTheDocument();
   });
 });

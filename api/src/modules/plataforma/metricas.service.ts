@@ -36,6 +36,16 @@ export interface ConsolidadoVeterinaria {
   citasProgramadas: number;
 }
 
+export interface PuntoMensual {
+  mes: string;
+  total: number;
+}
+
+export interface ConsultasPorVeterinario {
+  veterinarioId: string;
+  total: number;
+}
+
 export interface Metricas {
   alcance: 'global' | 'entidad' | 'veterinaria' | 'individual';
   periodo: { desde?: string; hasta?: string; consumo: string };
@@ -63,12 +73,19 @@ export interface Metricas {
   distribucionEspecies: ConteoPorClave[];
   consumoIaPorVeterinario: ConsumoPorVeterinario[];
   consolidadoVeterinarias: ConsolidadoVeterinaria[];
+  pacientesPorMes: PuntoMensual[];
+  consultasPorMes: PuntoMensual[];
+  consultasPorVeterinario: ConsultasPorVeterinario[];
 }
 
 export interface PeriodoMetricas {
   desde?: string;
   hasta?: string;
   hoy?: Date;
+  /** Filtra el resumen a un solo veterinario (drill-down para admin_veterinaria). */
+  veterinarioId?: string;
+  /** Filtra el resumen a una sola veterinaria (drill-down para admin_entidad). */
+  veterinariaId?: string;
 }
 
 type RolMetrica = 'superadmin' | 'admin_entidad' | 'admin_veterinaria' | 'veterinario';
@@ -91,19 +108,41 @@ export class MetricasService {
       this.listarColeccion(COLLECTIONS.consumos),
     ]);
 
-    const pacientes = pacientesAll.filter((r) => this.visiblePara(user, alcance, r.data));
-    const consultas = consultasAll
-      .filter((r) => this.visiblePara(user, alcance, r.data))
+    const porVeterinario = (r: Registro) =>
+      !periodo.veterinarioId || this.str(r.data.veterinarioId) === periodo.veterinarioId;
+    const porVeterinarioConsumo = (r: Registro) =>
+      !periodo.veterinarioId ||
+      this.str(r.data.veterinarioId) === periodo.veterinarioId ||
+      this.str(r.data.scopeId) === periodo.veterinarioId;
+    const porVeterinaria = (r: Registro) =>
+      !periodo.veterinariaId || this.scopeVeterinaria(r.data) === periodo.veterinariaId;
+    const porVeterinariaConsumo = (r: Registro) =>
+      !periodo.veterinariaId ||
+      this.scopeVeterinaria(r.data) === periodo.veterinariaId ||
+      this.str(r.data.scopeId) === periodo.veterinariaId;
+
+    const pacientesVisibles = pacientesAll.filter((r) => this.visiblePara(user, alcance, r.data));
+    const consultasVisibles = consultasAll.filter((r) => this.visiblePara(user, alcance, r.data));
+    const pacientes = pacientesVisibles.filter(porVeterinario).filter(porVeterinaria);
+    const consultas = consultasVisibles
+      .filter(porVeterinario)
+      .filter(porVeterinaria)
       .filter((r) => this.enPeriodo(r.data, periodo));
     const citas = citasAll
       .filter((r) => this.visiblePara(user, alcance, r.data))
+      .filter(porVeterinario)
+      .filter(porVeterinaria)
       .filter((r) => this.enPeriodo(r.data, periodo));
     const vacunas = vacunasAll
       .filter((r) => this.visiblePara(user, alcance, r.data))
+      .filter(porVeterinario)
+      .filter(porVeterinaria)
       .filter((r) => !r.data.eliminadaEn)
       .filter((r) => this.enPeriodo(r.data, periodo));
     const consumos = consumosAll
       .filter((r) => this.visibleConsumo(user, alcance, r.data))
+      .filter(porVeterinarioConsumo)
+      .filter(porVeterinariaConsumo)
       .filter((r) => this.str(r.data.periodo) === consumoPeriodo || !this.str(r.data.periodo));
 
     const consultasAprobadas = consultas.filter((r) => r.data.estado === 'aprobada');
@@ -140,6 +179,9 @@ export class MetricasService {
       distribucionEspecies: this.distribucionEspecies(pacientes),
       consumoIaPorVeterinario: this.consumoPorVeterinario(consumos),
       consolidadoVeterinarias: this.consolidadoVeterinarias(pacientes, consultas, vacunas, citas),
+      pacientesPorMes: this.serieMensual(pacientesVisibles.filter(porVeterinario).filter(porVeterinaria), periodo.hoy),
+      consultasPorMes: this.serieMensual(consultasVisibles.filter(porVeterinario).filter(porVeterinaria), periodo.hoy),
+      consultasPorVeterinario: this.consultasPorVeterinario(consultasVisibles),
     };
   }
 
@@ -377,6 +419,35 @@ export class MetricasService {
         bloqueado: item.bloqueado || (item.limite > 0 && item.usados >= item.limite),
       }))
       .sort((a, b) => b.usados - a.usados || a.veterinarioId.localeCompare(b.veterinarioId));
+  }
+
+  // Ultimos 6 meses (incluido el actual), en orden cronologico, con meses sin datos en 0 —
+  // asi el grafico de linea siempre tiene el mismo eje aunque no haya movimiento reciente.
+  private serieMensual(registros: Registro[], hoy: Date = new Date(), meses = 6): PuntoMensual[] {
+    const claves: string[] = [];
+    for (let i = meses - 1; i >= 0; i -= 1) {
+      const d = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1);
+      claves.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+    }
+    const counts = new Map<string, number>(claves.map((c) => [c, 0]));
+    for (const { data } of registros) {
+      const fecha = this.fechaRegistro(data);
+      if (!fecha) continue;
+      const clave = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}`;
+      if (counts.has(clave)) counts.set(clave, (counts.get(clave) ?? 0) + 1);
+    }
+    return claves.map((mes) => ({ mes, total: counts.get(mes) ?? 0 }));
+  }
+
+  private consultasPorVeterinario(consultas: Registro[]): ConsultasPorVeterinario[] {
+    const counts = new Map<string, number>();
+    for (const { data } of consultas) {
+      const id = this.str(data.veterinarioId) ?? 'sin_veterinario';
+      counts.set(id, (counts.get(id) ?? 0) + 1);
+    }
+    return [...counts.entries()]
+      .map(([veterinarioId, total]) => ({ veterinarioId, total }))
+      .sort((a, b) => b.total - a.total || a.veterinarioId.localeCompare(b.veterinarioId));
   }
 
   private consolidadoVeterinarias(

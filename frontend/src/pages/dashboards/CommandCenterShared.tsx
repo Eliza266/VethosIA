@@ -32,21 +32,6 @@ const MODULE_ICON: Record<NavIcon, LucideIcon> = {
   configuracion: Settings,
 };
 
-export interface CommandStat {
-  label: string;
-  value: React.ReactNode;
-  hint?: string;
-  tone?: 'accent' | 'success' | 'warn' | 'info' | 'neutral';
-}
-
-const TONE_CLASS: Record<NonNullable<CommandStat['tone']>, string> = {
-  accent: 'bg-[var(--accent-soft)] text-[var(--accent)]',
-  success: 'bg-[var(--success-soft)] text-[var(--success)]',
-  warn: 'bg-[var(--warn-soft)] text-[var(--warn)]',
-  info: 'bg-[var(--info-soft)] text-[var(--info)]',
-  neutral: 'bg-slate-100 text-slate-600',
-};
-
 export const CommandCenterShell: React.FC<
   React.PropsWithChildren<{ testId: string; className?: string }>
 > = ({ testId, className = '', children }) => (
@@ -58,56 +43,17 @@ export const CommandCenterShell: React.FC<
 export const CommandHero: React.FC<{
   eyebrow: string;
   title: string;
-  description: string;
+  description?: string;
   action?: React.ReactNode;
   variant: 'clinical' | 'clinic' | 'entity' | 'platform';
-}> = ({ eyebrow, title, description, action, variant }) => {
-  const variantClass =
-    variant === 'clinical'
-      ? 'command-hero text-white'
-      : variant === 'platform'
-        ? 'premium-card border-slate-900/10 bg-slate-950 text-white'
-        : 'premium-card bg-white';
-  const textClass = variant === 'clinical' || variant === 'platform' ? 'text-white/78' : 'text-slate-600';
-  const titleClass = variant === 'clinical' || variant === 'platform' ? 'text-white' : 'text-slate-950';
-  const badgeClass =
-    variant === 'clinical' || variant === 'platform'
-      ? 'border-white/15 bg-white/10 text-white'
-      : 'border-[color-mix(in_srgb,var(--accent)_20%,transparent)] bg-[var(--accent-soft)] text-[var(--accent)]';
-
-  return (
-    <section className={`${variantClass} overflow-hidden p-6 sm:p-8`} aria-label={eyebrow}>
-      <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
-        <div className="min-w-0">
-          <span className={`inline-flex rounded-full border px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em] ${badgeClass}`}>
-            {eyebrow}
-          </span>
-          <h1 className={`mt-4 max-w-4xl text-3xl font-black leading-[1.04] tracking-tight sm:text-4xl ${titleClass}`}>
-            {title}
-          </h1>
-          <p className={`mt-4 max-w-3xl text-sm leading-7 sm:text-base ${textClass}`}>{description}</p>
-        </div>
-        {action ? <div className="flex shrink-0 flex-wrap gap-3">{action}</div> : null}
-      </div>
-    </section>
-  );
-};
-
-export const StatStrip: React.FC<{ stats: CommandStat[] }> = ({ stats }) => (
-  <section aria-label="Indicadores principales" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-    {stats.map((stat) => (
-      <div key={stat.label} className="metric-tile p-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">{stat.label}</p>
-            <strong className="mt-1 block text-2xl font-black text-slate-950">{stat.value}</strong>
-            {stat.hint ? <p className="mt-1 text-xs leading-5 text-slate-500">{stat.hint}</p> : null}
-          </div>
-          <span className={`h-2.5 w-2.5 rounded-full ${TONE_CLASS[stat.tone ?? 'accent']}`} />
-        </div>
-      </div>
-    ))}
-  </section>
+}> = ({ eyebrow, title, action }) => (
+  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="min-w-0">
+      <span className="text-xs font-bold uppercase tracking-wider text-accent">{eyebrow}</span>
+      <h1 className="mt-1 text-xl font-black text-slate-900 sm:text-2xl">{title}</h1>
+    </div>
+    {action ? <div className="flex shrink-0 flex-wrap gap-2">{action}</div> : null}
+  </div>
 );
 
 type ModuleGridVariant = 'default' | 'primary' | 'secondary' | 'document';
@@ -212,16 +158,23 @@ export const InsightPanel: React.FC<{
   </section>
 );
 
+const PRIMARY_LINK_VARIANT_CLASS = {
+  primary: 'bg-[var(--accent)] text-[var(--accent-contrast)] shadow-[var(--shadow-accent)] hover:brightness-95',
+  secondary: 'border-2 text-[var(--clinical-cyan)] hover:bg-[color-mix(in_srgb,var(--clinical-cyan)_10%,transparent)]',
+} as const;
+
 export const PrimaryLink: React.FC<{
   to: string;
   children: React.ReactNode;
   icon?: React.ReactNode;
+  variant?: keyof typeof PRIMARY_LINK_VARIANT_CLASS;
   'data-tour'?: string;
-}> = ({ to, children, icon, 'data-tour': dataTour }) => (
+}> = ({ to, children, icon, variant = 'primary', 'data-tour': dataTour }) => (
   <Link
     to={to}
     data-tour={dataTour}
-    className="inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--accent)] px-4 py-2.5 text-sm font-black text-[var(--accent-contrast)] shadow-[var(--shadow-accent)] transition-all hover:brightness-95"
+    className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-black transition-all ${PRIMARY_LINK_VARIANT_CLASS[variant]}`}
+    style={variant === 'secondary' ? { borderColor: 'var(--clinical-cyan)' } : undefined}
   >
     {icon}
     {children}

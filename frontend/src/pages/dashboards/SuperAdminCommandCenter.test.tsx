@@ -19,6 +19,15 @@ vi.mock('../../features/metricas/api', () => ({
     cumplimientoVacunacion: 88,
     topDiagnosticos: [],
   }),
+  obtenerConsumo: vi.fn().mockResolvedValue({
+    periodo: '2026-06',
+    usados: 40,
+    limite: 300,
+    restante: 260,
+    porcentaje: 13,
+    alcanzo80: false,
+    bloqueado: false,
+  }),
 }));
 
 function renderCenter() {
@@ -37,7 +46,7 @@ describe('SuperAdminCommandCenter', () => {
     renderCenter();
 
     expect(await screen.findByTestId('superadmin-command-center')).toBeInTheDocument();
-    expect(screen.getByText(/Operaci[oó]n Plataforma/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Cantidad de pacientes/i)).toBeInTheDocument();
     expect(screen.getAllByText(/^Entidades$/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/^Veterinarias$/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/^Usuarios y miembros$/i).length).toBeGreaterThan(0);
@@ -47,6 +56,12 @@ describe('SuperAdminCommandCenter', () => {
     expect(screen.getAllByText(/Gesti[oó]n centralizada/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Configuraci[oó]n pendiente/i).length).toBeGreaterThan(0);
     expect(screen.queryByText(/Nueva consulta/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/^Pacientes$/i)).not.toBeInTheDocument();
+  });
+
+  it('muestra el panel de metricas globales de plataforma', async () => {
+    renderCenter();
+
+    expect(await screen.findByText(/Cantidad de pacientes/i)).toBeInTheDocument();
+    expect(screen.getByText(/Cantidad de consultas/i)).toBeInTheDocument();
   });
 });

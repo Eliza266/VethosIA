@@ -4,17 +4,6 @@ import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import AdminVeterinariaCommandCenter from './AdminVeterinariaCommandCenter';
 
-vi.mock('../../hooks/usePacientes', () => ({
-  usePacientes: () => ({
-    pacientes: [{ id: 'p1', nombre: 'Luna', especie: 'perro' }],
-    loading: false,
-  }),
-}));
-
-vi.mock('../../features/citas/api', () => ({
-  listarCitasProximas2h: vi.fn().mockResolvedValue([]),
-}));
-
 vi.mock('../../features/metricas/api', () => ({
   obtenerMetricas: vi.fn().mockResolvedValue({
     alcance: 'veterinaria',
@@ -41,13 +30,6 @@ vi.mock('../../features/metricas/api', () => ({
   }),
 }));
 
-vi.mock('../../features/saas/api', () => ({
-  miSuscripcion: vi.fn().mockResolvedValue({
-    suscripcion: { id: 'sub1', planId: 'plan-pro', estado: 'activa', ciclo: 'mensual' },
-    asientos: { usados: 2, max: 5 },
-  }),
-}));
-
 function renderCenter() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
@@ -62,16 +44,16 @@ function renderCenter() {
 }
 
 describe('AdminVeterinariaCommandCenter', () => {
-  it('muestra operación de clínica y no módulos de entidad/superadmin', async () => {
+  it('muestra directo las métricas sin encabezado ni accesos rápidos', async () => {
     renderCenter();
 
     expect(await screen.findByTestId('admin-veterinaria-command-center')).toBeInTheDocument();
-    expect(screen.getByText(/Operaci[oó]n de Cl[ií]nica/i)).toBeInTheDocument();
-    expect(screen.getByText(/Control de sede/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/Nueva consulta/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Configuraci[oó]n/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Pacientes de sede/i).length).toBeGreaterThan(0);
-    expect(screen.getByText(/Plan, consumo y estado/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Cantidad de pacientes/i)).toBeInTheDocument();
+    expect(screen.getByText(/Cantidad de consultas/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Operaci[oó]n de Cl[ií]nica/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Control de sede/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Plan, consumo y estado/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Accesos r[aá]pidos/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Vista entidad/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Soporte plataforma/i)).not.toBeInTheDocument();
   });

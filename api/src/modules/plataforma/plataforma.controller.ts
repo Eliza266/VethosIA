@@ -44,8 +44,10 @@ export class MetricasController {
     @CurrentUser() user: AuthUser,
     @Query('desde') desde?: string,
     @Query('hasta') hasta?: string,
+    @Query('veterinarioId') veterinarioId?: string,
+    @Query('veterinariaId') veterinariaId?: string,
   ): Promise<Metricas> {
-    return this.metricas.resumen(user, { desde, hasta });
+    return this.metricas.resumen(user, { desde, hasta, veterinarioId, veterinariaId });
   }
 }
 

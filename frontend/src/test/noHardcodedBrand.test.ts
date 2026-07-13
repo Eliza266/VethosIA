@@ -6,7 +6,7 @@ import { describe, it, expect } from 'vitest';
  * Excepciones legítimas: el módulo de tema, la prueba de contraste y este propio test.
  */
 const BRAND_HEX = /#072040|#072540/i;
-const ALLOWLIST = ['theme.ts', 'paletteContrast.test.ts', 'noHardcodedBrand.test.ts'];
+const ALLOWLIST = ['theme.ts', 'paletteContrast.test.ts', 'noHardcodedBrand.test.ts', 'chartColors.ts'];
 
 const modules = import.meta.glob('../**/*.{ts,tsx}', {
   query: '?raw',

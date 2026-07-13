@@ -61,7 +61,7 @@ describe('AdminEntidadCommandCenter', () => {
     renderCenter();
 
     expect(await screen.findByTestId('admin-entidad-command-center')).toBeInTheDocument();
-    expect(screen.getByText(/Operaci[oó]n Multi-sede/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Cantidad de pacientes/i)).toBeInTheDocument();
     expect(screen.getAllByText(/^Sedes$/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/^Veterinarios por sede$/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/^Freelancers$/i).length).toBeGreaterThan(0);

@@ -217,21 +217,6 @@ const ADMIN_VET_CATALOG: Record<AdminVetMode, RoleModule[]> = {
       badge: 'Gestión',
     },
     {
-      id: 'metricas',
-      label: 'Métricas',
-      description: 'Resumen de métricas de la veterinaria.',
-      path: '/metricas',
-      icon: 'brigadas',
-      roles: ['admin_veterinaria'],
-      status: 'active',
-      category: 'operations',
-      priority: 30,
-      showInNavbar: true,
-      showInDashboard: false,
-      requiresTenant: true,
-      modulo: 'metricas',
-    },
-    {
       id: 'pacientes',
       label: 'Pacientes',
       description: 'Historias clínicas, propietarios y seguimiento operativo.',
@@ -423,10 +408,6 @@ export function canAccessPath(
   }
   if (path === '/planes' || path === '/suscripciones' || path === '/auditoria' || path === '/configuracion') {
     return canAccessModule(profile, 'soporte');
-  }
-  if (path === '/metricas') {
-    const rol = effectiveRole(profile);
-    return rol === 'admin_entidad' || rol === 'superadmin' || rol === 'admin_veterinaria';
   }
   return false;
 }

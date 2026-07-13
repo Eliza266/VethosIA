@@ -40,9 +40,17 @@ export interface Metricas {
     vacunasVencidas: number;
     citasProgramadas: number;
   }>;
+  pacientesPorMes?: Array<{ mes: string; total: number }>;
+  consultasPorMes?: Array<{ mes: string; total: number }>;
+  consultasPorVeterinario?: Array<{ veterinarioId: string; total: number }>;
 }
 
-export const obtenerMetricas = async (params?: { desde?: string; hasta?: string }): Promise<Metricas> => {
+export const obtenerMetricas = async (params?: {
+  desde?: string;
+  hasta?: string;
+  veterinarioId?: string;
+  veterinariaId?: string;
+}): Promise<Metricas> => {
   const res = await apiClient.get<Metricas>('/v1/metricas', { params });
   return res.data;
 };

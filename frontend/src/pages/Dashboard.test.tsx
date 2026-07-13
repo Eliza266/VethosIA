@@ -115,17 +115,16 @@ describe('Dashboard role command center router', () => {
     });
   });
 
-  it('renderiza Centro clínico para veterinario y no muestra modulos admin', async () => {
+  it('renderiza el panel de veterinario y no muestra modulos admin', async () => {
     renderDashboard();
 
     expect(await screen.findByTestId('veterinario-command-center')).toBeInTheDocument();
-    expect(screen.getByText(/Centro Cl[ií]nico/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/Nueva consulta/i).length).toBeGreaterThan(0);
+    expect(await screen.findByText(/Cantidad de pacientes/i)).toBeInTheDocument();
     expect(screen.queryByTestId('admin-entidad-command-center')).not.toBeInTheDocument();
-    expect(screen.queryByText(/Operaci[oó]n Plataforma/i)).not.toBeInTheDocument();
+    expect(screen.queryByTestId('superadmin-command-center')).not.toBeInTheDocument();
   });
 
-  it('renderiza Operación de Clínica para admin_veterinaria', async () => {
+  it('renderiza el panel de admin_veterinaria', async () => {
     mockUseMe.mockReturnValue({
       data: { uid: 'u1', role: 'admin_veterinaria', rol: 'admin', veterinariaId: 'vetA' },
       isLoading: false,
@@ -135,13 +134,12 @@ describe('Dashboard role command center router', () => {
     renderDashboard();
 
     expect(await screen.findByTestId('admin-veterinaria-command-center')).toBeInTheDocument();
-    expect(screen.getByText(/Operaci[oó]n de Cl[ií]nica/i)).toBeInTheDocument();
-    expect(screen.getByText(/Control de sede/i)).toBeInTheDocument();
-    expect(screen.queryByText(/Operaci[oó]n Multi-sede/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/Operaci[oó]n Plataforma/i)).not.toBeInTheDocument();
+    expect(await screen.findByText(/Cantidad de pacientes/i)).toBeInTheDocument();
+    expect(screen.queryByTestId('admin-entidad-command-center')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('superadmin-command-center')).not.toBeInTheDocument();
   });
 
-  it('renderiza Operación Multi-sede para admin_entidad sin panel clínico individual principal', async () => {
+  it('renderiza el panel de admin_entidad sin panel clínico individual principal', async () => {
     mockUseMe.mockReturnValue({
       data: { uid: 'u1', role: 'admin_entidad', rol: 'admin', entidadId: 'entA' },
       isLoading: false,
@@ -151,10 +149,9 @@ describe('Dashboard role command center router', () => {
     renderDashboard();
 
     expect(await screen.findByTestId('admin-entidad-command-center')).toBeInTheDocument();
-    expect(screen.getByText(/Operaci[oó]n Multi-sede/i)).toBeInTheDocument();
     expect(screen.getAllByText(/Cobertura territorial/i).length).toBeGreaterThan(0);
-    expect(screen.queryByText(/Centro Cl[ií]nico/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/Operaci[oó]n Plataforma/i)).not.toBeInTheDocument();
+    expect(screen.queryByTestId('veterinario-command-center')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('superadmin-command-center')).not.toBeInTheDocument();
   });
 
   it('redirecciona a /admin para superadmin sin renderizar flujo clinico', async () => {
@@ -170,8 +167,7 @@ describe('Dashboard role command center router', () => {
     expect(nav).toBeInTheDocument();
     expect(nav).toHaveAttribute('data-to', '/admin');
     expect(nav).toHaveAttribute('data-replace', 'true');
-    expect(screen.queryByText(/Centro Cl[ií]nico/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/Nueva consulta/i)).not.toBeInTheDocument();
+    expect(screen.queryByTestId('veterinario-command-center')).not.toBeInTheDocument();
   });
 
   it('mantiene fallback controlado para rol legacy sin modulos V2', async () => {
