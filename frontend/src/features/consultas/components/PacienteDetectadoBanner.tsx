@@ -2,13 +2,23 @@ import React, { useState } from 'react';
 import { Sparkles, UserCheck, UserPlus } from 'lucide-react';
 import type { DatosDetectadosConsulta, Paciente } from '../../../types';
 import { mapEspecieDetectada } from '../../pacientes/matching';
+import { PAIS_DEFAULT, splitPhone, type PaisIndicativo } from '../../../lib/phone';
+import PhoneInput from '../../../components/ui/PhoneInput';
 
 export interface DatosPacienteNuevo {
   nombre: string;
   especie: Paciente['especie'];
   raza: string;
+  color: string;
+  chip: string;
+  sexo: Paciente['sexo'];
+  estadoReproductivo: Paciente['estadoReproductivo'];
+  fechaNacimiento: string;
+  notasGenerales: string;
   nombrePropietario: string;
-  telefonoPropietario: string;
+  telefonoPais: PaisIndicativo;
+  telefonoNumero: string;
+  emailPropietario: string;
 }
 
 interface Props {
@@ -37,7 +47,9 @@ const labelTextClass = 'text-[10px] font-bold uppercase tracking-wide text-slate
 // consulta que empezo sin paciente preseleccionado. Si el nombre coincide con un paciente ya
 // registrado, ofrecemos vincular en vez de dejar un paciente placeholder duplicado. Si es
 // mascota nueva, el veterinario revisa/corrige los datos detectados antes de guardarlos —
-// la IA puede transcribir mal un nombre o un numero, asi que no se guardan a ciegas.
+// la IA puede transcribir mal un nombre o un numero, asi que no se guardan a ciegas. El
+// formulario incluye los mismos campos que "Nuevo paciente" (salvo foto) para que la ficha
+// quede completa desde la consulta, sin tener que volver a editar el paciente despues.
 const PacienteDetectadoBanner: React.FC<Props> = ({
   datosDetectados,
   pacienteCoincidente,
@@ -48,12 +60,21 @@ const PacienteDetectadoBanner: React.FC<Props> = ({
 }) => {
   const { nombrePaciente, especie, raza, nombrePropietario, telefonoPropietario } = datosDetectados;
   const [mostrarForm, setMostrarForm] = useState(!pacienteCoincidente);
+  const telefonoDetectado = splitPhone(telefonoPropietario);
   const [datos, setDatos] = useState<DatosPacienteNuevo>({
     nombre: nombrePaciente ?? '',
     especie: mapEspecieDetectada(especie),
     raza: raza ?? '',
+    color: '',
+    chip: '',
+    sexo: 'macho',
+    estadoReproductivo: 'entero',
+    fechaNacimiento: '',
+    notasGenerales: '',
     nombrePropietario: nombrePropietario ?? '',
-    telefonoPropietario: telefonoPropietario ?? '',
+    telefonoPais: telefonoPropietario ? telefonoDetectado.pais : PAIS_DEFAULT,
+    telefonoNumero: telefonoPropietario ? telefonoDetectado.numero : '',
+    emailPropietario: '',
   });
 
   const actualizarCampo = <K extends keyof DatosPacienteNuevo>(campo: K, valor: DatosPacienteNuevo[K]) => {
@@ -100,7 +121,9 @@ const PacienteDetectadoBanner: React.FC<Props> = ({
 
         {mostrarForm && (
           <div className="space-y-2.5">
-            <p>Revisa y corrige si hace falta antes de guardar en la ficha (la IA puede transcribir mal un nombre o un número):</p>
+            <p>Revisa y corrige si hace falta antes de guardar en la ficha (la IA puede transcribir mal un nombre o un número). Completa lo demás si lo sabes — igual que al crear un paciente nuevo:</p>
+
+            <p className="text-[10px] font-black uppercase tracking-wide text-accent">Datos de la mascota</p>
             <div className="grid grid-cols-2 gap-2.5">
               <label className={labelClass}>
                 <span className={labelTextClass}>Nombre de la mascota</span>
@@ -135,6 +158,73 @@ const PacienteDetectadoBanner: React.FC<Props> = ({
                 />
               </label>
               <label className={labelClass}>
+                <span className={labelTextClass}>Color / Pelaje</span>
+                <input
+                  type="text"
+                  value={datos.color}
+                  onChange={(e) => actualizarCampo('color', e.target.value)}
+                  className={inputClass}
+                />
+              </label>
+              <label className={labelClass}>
+                <span className={labelTextClass}>N° de chip (opcional)</span>
+                <input
+                  type="text"
+                  value={datos.chip}
+                  onChange={(e) => actualizarCampo('chip', e.target.value)}
+                  className={inputClass}
+                />
+              </label>
+              <label className={labelClass}>
+                <span className={labelTextClass}>Fecha de nacimiento</span>
+                <input
+                  type="date"
+                  value={datos.fechaNacimiento}
+                  onChange={(e) => actualizarCampo('fechaNacimiento', e.target.value)}
+                  className={inputClass}
+                />
+              </label>
+              <label className={labelClass}>
+                <span className={labelTextClass}>Sexo</span>
+                <select
+                  value={datos.sexo}
+                  onChange={(e) => actualizarCampo('sexo', e.target.value as Paciente['sexo'])}
+                  className={inputClass}
+                >
+                  <option value="macho">Macho</option>
+                  <option value="hembra">Hembra</option>
+                </select>
+              </label>
+              <label className={labelClass}>
+                <span className={labelTextClass}>¿Castrado?</span>
+                <select
+                  value={datos.estadoReproductivo === 'entero' ? 'entero' : 'esterilizado'}
+                  onChange={(e) =>
+                    actualizarCampo(
+                      'estadoReproductivo',
+                      e.target.value as Paciente['estadoReproductivo'],
+                    )
+                  }
+                  className={inputClass}
+                >
+                  <option value="esterilizado">Sí</option>
+                  <option value="entero">No</option>
+                </select>
+              </label>
+              <label className={`${labelClass} col-span-2`}>
+                <span className={labelTextClass}>Notas generales / Alergias</span>
+                <textarea
+                  value={datos.notasGenerales}
+                  onChange={(e) => actualizarCampo('notasGenerales', e.target.value)}
+                  rows={2}
+                  className={`${inputClass} resize-none`}
+                />
+              </label>
+            </div>
+
+            <p className="text-[10px] font-black uppercase tracking-wide text-accent">Datos del propietario</p>
+            <div className="grid grid-cols-2 gap-2.5">
+              <label className={labelClass}>
                 <span className={labelTextClass}>Nombre del dueño</span>
                 <input
                   type="text"
@@ -143,16 +233,27 @@ const PacienteDetectadoBanner: React.FC<Props> = ({
                   className={inputClass}
                 />
               </label>
-              <label className={`${labelClass} col-span-2`}>
-                <span className={labelTextClass}>Teléfono del dueño</span>
+              <label className={labelClass}>
+                <span className={labelTextClass}>Correo (opcional)</span>
                 <input
-                  type="tel"
-                  value={datos.telefonoPropietario}
-                  onChange={(e) => actualizarCampo('telefonoPropietario', e.target.value)}
+                  type="email"
+                  value={datos.emailPropietario}
+                  onChange={(e) => actualizarCampo('emailPropietario', e.target.value)}
                   className={inputClass}
                 />
               </label>
+              <div className="col-span-2">
+                <PhoneInput
+                  id="paciente-detectado-telefono"
+                  label="Teléfono del dueño"
+                  pais={datos.telefonoPais}
+                  numero={datos.telefonoNumero}
+                  onChangePais={(pais) => actualizarCampo('telefonoPais', pais)}
+                  onChangeNumero={(numero) => actualizarCampo('telefonoNumero', numero)}
+                />
+              </div>
             </div>
+
             <div className="flex flex-wrap items-center gap-3">
               <button
                 type="button"

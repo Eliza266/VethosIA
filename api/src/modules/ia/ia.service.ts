@@ -70,14 +70,20 @@ export class IaService implements IaProcessor, OnModuleInit {
     return this.soap.generarSoap(transcripcion);
   }
 
-  // Resumen clinico corto de un PDF de resultados de examen. Usa Claude directamente
-  // (lee el PDF nativo); no pasa por el arreglo de proveedores con fallback de generarSoap.
-  async resumirExamenPdf(pdfBase64: string, nombreExamen: string): Promise<string> {
+  // Resumen clinico corto de un examen (PDF o foto de un resultado impreso). Usa Claude
+  // directamente (lee el documento/imagen nativo); no pasa por el arreglo de proveedores
+  // con fallback de generarSoap.
+  async resumirExamenPdf(
+    pdfBase64: string,
+    nombreExamen: string,
+    mimeType: string = 'application/pdf',
+  ): Promise<string> {
+    const tipoDocumento = mimeType.startsWith('image/') ? 'la foto' : 'el PDF';
     const prompt =
-      `Este PDF contiene los resultados del examen "${nombreExamen}" de una mascota. ` +
+      `Este archivo (${tipoDocumento}) contiene los resultados del examen "${nombreExamen}" de una mascota. ` +
       'Resume en español, en máximo 5 líneas, los hallazgos clínicamente relevantes ' +
-      '(valores fuera de rango, diagnósticos o recomendaciones). No repitas el PDF completo.';
-    return this.claude.resumirDocumentoPdf(pdfBase64, prompt);
+      '(valores fuera de rango, diagnósticos o recomendaciones). No repitas el documento completo.';
+    return this.claude.resumirDocumentoPdf(pdfBase64, prompt, mimeType);
   }
 
   // Encola el procesamiento y marca la consulta como 'procesando'. El cliente sube el audio

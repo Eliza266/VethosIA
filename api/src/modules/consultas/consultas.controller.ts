@@ -29,6 +29,13 @@ import { AuthUser } from '../../common/auth/auth-user.interface';
 import { assertAcceso, particionTenant } from '../../common/auth/access';
 import { StorageService } from '../storage/storage.service';
 import { SubirExamenDto } from './dto/examen.dto';
+
+const EXTENSION_POR_MIME: Record<string, string> = {
+  'application/pdf': 'pdf',
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+};
 import { ExamenConsulta } from './consulta.types';
 import { randomUUID } from 'node:crypto';
 
@@ -184,13 +191,15 @@ export class ConsultasController {
     const consulta = await this.consultas.getById(id);
     assertAcceso(user, consulta);
 
+    const mimeType = dto.mimeType ?? 'application/pdf';
+    const extension = EXTENSION_POR_MIME[mimeType];
     const buffer = Buffer.from(dto.pdfBase64, 'base64');
     const tenant = consulta.orgId ?? particionTenant(user, consulta);
     const examenId = randomUUID();
-    const storagePath = `examenes/${tenant}/${id}/${examenId}.pdf`;
-    await this.storage.subirBuffer(storagePath, buffer, 'application/pdf');
+    const storagePath = `examenes/${tenant}/${id}/${examenId}.${extension}`;
+    await this.storage.subirBuffer(storagePath, buffer, mimeType);
 
-    const resumen = await this.ia.resumirExamenPdf(dto.pdfBase64, dto.nombre);
+    const resumen = await this.ia.resumirExamenPdf(dto.pdfBase64, dto.nombre, mimeType);
     const examen: ExamenConsulta = {
       id: examenId,
       nombre: dto.nombre,

@@ -296,6 +296,10 @@ export class PdfService {
     }
 
     const medicamentos = this.parseMedicamentos(soap.medicamentosSugeridos);
+    const examenes = Array.isArray(consulta.examenes) ? consulta.examenes : [];
+    const examenesPartes = examenes
+      .filter((ex) => ex && typeof ex.nombre === 'string')
+      .map((ex) => `${ex.nombre}: ${str(ex.resumen, 'Sin resumen disponible.')}`);
     const diagnosticos = normalizarDiagnosticosEstructurados(consulta.diagnosticoEstructurado, {
       strict: false,
     });
@@ -364,7 +368,7 @@ export class PdfService {
       },
       diagnosticos,
       diagnostico: str(textoDiagnosticoFallback(diagnosticos, str(soap.analisis, '')), ND),
-      examenesComplementarios: ND,
+      examenesComplementarios: examenesPartes.length > 0 ? examenesPartes.join('\n\n') : ND,
       planTerapeutico: str(soap.plan, ND),
       medicamentos,
       evolucion: ND,
@@ -617,7 +621,12 @@ class PdfLayout {
       });
     }
 
-
+    // 8) Exámenes complementarios (PDF o foto subida durante la consulta, resumen de IA)
+    if (m.examenesComplementarios && m.examenesComplementarios !== ND) {
+      this.drawSection('Exámenes complementarios', () => {
+        this.drawParagraph(m.examenesComplementarios);
+      });
+    }
 
     // 9) Firma del profesional
     this.drawSignatureSection(m);

@@ -27,14 +27,20 @@ export class PacientesService {
   async crear(dto: CrearPacienteDto, user: AuthUser): Promise<PacienteDoc> {
     assertOperacionClinica(user);
     const tenant = particionTenant(user);
-    const doc: Omit<PacienteDoc, 'id' | 'codigo'> = {
+    // ValidationPipe instancia PropietarioDto; Firestore exige POJO plano. Ademas,
+    // Firestore rechaza (500) cualquier campo en `undefined` en cualquier nivel del
+    // documento -- orgId/campos opcionales del DTO/scope V2 pueden venir undefined
+    // segun la cuenta, asi que se limpian aqui igual que en actualizar().
+    const propietario = dto.propietario
+      ? stripUndefinedFields({ ...dto.propietario })
+      : undefined;
+    const doc = stripUndefinedFields({
       ...dto,
-      // ValidationPipe instancia PropietarioDto; Firestore exige POJO plano.
-      propietario: dto.propietario ? { ...dto.propietario } : undefined,
+      propietario,
       orgId: user.orgId,
       veterinarioId: user.uid,
       ...scopeClinicoParaCrearV2(user),
-    };
+    }) as Omit<PacienteDoc, 'id' | 'codigo'>;
     const creado = await this.repo.crear(doc, tenant);
     await this.auditoria.registrar({
       accion: 'paciente.crear',

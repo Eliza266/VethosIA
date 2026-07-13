@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import * as admin from 'firebase-admin';
 import { FirebaseService } from '../../common/firebase/firebase.service';
 import { COLLECTIONS } from '../../common/firebase/collections';
-import { ConsultaDoc } from './consulta.types';
+import { ConsultaDoc, DatosDetectadosConsulta, ExamenConsulta } from './consulta.types';
 import { runtimeScopeFromRecord, type RuntimeTenantFilter } from '../../common/auth/runtime-v2';
 import { normalizarDiagnosticosEstructurados } from './diagnostico-estructurado';
 
@@ -119,6 +119,13 @@ export class ConsultasRepository {
       d.diagnosticoEstructurado,
       { strict: false },
     );
+    const examenes = Array.isArray(d.examenes) ? (d.examenes as ExamenConsulta[]) : undefined;
+    const datosDetectados =
+      d.datosDetectados && typeof d.datosDetectados === 'object'
+        ? (d.datosDetectados as DatosDetectadosConsulta)
+        : undefined;
+    const pacientePendienteConfirmar =
+      typeof d.pacientePendienteConfirmar === 'boolean' ? d.pacientePendienteConfirmar : undefined;
     return {
       id: snap.id,
       numeroHC: str(d.numeroHC),
@@ -144,6 +151,9 @@ export class ConsultasRepository {
       signosVitales,
       soap,
       diagnosticoEstructurado,
+      examenes,
+      datosDetectados,
+      pacientePendienteConfirmar,
       fechaHora: d.fechaHora,
       creadoEn: d.creadoEn,
       actualizadoEn: d.actualizadoEn,

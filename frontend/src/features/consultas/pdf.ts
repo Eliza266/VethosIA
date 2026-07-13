@@ -69,6 +69,7 @@ export interface HistoriaClinicaModel {
   vitales: VitalPDF[];
   soapSections: SoapSectionPDF[];
   plan: string;
+  examenes: { nombre: string; resumen: string }[];
   firma: {
     nombre: string;
     matricula: string | null;
@@ -172,6 +173,10 @@ export const buildHistoriaClinicaModel = (input: HistoriaClinicaPDFInput): Histo
       { title: 'ANÁLISIS (A)', text: soap.analisis || 'No registrado' },
     ],
     plan: soap.plan || 'Sin plan médico registrado',
+    examenes: (consulta.examenes ?? []).map((ex) => ({
+      nombre: ex.nombre,
+      resumen: ex.resumen || 'Sin resumen disponible.',
+    })),
     firma: {
       nombre: `Dr(a). ${vet.nombre || 'Veterinario'}`,
       matricula: vet.matriculaProfesional ? `Matrícula Profesional: ${vet.matriculaProfesional}` : null,
@@ -332,6 +337,34 @@ export const renderHistoriaClinicaPDF = (input: HistoriaClinicaPDFInput): jsPDF 
     y += 4.5;
   });
   y += 15;
+
+  // --- SECCIÓN VI: EXÁMENES COMPLEMENTARIOS ---
+  if (model.examenes.length > 0) {
+    checkPage(20);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(11);
+    pdf.setTextColor(15, 110, 86);
+    pdf.text('VI. EXÁMENES COMPLEMENTARIOS', 14, y);
+    y += 8;
+    model.examenes.forEach((ex) => {
+      checkPage(15);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(10);
+      pdf.setTextColor(60, 60, 60);
+      pdf.text(ex.nombre, 14, y);
+      y += 5;
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(9);
+      pdf.setTextColor(0, 0, 0);
+      const lines = pdf.splitTextToSize(ex.resumen, pageWidth - 28);
+      lines.forEach((line: string) => {
+        checkPage(5);
+        pdf.text(line, 14, y);
+        y += 4.5;
+      });
+      y += 4;
+    });
+  }
 
   // --- FIRMA ---
   checkPage(40);

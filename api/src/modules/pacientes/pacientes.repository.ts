@@ -138,6 +138,7 @@ export class PacientesRepository {
       notas: str(d.notas),
       ultimoPeso: numv(d.ultimoPeso),
       ultimaTalla: numv(d.ultimaTalla),
+      esPlaceholder: typeof d.esPlaceholder === 'boolean' ? d.esPlaceholder : undefined,
       // deletedAt puede ser Timestamp (truthy) o null/undefined.
       deletedAt: deletedRaw == null ? null : (deletedRaw as PacienteDoc['deletedAt']),
     };
