@@ -18,6 +18,8 @@
     "seed:emulator": "ts-node scripts/seed-emulator.ts",
     "seed:e2e-local": "ts-node scripts/seed-e2e-local.ts",
     "seed:test-roles": "ts-node scripts/seed-test-roles.ts",
+    "migrate:nicovet-demo": "ts-node scripts/migrate-nicovet-a-clinica-demo.ts",
+    "seed:data-prueba-demo": "ts-node scripts/seed-data-prueba-clinica-demo.ts",
     "e2e:runtime-smoke": "ts-node scripts/e2e-runtime-smoke.ts",
     "smoke": "ts-node scripts/smoke.ts",
     "set-superadmin": "ts-node scripts/set-superadmin.ts"
