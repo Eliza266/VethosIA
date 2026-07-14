@@ -5,7 +5,7 @@ import { usePacientes } from '../hooks/usePacientes';
 import { useConsultas } from '../hooks/useConsultas';
 import { VacunasPanel } from '../features/vacunas/VacunasPanel';
 import { construirEvolucionClinica } from '../features/pacientes/evolucion';
-import { listarVacunasPaciente } from '../features/vacunas/api';
+import { listarVacunasPaciente, type Vacuna } from '../features/vacunas/api';
 import type { Paciente, Consulta } from '../types';
 import { storage } from '../services/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -34,13 +34,40 @@ import {
   ChevronRight,
   TrendingUp,
   Edit2,
-  Calendar,
-  Scale,
-  Activity,
   X,
   Save,
   Stethoscope,
+  Syringe,
+  CheckCircle2,
 } from 'lucide-react';
+
+/** Panel deslizante desde la derecha (ej. "todas las consultas" / "todas las vacunas")
+ * para no obligar a salir del perfil del paciente a ver el historial completo. */
+const SidePanel: React.FC<{ titulo: string; onClose: () => void; children: React.ReactNode }> = ({
+  titulo,
+  onClose,
+  children,
+}) => (
+  <div className="fixed inset-0 z-[150] flex justify-end bg-slate-900/40 backdrop-blur-sm" onClick={onClose}>
+    <div
+      className="h-full w-full max-w-lg overflow-y-auto bg-white shadow-2xl"
+      style={{ animation: 'toastIn 0.28s ease-out forwards' }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white px-5 py-4">
+        <h2 className="text-base font-black text-slate-800">{titulo}</h2>
+        <button
+          onClick={onClose}
+          className="rounded-full p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+          aria-label="Cerrar panel"
+        >
+          <X className="h-5 w-5" />
+        </button>
+      </div>
+      <div className="p-5">{children}</div>
+    </div>
+  </div>
+);
 
 const parseLocalDate = (dateString: string): Date => {
   const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(dateString);
@@ -61,7 +88,7 @@ const DetallePaciente: React.FC = () => {
   const queryParams = new URLSearchParams(location.search);
   const activeTab = queryParams.get('tab') || 'perfil';
 
-  const { getPaciente, pacientes, fetchPacientes, actualizarPaciente } = usePacientes();
+  const { getPaciente, actualizarPaciente } = usePacientes();
   const { fetchConsultasPorPaciente } = useConsultas();
   const { data: me } = useMe();
   useTourGuide('paciente-detalle', TOUR_STEPS_PACIENTE_DETALLE);
@@ -81,9 +108,14 @@ const DetallePaciente: React.FC = () => {
     }
   };
 
-  // Vaccines stats
-  const [vacunasCount, setVacunasCount] = useState(0);
-  const [vacunasAlDia, setVacunasAlDia] = useState(0);
+  // Vacunas del paciente (lista completa: sirve tanto para las stats como para la
+  // vista previa compacta y el panel de "ver todas").
+  const [vacunas, setVacunas] = useState<Vacuna[]>([]);
+  const vacunasCount = vacunas.length;
+  const vacunasAlDia = vacunas.filter((v) => v.estado === 'al_dia').length;
+
+  // "Ver todas" abre el panel lateral con el historial completo, sin salir del perfil.
+  const [panelAbierto, setPanelAbierto] = useState<'consultas' | 'vacunas' | null>(null);
 
   // Edit modal
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -134,10 +166,6 @@ const DetallePaciente: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchPacientes();
-  }, [fetchPacientes]);
-
-  useEffect(() => {
     const loadData = async () => {
       if (!id) {
         setLoadingGeneral(false);
@@ -154,8 +182,7 @@ const DetallePaciente: React.FC = () => {
               listarVacunasPaciente(id),
             ]);
             setConsultasPaciente(consData || []);
-            setVacunasCount(vacData.length);
-            setVacunasAlDia(vacData.filter(v => v.estado === 'al_dia').length);
+            setVacunas(vacData || []);
           } catch (e) {
             console.error('Error loading sub-resources', e);
             setConsultasPaciente([]);
@@ -229,8 +256,6 @@ const DetallePaciente: React.FC = () => {
       default: return '🐾';
     }
   };
-
-  const otrosPacientes = pacientes.filter(p => p.id !== id);
 
   // Evolución data
   const evolucionClinica = construirEvolucionClinica(consultasPaciente);
@@ -330,117 +355,108 @@ const DetallePaciente: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in" data-tour="paciente-info">
+    <div className="space-y-5 animate-fade-in" data-tour="paciente-info">
       {/* 1. Vistas Condicionales */}
       {activeTab === 'perfil' && (
-        <div className="space-y-6">
-          {/* Acción rápida: crear consulta desde el perfil del paciente */}
-          <div className="flex justify-end">
-            <Link
-              to={`/pacientes/${paciente.id}/consultas/nueva`}
-              data-tour="paciente-nueva-consulta"
-              className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:bg-accent-strong"
-            >
-              <Stethoscope className="h-4 w-4" />
-              Crear consulta
-            </Link>
-          </div>
-
-          {/* Dashboard de Métricas */}
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            <div className="metric-tile p-4 flex items-start gap-3 bg-white border border-slate-100 rounded-2xl shadow-sm">
-              <div className="p-2 bg-teal-50 text-accent rounded-xl shrink-0">
-                <Scale className="h-5 w-5" />
-              </div>
-              <div>
-                <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Peso Actual</span>
-                <span className="text-lg font-black text-slate-800">
-                  {paciente.ultimoPeso ? `${paciente.ultimoPeso} kg` : 'No reg.'}
-                </span>
-              </div>
-            </div>
-            <div className="metric-tile p-4 flex items-start gap-3 bg-white border border-slate-100 rounded-2xl shadow-sm">
-              <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl shrink-0">
-                <Calendar className="h-5 w-5" />
-              </div>
-              <div>
-                <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Edad</span>
-                <span className="text-lg font-black text-slate-800">{getAge(paciente.fechaNacimiento)}</span>
-              </div>
-            </div>
-            <div className="metric-tile p-4 flex items-start gap-3 bg-white border border-slate-100 rounded-2xl shadow-sm">
-              <div className="p-2 bg-amber-50 text-amber-600 rounded-xl shrink-0">
-                <FileText className="h-5 w-5" />
-              </div>
-              <div>
-                <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Consultas</span>
-                <span className="text-lg font-black text-slate-800">{consultasPaciente.length}</span>
-              </div>
-            </div>
-            <div className="metric-tile p-4 flex items-start gap-3 bg-white border border-slate-100 rounded-2xl shadow-sm">
-              <div className="p-2 bg-rose-50 text-rose-600 rounded-xl shrink-0">
-                <Activity className="h-5 w-5" />
-              </div>
-              <div>
-                <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Vacunas</span>
-                <span className="text-lg font-black text-slate-800">{vacunasAlDia} / {vacunasCount} al día</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Gráfica de peso clínica */}
-          {hasPesoData && (
-            <div className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-sm">
-              <h3 className="font-bold text-slate-800 text-sm border-b border-slate-100 pb-3 mb-6 flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 text-accent" />
-                Evolución de Peso
-              </h3>
-              <div style={{ width: '100%', height: 220 }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={evolucionDatos}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                    <XAxis dataKey="fecha" tick={{ fontSize: 10, fill: '#64748b' }} axisLine={false} tickLine={false} />
-                    <YAxis domain={['auto', 'auto']} tick={{ fontSize: 10, fill: '#64748b' }} axisLine={false} tickLine={false} width={30} />
-                    <Tooltip
-                      contentStyle={{ borderRadius: '8px', fontSize: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                      formatter={formatPesoTooltip}
-                      labelStyle={{ fontWeight: 'bold', color: '#334155' }}
+        <div className="space-y-5">
+          {/* Fila 1 (escritorio): encabezado del paciente (mas ancho, foto grande) + Evolucion de Peso al lado. */}
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+            {/* Encabezado del paciente: foto, nombre y datos clave de un vistazo. */}
+            <div className={`flex flex-col gap-4 rounded-2xl border border-slate-200/70 bg-white p-5 shadow-sm ${hasPesoData ? 'md:col-span-2' : 'md:col-span-3'}`}>
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="flex min-w-0 items-center gap-4">
+                  {paciente.foto ? (
+                    <img
+                      src={paciente.foto}
+                      alt={paciente.nombre}
+                      className="h-24 w-24 shrink-0 rounded-2xl object-cover border border-slate-100 shadow-sm"
                     />
-                    <Line type="monotone" dataKey="peso" stroke={BRAND.accent} strokeWidth={3} dot={{ fill: BRAND.accent, strokeWidth: 2, r: 4 }} activeDot={{ r: 6 }} connectNulls />
-                  </LineChart>
-                </ResponsiveContainer>
+                  ) : (
+                    <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl bg-slate-50 text-4xl border border-slate-100">
+                      {getSpeciesEmoji(paciente.especie)}
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <h1 className="truncate text-2xl font-black text-slate-900">{paciente.nombre}</h1>
+                    <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-semibold text-slate-500">
+                      <span className="capitalize">{paciente.sexo}</span>
+                      {paciente.estadoReproductivo !== 'entero' && (
+                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600">Castrado</span>
+                      )}
+                      <span>•</span>
+                      <span>{getAge(paciente.fechaNacimiento)}</span>
+                      <span>•</span>
+                      <span>{paciente.ultimoPeso ? `${paciente.ultimoPeso} kg` : 'Peso no reg.'}</span>
+                    </div>
+                    <div className="mt-2">
+                      <span
+                        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                          vacunasCount > 0 && vacunasAlDia === vacunasCount
+                            ? 'bg-emerald-50 text-emerald-700'
+                            : 'bg-amber-50 text-amber-700'
+                        }`}
+                      >
+                        <CheckCircle2 className="h-3 w-3" />
+                        {vacunasCount === 0 ? 'Sin vacunas' : `Vacunas ${vacunasAlDia}/${vacunasCount} al día`}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <button
+                    onClick={handleOpenEdit}
+                    data-tour="paciente-editar"
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm font-bold text-slate-600 transition-all hover:border-accent hover:text-accent"
+                  >
+                    <Edit2 className="h-4 w-4" />
+                    Editar
+                  </button>
+                  <Link
+                    to={`/pacientes/${paciente.id}/consultas/nueva`}
+                    data-tour="paciente-nueva-consulta"
+                    className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:bg-accent-strong"
+                  >
+                    <Stethoscope className="h-4 w-4" />
+                    Crear consulta
+                  </Link>
+                </div>
               </div>
             </div>
-          )}
+
+            {/* Gráfica de peso clínica */}
+            {hasPesoData && (
+              <div className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm md:col-span-1">
+                <h3 className="mb-2 flex items-center gap-1.5 border-b border-slate-100 pb-2 text-sm font-bold text-slate-800">
+                  <TrendingUp className="h-3.5 w-3.5 text-accent" />
+                  Evolución de Peso
+                </h3>
+                <div style={{ width: '100%', height: 150 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={evolucionDatos} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                      <XAxis dataKey="fecha" tick={{ fontSize: 9, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                      <YAxis domain={['auto', 'auto']} tick={{ fontSize: 9, fill: '#64748b' }} axisLine={false} tickLine={false} width={26} />
+                      <Tooltip
+                        contentStyle={{ borderRadius: '8px', fontSize: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                        formatter={formatPesoTooltip}
+                        labelStyle={{ fontWeight: 'bold', color: '#334155' }}
+                      />
+                      <Line type="monotone" dataKey="peso" stroke={BRAND.accent} strokeWidth={2} dot={{ fill: BRAND.accent, strokeWidth: 2, r: 3 }} activeDot={{ r: 5 }} connectNulls />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Información en dos columnas */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+
             {/* Col 1: Datos Fisiológicos */}
-            <div className="space-y-4 rounded-2xl border border-slate-200/70 bg-white p-6 shadow-sm">
-              <div className="flex justify-between items-center border-b border-slate-100 pb-2">
-                <h3 className="font-bold text-slate-800 text-sm">Datos Fisiológicos</h3>
-                <button
-                  onClick={handleOpenEdit}
-                  data-tour="paciente-editar"
-                  className="inline-flex items-center gap-1 text-xs font-bold text-accent hover:underline"
-                >
-                  <Edit2 className="h-3.5 w-3.5" />
-                  Editar
-                </button>
-              </div>
+            <div className="space-y-2.5 rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm">
+              <h3 className="border-b border-slate-100 pb-2 text-sm font-bold text-slate-800">Datos Fisiológicos</h3>
 
-              {paciente.foto && (
-                <div className="flex justify-center pb-2">
-                  <img
-                    src={paciente.foto}
-                    alt={paciente.nombre}
-                    className="h-32 w-32 rounded-2xl object-cover border border-slate-100 shadow-sm"
-                  />
-                </div>
-              )}
-
-              <div className="space-y-3 text-sm">
+              <div className="space-y-2 text-sm">
                 <div className="flex justify-between py-1 border-b border-slate-50/50">
                   <span className="text-slate-400 font-medium">Sexo</span>
                   <span className="font-bold text-slate-700 capitalize">{paciente.sexo}</span>
@@ -477,54 +493,35 @@ const DetallePaciente: React.FC = () => {
             </div>
 
             {/* Col 2: Propietario e Alertas */}
-            <div className="space-y-6">
-              <div className="space-y-4 rounded-2xl border border-slate-200/70 bg-white p-6 shadow-sm">
-                <h3 className="font-bold text-slate-800 text-sm border-b border-slate-100 pb-2">Información del Propietario</h3>
-                <div className="space-y-4">
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 bg-indigo-50 rounded-xl text-indigo-600">
-                      <User className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Nombre del Dueño</div>
-                      <div className="text-sm font-bold text-slate-700">{paciente.propietario.nombre}</div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 bg-accent/5 rounded-xl text-accent">
-                      <Phone className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Teléfono</div>
-                      <a href={`tel:${paciente.propietario.telefono}`} className="text-sm font-bold text-accent hover:underline">
-                        {paciente.propietario.telefono}
-                      </a>
-                      {paciente.propietario.whatsapp && (
-                        <span className="text-xs text-slate-500 block">WhatsApp: {paciente.propietario.whatsapp}</span>
-                      )}
-                    </div>
-                  </div>
-
-                  {paciente.propietario.email && (
-                    <div className="flex items-start gap-3">
-                      <div className="p-2 bg-amber-50 rounded-xl text-amber-600">
-                        <Mail className="h-4 w-4" />
-                      </div>
-                      <div>
-                        <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Correo Electrónico</div>
-                        <a href={`mailto:${paciente.propietario.email}`} className="text-sm font-bold text-slate-700 hover:underline truncate block max-w-[200px]">
-                          {paciente.propietario.email}
-                        </a>
-                      </div>
-                    </div>
+            <div className="space-y-5">
+              <div className="space-y-3 rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm">
+                <h3 className="border-b border-slate-100 pb-2 text-sm font-bold text-slate-800">Información del Propietario</h3>
+                <div className="flex items-center gap-2 text-sm">
+                  <User className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                  <span className="font-bold text-slate-700">{paciente.propietario.nombre}</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <Phone className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                  <a href={`tel:${paciente.propietario.telefono}`} className="font-bold text-accent hover:underline">
+                    {paciente.propietario.telefono}
+                  </a>
+                  {paciente.propietario.whatsapp && (
+                    <span className="text-xs text-slate-400">· WhatsApp {paciente.propietario.whatsapp}</span>
                   )}
                 </div>
+                {paciente.propietario.email && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Mail className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                    <a href={`mailto:${paciente.propietario.email}`} className="truncate font-bold text-slate-700 hover:underline">
+                      {paciente.propietario.email}
+                    </a>
+                  </div>
+                )}
               </div>
 
               {/* Notas Clínicas */}
               {paciente.notasGenerales && (
-                <div className="space-y-3 rounded-2xl border border-amber-100 bg-white p-6 shadow-sm">
+                <div className="space-y-2.5 rounded-2xl border border-amber-100 bg-white p-4 shadow-sm">
                   <h3 className="font-bold text-slate-800 text-sm flex items-center gap-1.5 text-amber-700">
                     <Info className="h-4 w-4" />
                     Alertas / Notas Clínicas
@@ -535,61 +532,151 @@ const DetallePaciente: React.FC = () => {
                 </div>
               )}
             </div>
+          </div>
 
+          {/* Fila 2 (escritorio): Historial de Consultas y Vacunas lado a lado. */}
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+          {/* Vista previa de Consultas: ultimas 3, con acceso al historial completo en panel lateral. */}
+          <div className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm">
+            <div className="mb-3 flex items-center justify-between border-b border-slate-100 pb-2">
+              <h3 className="text-sm font-bold text-slate-800">Historial de Consultas ({consultasPaciente.length})</h3>
+              {consultasPaciente.length > 3 && (
+                <button
+                  onClick={() => setPanelAbierto('consultas')}
+                  className="inline-flex items-center gap-1 text-xs font-bold text-accent hover:underline"
+                >
+                  Ver todas
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+            {consultasPaciente.length === 0 ? (
+              <p className="py-4 text-center text-xs text-slate-400">No hay consultas registradas en este expediente.</p>
+            ) : (
+              <div className="space-y-2">
+                {consultasPaciente.slice(0, 3).map((consulta) => (
+                  <Link
+                    key={consulta.id}
+                    to={`/pacientes/${paciente.id}/consultas/${consulta.id}`}
+                    className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/30 p-3 transition-all hover:border-accent/30 hover:bg-slate-50"
+                  >
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-slate-700">
+                          {new Date(consulta.fechaHora).toLocaleDateString()}
+                        </span>
+                        {consulta.numeroHC && <span className="text-xs font-bold text-accent">#{consulta.numeroHC}</span>}
+                      </div>
+                      <p className="mt-0.5 truncate text-xs text-slate-500">{consulta.motivo || consulta.soap?.subjetivo || 'Sin motivo registrado'}</p>
+                    </div>
+                    <span
+                      className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
+                        consulta.estado === 'aprobada'
+                          ? 'bg-emerald-50 text-emerald-700'
+                          : consulta.estado === 'procesando'
+                            ? 'bg-amber-50 text-amber-700'
+                            : consulta.estado === 'error'
+                              ? 'bg-red-50 text-red-700'
+                              : 'bg-slate-100 text-slate-600'
+                      }`}
+                    >
+                      {consulta.estado === 'aprobada' ? 'Completado' : consulta.estado === 'procesando' ? 'Procesando' : consulta.estado === 'error' ? 'Error' : 'Borrador'}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Vista previa de Vacunas: al dia/proximas/vencidas, con acceso al panel de gestion completo. */}
+          <div className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm">
+            <div className="mb-3 flex items-center justify-between border-b border-slate-100 pb-2">
+              <h3 className="text-sm font-bold text-slate-800">Vacunas ({vacunasCount})</h3>
+              <button
+                onClick={() => setPanelAbierto('vacunas')}
+                className="inline-flex items-center gap-1 text-xs font-bold text-accent hover:underline"
+              >
+                Ver todas / Agregar
+                <ChevronRight className="h-3.5 w-3.5" />
+              </button>
+            </div>
+            {vacunas.length === 0 ? (
+              <p className="py-4 text-center text-xs text-slate-400">No hay vacunas registradas todavía.</p>
+            ) : (
+              <div className="space-y-2">
+                {vacunas.slice(0, 3).map((v) => (
+                  <div key={v.id} className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/30 p-3">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Syringe className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                      <span className="truncate text-xs font-bold text-slate-700">{v.nombre}</span>
+                      {v.proximaDosis && (
+                        <span className="shrink-0 text-[10px] text-slate-400">próx. {new Date(v.proximaDosis).toLocaleDateString()}</span>
+                      )}
+                    </div>
+                    <span
+                      className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
+                        v.estado === 'al_dia'
+                          ? 'bg-emerald-50 text-emerald-700'
+                          : v.estado === 'proxima_a_vencer'
+                            ? 'bg-amber-50 text-amber-700'
+                            : 'bg-red-50 text-red-700'
+                      }`}
+                    >
+                      {v.estado === 'al_dia' ? 'Al día' : v.estado === 'proxima_a_vencer' ? 'Próxima' : 'Vencida'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
           </div>
         </div>
       )}
 
-      {activeTab === 'vacunas' && id && (
-        <div className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-sm">
-          <VacunasPanel pacienteId={id} pacienteEspecie={paciente.especie} />
-        </div>
-      )}
-
-      {activeTab === 'consultas' && (
-        <div className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-sm">
-          <div className="flex justify-between items-center border-b border-slate-100 pb-3 mb-6">
-            <h3 className="font-bold text-slate-800 text-sm">Historial de Consultas Clínicas</h3>
+      {/* Panel lateral: historial completo de consultas */}
+      {panelAbierto === 'consultas' && (
+        <SidePanel titulo="Historial de Consultas" onClose={() => setPanelAbierto(null)}>
+          <div className="mb-4 flex justify-end">
             <Link
               to={`/pacientes/${paciente.id}/consultas/nueva`}
-              className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:bg-accent-strong"
+              className="inline-flex items-center gap-2 rounded-xl bg-accent px-3.5 py-2 text-xs font-bold text-white shadow-sm transition-all hover:bg-accent-strong"
             >
-              <Plus className="h-4 w-4" />
+              <Plus className="h-3.5 w-3.5" />
               Nueva Consulta
             </Link>
           </div>
 
           {consultasPaciente.length > 0 && (
-            <div className="flex flex-wrap items-end gap-3 mb-6 bg-slate-50 p-4 rounded-xl border border-slate-100">
+            <div className="mb-4 flex flex-wrap items-end gap-2 rounded-xl border border-slate-100 bg-slate-50 p-3">
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Desde</label>
+                <label className="mb-1 block text-[10px] font-bold uppercase text-slate-500">Desde</label>
                 <input
                   type="date"
                   value={fechaDesde}
                   onChange={(e) => setFechaDesde(e.target.value)}
-                  className="px-3 py-2 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-accent outline-none"
+                  className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-700 outline-none focus:border-accent"
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Hasta</label>
+                <label className="mb-1 block text-[10px] font-bold uppercase text-slate-500">Hasta</label>
                 <input
                   type="date"
                   value={fechaHasta}
                   onChange={(e) => setFechaHasta(e.target.value)}
-                  className="px-3 py-2 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-accent outline-none"
+                  className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-700 outline-none focus:border-accent"
                 />
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-1.5">
                 <button
                   onClick={handleFilter}
-                  className="px-4 py-2 bg-accent hover:bg-accent-strong text-white text-sm font-bold rounded-lg transition-colors"
+                  className="rounded-lg bg-accent px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-accent-strong"
                 >
                   Filtrar
                 </button>
                 {(fechaDesde || fechaHasta) && (
                   <button
                     onClick={handleClearFilter}
-                    className="px-4 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 text-sm font-bold rounded-lg transition-colors"
+                    className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 transition-colors hover:bg-slate-50"
                   >
                     Limpiar
                   </button>
@@ -599,81 +686,64 @@ const DetallePaciente: React.FC = () => {
           )}
 
           {consultasFiltradas.length === 0 ? (
-            <div className="text-center py-12 text-slate-500">
-              <FileText className="h-10 w-10 text-slate-300 mx-auto mb-3" />
+            <div className="py-10 text-center text-slate-500">
+              <FileText className="mx-auto mb-3 h-8 w-8 text-slate-300" />
               <p className="text-sm">
-                {consultasPaciente.length === 0 ? 'No hay consultas registradas en este expediente.' : 'No hay consultas en el rango de fechas seleccionado.'}
+                {consultasPaciente.length === 0
+                  ? 'No hay consultas registradas en este expediente.'
+                  : 'No hay consultas en el rango de fechas seleccionado.'}
               </p>
-              {consultasPaciente.length === 0 && (
-                <p className="text-xs text-slate-400 mt-1">Haz clic en "Nueva Consulta" para iniciar una evaluación clínica.</p>
-              )}
             </div>
           ) : (
-            <div className="relative border-l border-slate-100 pl-6 ml-3 space-y-8">
+            <div className="relative ml-2 space-y-6 border-l border-slate-100 pl-5">
               {consultasFiltradas.map((consulta) => (
-                <div key={consulta.id} className="relative group">
-                  <span className={`absolute -left-[31px] top-1 flex h-4 w-4 items-center justify-center rounded-full ring-4 ring-white ${
-                    consulta.estado === 'aprobada'
-                      ? 'bg-emerald-500'
-                      : consulta.estado === 'procesando'
-                        ? 'bg-amber-500 animate-pulse'
-                        : consulta.estado === 'error'
-                          ? 'bg-red-500'
-                          : 'bg-slate-400'
-                  }`}></span>
-
-                  <div className="p-4 rounded-xl border border-slate-100 bg-slate-50/30 group-hover:bg-slate-50 group-hover:border-slate-200 transition-all">
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-slate-700">
-                          {new Date(consulta.fechaHora).toLocaleDateString()}
-                        </span>
-                        <span className="text-slate-300 text-xs">•</span>
-                        <span className="text-xs text-slate-400 font-medium">
-                          {new Date(consulta.fechaHora).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                        {consulta.numeroHC && (
-                          <>
-                            <span className="text-slate-300 text-xs">•</span>
-                            <span className="text-xs font-bold text-accent">#{consulta.numeroHC}</span>
-                          </>
-                        )}
+                <div key={consulta.id} className="relative">
+                  <span
+                    className={`absolute -left-[27px] top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full ring-4 ring-white ${
+                      consulta.estado === 'aprobada'
+                        ? 'bg-emerald-500'
+                        : consulta.estado === 'procesando'
+                          ? 'bg-amber-500 animate-pulse'
+                          : consulta.estado === 'error'
+                            ? 'bg-red-500'
+                            : 'bg-slate-400'
+                    }`}
+                  />
+                  <div className="rounded-xl border border-slate-100 bg-slate-50/30 p-3">
+                    <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-bold text-slate-700">{new Date(consulta.fechaHora).toLocaleDateString()}</span>
+                        {consulta.numeroHC && <span className="text-xs font-bold text-accent">#{consulta.numeroHC}</span>}
                       </div>
-
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
-                        consulta.estado === 'aprobada'
-                          ? 'bg-emerald-50 text-emerald-700'
-                          : consulta.estado === 'procesando'
-                            ? 'bg-amber-50 text-amber-700 animate-pulse'
-                            : consulta.estado === 'error'
-                              ? 'bg-red-50 text-red-700'
-                              : 'bg-slate-100 text-slate-600'
-                      }`}>
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
+                          consulta.estado === 'aprobada'
+                            ? 'bg-emerald-50 text-emerald-700'
+                            : consulta.estado === 'procesando'
+                              ? 'bg-amber-50 text-amber-700'
+                              : consulta.estado === 'error'
+                                ? 'bg-red-50 text-red-700'
+                                : 'bg-slate-100 text-slate-600'
+                        }`}
+                      >
                         {consulta.estado === 'aprobada' ? 'Completado' : consulta.estado === 'procesando' ? 'Procesando con IA' : consulta.estado === 'error' ? 'Error' : 'Borrador'}
                       </span>
                     </div>
-
                     {consulta.soap ? (
-                      <div className="space-y-1 mt-3">
-                        <div className="text-xs text-slate-600 truncate">
-                          <span className="font-semibold text-slate-700">S:</span> {consulta.soap.subjetivo}
-                        </div>
-                        <div className="text-xs text-slate-600 truncate">
-                          <span className="font-semibold text-slate-700">A:</span> {consulta.soap.analisis}
-                        </div>
-                      </div>
+                      <p className="truncate text-xs text-slate-600">
+                        <span className="font-semibold text-slate-700">S:</span> {consulta.soap.subjetivo}
+                      </p>
                     ) : (
-                      <p className="text-xs italic text-slate-400 mt-2">
+                      <p className="text-xs italic text-slate-400">
                         {consulta.estado === 'procesando' ? 'La IA está generando la nota...' : 'Consulta clínica vacía.'}
                       </p>
                     )}
-
-                    <div className="flex justify-end mt-4 pt-3 border-t border-slate-100/50">
+                    <div className="mt-2 flex justify-end border-t border-slate-100/50 pt-2">
                       <Link
                         to={`/pacientes/${paciente.id}/consultas/${consulta.id}`}
                         className="inline-flex items-center gap-1 text-xs font-bold text-accent hover:underline"
                       >
-                        Ver Consulta
+                        Ver consulta
                         <ChevronRight className="h-3.5 w-3.5" />
                       </Link>
                     </div>
@@ -682,29 +752,14 @@ const DetallePaciente: React.FC = () => {
               ))}
             </div>
           )}
-        </div>
+        </SidePanel>
       )}
 
-      {/* Otros Pacientes Carousel Section */}
-      {otrosPacientes.length > 0 && (
-        <div className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-sm">
-          <h3 className="font-bold text-slate-800 text-sm border-b border-slate-100 pb-3 mb-4">Otros Pacientes</h3>
-          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin">
-            {otrosPacientes.slice(0, 10).map((p) => (
-              <Link
-                key={p.id}
-                to={`/pacientes/${p.id}`}
-                className="flex items-center gap-3 px-4 py-3 bg-slate-50/50 hover:bg-slate-50 border border-slate-100 hover:border-accent/30 rounded-xl transition-all shrink-0 min-w-[180px]"
-              >
-                <span className="text-xl">{getSpeciesEmoji(p.especie)}</span>
-                <div className="min-w-0">
-                  <h4 className="text-xs font-bold text-slate-800 truncate">{p.nombre}</h4>
-                  <p className="text-[10px] text-slate-400 capitalize truncate">{p.raza || p.especie} • {p.sexo}</p>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
+      {/* Panel lateral: gestion completa de vacunas (crear/editar/aplicar) */}
+      {panelAbierto === 'vacunas' && id && (
+        <SidePanel titulo="Vacunas" onClose={() => setPanelAbierto(null)}>
+          <VacunasPanel pacienteId={id} pacienteEspecie={paciente.especie} />
+        </SidePanel>
       )}
 
       {/* 2. Modal de Edición */}

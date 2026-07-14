@@ -139,11 +139,10 @@ describe('Sidebar (roles y RBAC)', () => {
     expect(screen.queryByRole('link', { name: /agenda/i })).not.toBeInTheDocument();
   });
 
-  it('vet en detalle de paciente muestra tabs contextuales (nivel 3)', () => {
+  it('vet en detalle de paciente muestra el contexto del expediente (nivel 3)', () => {
     mockUseMe.mockReturnValue({ data: { ...meAdmin, rol: 'vet' }, isLoading: false, isFetching: false });
-    renderSidebar('/pacientes/abc123?tab=vacunas');
-    expect(screen.getByRole('link', { name: /^perfil$/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /^consultas$/i })).toBeInTheDocument();
+    renderSidebar('/pacientes/abc123');
+    expect(screen.getByRole('link', { name: /expediente/i })).toHaveAttribute('href', '/pacientes/abc123');
   });
 
   it('tocar un módulo del drawer móvil no lo cierra (solo el clic afuera cierra)', async () => {

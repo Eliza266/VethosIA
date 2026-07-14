@@ -31,11 +31,6 @@ interface SidebarProps {
   mobile?: boolean;
 }
 
-const PATIENT_TABS = [
-  { label: 'Perfil', val: 'perfil' },
-  { label: 'Vacunas', val: 'vacunas' },
-  { label: 'Consultas', val: 'consultas' },
-];
 
 export const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, onToggleCollapse, onNavigate, mobile = false }) => {
   const { firebaseUser, logout } = useAuth();
@@ -200,24 +195,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, onToggleCol
                       collapsed={showCollapsed}
                     />
                     {showPatientTabsHere && (
-                      <div className="mt-1 ml-4 space-y-0.5 border-l pl-2" style={{ borderColor: 'var(--border)' }}>
-                        <div className="flex items-center gap-1.5 px-3 py-1 text-xs font-bold" style={{ color: 'var(--accent-strong)' }}>
+                      <div className="mt-1 ml-4 border-l pl-2" style={{ borderColor: 'var(--border)' }}>
+                        {/* El expediente del paciente ya vive todo en una sola vista (perfil,
+                            consultas y vacunas juntos); esto es solo un indicador de contexto,
+                            no una pestana, asi que enlaza directo al expediente. */}
+                        <Link
+                          to={`/pacientes/${patientId}`}
+                          className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors hover:bg-[var(--sidebar-item-hover-bg)]"
+                          style={{ color: 'var(--accent-strong)' }}
+                        >
                           <span>{getSpeciesEmoji(currentPaciente?.especie)}</span>
                           <span className="truncate">{currentPaciente?.nombre || 'Expediente'}</span>
-                        </div>
-                        {PATIENT_TABS.map((tab) => {
-                          const active = (new URLSearchParams(location.search).get('tab') || 'perfil') === tab.val;
-                          return (
-                            <Link
-                              key={tab.val}
-                              to={`/pacientes/${patientId}?tab=${tab.val}`}
-                              className={`block rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${active ? 'veth-sidebar-item-active' : 'veth-sidebar-item'}`}
-                              aria-current={active ? 'page' : undefined}
-                            >
-                              {tab.label}
-                            </Link>
-                          );
-                        })}
+                        </Link>
                       </div>
                     )}
                     {showSubModulesHere && activeModule && (
