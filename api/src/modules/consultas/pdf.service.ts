@@ -1,4 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import * as fs from 'fs';
+import * as path from 'path';
 import PDFDocument from 'pdfkit';
 import { FirebaseService } from '../../common/firebase/firebase.service';
 import { COLLECTIONS } from '../../common/firebase/collections';
@@ -20,6 +22,23 @@ const ND = 'No documentado';
 const EMPTY_FIELD = 'No registrado';
 const EMPTY_SECTION = 'Sin información documentada en esta consulta';
 const FECHA_COLOMBIA = 'America/Bogota';
+
+// Logo propio de Vethos AI para el pie de pagina (marca-agua discreta, no el encabezado:
+// ese ahora es de la clinica). Se busca relativo a __dirname (no process.cwd()) para que
+// resuelva igual en ts-node (src/) y en el build compilado (dist/), ambos 3 niveles bajo api/.
+const VETHOS_LOGO_PATH = path.join(__dirname, '..', '..', '..', 'assets', 'logo-vethos.png');
+let vethosLogoBufferCache: Buffer | null | undefined;
+
+/** Carga perezosa y cacheada del logo de Vethos AI; null si el archivo no esta disponible. */
+function cargarLogoVethos(): Buffer | null {
+  if (vethosLogoBufferCache !== undefined) return vethosLogoBufferCache;
+  try {
+    vethosLogoBufferCache = fs.readFileSync(VETHOS_LOGO_PATH);
+  } catch {
+    vethosLogoBufferCache = null;
+  }
+  return vethosLogoBufferCache;
+}
 
 const COLOR = {
   brand: '#072040',
@@ -74,6 +93,7 @@ export interface ModeloPdf {
     sede: string;
     ciudad: string;
     telefono: string;
+    logoUrl: string | null;
   };
   numeroHC: string;
   fechaConsulta: string;
@@ -189,7 +209,8 @@ export class PdfService {
     ]);
 
     const modelo = this.construirModelo(consultaRaw, paciente, vet, entidad);
-    const buffer = await this.render(modelo);
+    const logoEntidad = await this.obtenerLogoEntidad(modelo.entidad.logoUrl);
+    const buffer = await this.render(modelo, { logoEntidad });
     const tenant = consulta.orgId ?? particionTenant(user, consulta);
     const path = `historiales/${tenant}/${consultaId}.pdf`;
     await this.storage.subirBuffer(path, buffer, 'application/pdf');
@@ -234,6 +255,19 @@ export class PdfService {
     return { buffer, filename: `HC_${numero}.pdf` };
   }
 
+  /** Descarga el logo de la veterinaria para embeberlo en el encabezado; null si falla o no hay. */
+  private async obtenerLogoEntidad(url: string | null): Promise<Buffer | null> {
+    if (!url) return null;
+    try {
+      const res = await fetch(url);
+      if (!res.ok) return null;
+      const arrayBuffer = await res.arrayBuffer();
+      return Buffer.from(arrayBuffer);
+    } catch {
+      return null;
+    }
+  }
+
   private async urlAccesoPdf(consultaId: string, storagePath: string): Promise<string> {
     const cfg = loadAppConfig();
     if (cfg.useEmulators) {
@@ -271,6 +305,11 @@ export class PdfService {
         : str(vet.ciudad, ND);
 
     const telefonoEntidad = str(vet.telefono, str(vet.whatsapp, ND));
+
+    const logoEntidad =
+      typeof entidad.logoUrl === 'string' && entidad.logoUrl.trim().length > 0
+        ? entidad.logoUrl.trim()
+        : null;
 
     const vitales: VitalPdf[] = [
       { label: 'Peso', value: numStr(sv.peso, ' kg') ?? ND },
@@ -331,6 +370,7 @@ export class PdfService {
         sede: str(vet.sede, ND),
         ciudad: ciudadEntidad,
         telefono: telefonoEntidad,
+        logoUrl: logoEntidad,
       },
       numeroHC: str(consulta.numeroHC, 'S/N'),
       fechaConsulta: formatFechaHora(consulta.fechaHora ?? consulta.creadoEn),
@@ -428,7 +468,8 @@ export class PdfService {
       this.leerDoc(COLLECTIONS.organizaciones, orgId),
     ]);
     const modelos = aprobadasScope.map((c) => this.construirModelo(c, paciente, vet, entidad));
-    const buffer = await this.renderHistorial(modelos);
+    const logoEntidad = await this.obtenerLogoEntidad(modelos[0]?.entidad.logoUrl ?? null);
+    const buffer = await this.renderHistorial(modelos, logoEntidad);
 
     const tenant = orgId ?? particionTenant(user, paciente as { orgId?: string; veterinarioId?: string });
     const path = `historiales/${tenant}/paciente-${pacienteId}.pdf`;
@@ -445,7 +486,7 @@ export class PdfService {
     return { url };
   }
 
-  private renderHistorial(modelos: ModeloPdf[]): Promise<Buffer> {
+  private renderHistorial(modelos: ModeloPdf[], logoEntidad: Buffer | null = null): Promise<Buffer> {
     return new Promise<Buffer>((resolve, reject) => {
       const doc = new PDFDocument({
         size: 'A4',
@@ -459,14 +500,14 @@ export class PdfService {
 
       const ctx = new PdfLayout(doc);
       const cab = modelos[0];
-      ctx.drawPortadaHistorial(cab, modelos.length);
+      ctx.drawPortadaHistorial(cab, modelos.length, logoEntidad);
 
       modelos.forEach((m, i) => {
         if (i > 0) ctx.newPage();
-        ctx.drawHistoriaClinica(m, { tituloExtra: `Consulta ${i + 1} de ${modelos.length}` });
+        ctx.drawHistoriaClinica(m, { tituloExtra: `Consulta ${i + 1} de ${modelos.length}`, logoEntidad });
       });
 
-      ctx.drawFooters('Vethos AI — Historial clínico completo');
+      ctx.drawFooters('Historial clínico completo', cargarLogoVethos());
       doc.end();
     });
   }
@@ -477,7 +518,10 @@ export class PdfService {
     return (snap.data() ?? {}) as Record<string, unknown>;
   }
 
-  private render(m: ModeloPdf, opts?: { compress?: boolean }): Promise<Buffer> {
+  private render(
+    m: ModeloPdf,
+    opts?: { compress?: boolean; logoEntidad?: Buffer | null },
+  ): Promise<Buffer> {
     return new Promise<Buffer>((resolve, reject) => {
       const doc = new PDFDocument({
         size: 'A4',
@@ -491,8 +535,8 @@ export class PdfService {
       doc.on('error', reject);
 
       const ctx = new PdfLayout(doc);
-      ctx.drawHistoriaClinica(m);
-      ctx.drawFooters('Vethos AI — Historia clínica veterinaria');
+      ctx.drawHistoriaClinica(m, { logoEntidad: opts?.logoEntidad ?? null });
+      ctx.drawFooters('Historia clínica veterinaria', cargarLogoVethos());
       doc.end();
     });
   }
@@ -506,6 +550,7 @@ class PdfLayout {
   private readonly bottomLimit: number;
   private y: number;
   private contentPageIndex = 0;
+  private currentEntidadNombre = 'Vethos AI';
 
   constructor(private readonly doc: PDFKit.PDFDocument) {
     this.pageWidth = doc.page.width;
@@ -516,8 +561,15 @@ class PdfLayout {
     this.resetCursor();
   }
 
-  drawPortadaHistorial(cab: ModeloPdf | undefined, totalConsultas: number): void {
-    this.drawHeaderBand(cab?.entidad ?? { nombre: ND, sede: ND, ciudad: ND, telefono: ND });
+  drawPortadaHistorial(
+    cab: ModeloPdf | undefined,
+    totalConsultas: number,
+    logoEntidad: Buffer | null = null,
+  ): void {
+    this.drawHeaderBand(
+      cab?.entidad ?? { nombre: ND, sede: ND, ciudad: ND, telefono: ND, logoUrl: null },
+      logoEntidad,
+    );
     this.y += 8;
     this.drawBlockTitle('Historial clínico completo');
     if (cab) {
@@ -539,13 +591,14 @@ class PdfLayout {
     this.y += 12;
   }
 
-  drawHistoriaClinica(m: ModeloPdf, opts?: { tituloExtra?: string }): void {
+  drawHistoriaClinica(m: ModeloPdf, opts?: { tituloExtra?: string; logoEntidad?: Buffer | null }): void {
     this.contentPageIndex = 0;
     this.y = this.doc.page.margins.top;
+    this.currentEntidadNombre = m.entidad.nombre;
     this.resetCursor();
 
     // 1) Encabezado (HC N°, fecha, prioridad, clínica)
-    this.drawHeaderBand(m.entidad);
+    this.drawHeaderBand(m.entidad, opts?.logoEntidad ?? null);
     this.drawHcBanner(m.numeroHC, m.fechaConsulta, m.prioridad, opts?.tituloExtra);
 
     // 2) Paciente + Propietario
@@ -632,11 +685,16 @@ class PdfLayout {
     this.drawSignatureSection(m);
   }
 
-    drawFooters(tagline: string): void {
+  // Marca de Vethos AI en el pie de pagina de cada hoja (el encabezado ya es marca blanca
+  // de la clinica): logo chico + texto, discreto, sin competir con el contenido clinico.
+  drawFooters(tagline: string, logoVethos: Buffer | null = null): void {
     const range = this.doc.bufferedPageRange();
     const totalPages = range.count;
     const impreso = formatFechaHora(new Date());
     const lastPage = range.start + totalPages - 1;
+    const logoSize = 13;
+    const textX = logoVethos ? this.left + logoSize + 5 : this.left;
+    const textWidth = this.contentWidth * 0.58 - (logoVethos ? logoSize + 5 : 0);
 
     for (let i = 0; i < totalPages; i++) {
       const pageIndex = range.start + i;
@@ -656,14 +714,28 @@ class PdfLayout {
         .lineTo(right, footerY)
         .stroke();
 
-      this.doc.font('Helvetica-Oblique').fontSize(7).fillColor(COLOR.muted);
-      this.doc.text(tagline, this.left, footerY + 6, {
-        width: this.contentWidth * 0.58,
+      if (logoVethos) {
+        try {
+          this.doc.image(logoVethos, this.left, footerY + 7, { fit: [logoSize, logoSize] });
+        } catch {
+          // Logo corrupto/no disponible: se omite, el texto de marca sigue igual.
+        }
+      }
+
+      this.doc.font('Helvetica-Bold').fontSize(7).fillColor(COLOR.brandDark);
+      this.doc.text('Vethos AI', textX, footerY + 6, {
+        width: textWidth,
         height: 9,
         lineBreak: false,
       });
-      this.doc.text(`Impreso: ${impreso}`, this.left, footerY + 16, {
-        width: this.contentWidth * 0.58,
+      this.doc.font('Helvetica-Oblique').fontSize(7).fillColor(COLOR.muted);
+      this.doc.text(tagline, textX, footerY + 15, {
+        width: textWidth,
+        height: 9,
+        lineBreak: false,
+      });
+      this.doc.text(`Impreso: ${impreso}`, textX, footerY + 24, {
+        width: textWidth,
         height: 9,
         lineBreak: false,
       });
@@ -874,28 +946,46 @@ class PdfLayout {
     this.resetCursor();
   }
 
-  private drawHeaderBand(entidad: ModeloPdf['entidad']): void {
+  // Encabezado con marca blanca: el nombre y logo que se ven aca son de la clinica, no de
+  // Vethos AI (esa marca queda solo en el pie de pagina, ver drawFooters).
+  private drawHeaderBand(entidad: ModeloPdf['entidad'], logoEntidad: Buffer | null = null): void {
     const bandH = 62;
+    const nombreClinica = entidad.nombre !== ND ? entidad.nombre : 'Clínica Veterinaria';
+    const nombreMaxWidth = 210;
+    const badgeW = 88;
+    const badgeX = this.left + nombreMaxWidth + 12;
+
     this.doc.save();
     this.doc.rect(0, 0, this.pageWidth, bandH).fill(COLOR.brand);
     this.doc.rect(0, bandH - 3, this.pageWidth, 3).fill(COLOR.brandDark);
 
-    this.doc.fillColor(COLOR.white).font('Helvetica-Bold').fontSize(22);
-    this.doc.text('Vethos AI', this.left, 12);
+    this.doc.fillColor(COLOR.white).font('Helvetica-Bold').fontSize(20);
+    this.doc.text(nombreClinica, this.left, 12, {
+      width: nombreMaxWidth,
+      height: 24,
+      ellipsis: true,
+      lineBreak: false,
+    });
     this.doc.font('Helvetica').fontSize(8.5);
     this.doc.text('Historia clínica veterinaria', this.left, 36);
 
-    const badgeW = 88;
-    const badgeX = this.left + 130;
     this.doc.roundedRect(badgeX, 14, badgeW, 14, 3).fill(COLOR.brandDark);
     this.doc.fillColor(COLOR.white).font('Helvetica-Bold').fontSize(6.5);
     this.doc.text('DOCUMENTO OFICIAL', badgeX, 18, { width: badgeW, align: 'center' });
 
-    this.doc.fillColor(COLOR.white).font('Helvetica-Bold').fontSize(11);
-    this.doc.text(entidad.nombre, this.left, 12, {
-      width: this.contentWidth,
-      align: 'right',
-    });
+    // Logo de la clinica (si ya lo subio) arriba a la derecha; sin logo se deja el espacio
+    // en blanco en vez de repetir el nombre (ya va grande a la izquierda).
+    if (logoEntidad) {
+      const logoBoxW = 100;
+      const logoBoxH = 30;
+      const logoX = this.pageWidth - this.doc.page.margins.right - logoBoxW;
+      try {
+        this.doc.image(logoEntidad, logoX, 8, { fit: [logoBoxW, logoBoxH], align: 'right' });
+      } catch {
+        // Logo invalido/corrupto: se omite en silencio, el resto del encabezado sigue.
+      }
+    }
+
     const sedeLine =
       entidad.sede !== ND || entidad.ciudad !== ND
         ? [entidad.sede !== ND ? entidad.sede : null, entidad.ciudad !== ND ? entidad.ciudad : null]
@@ -903,12 +993,12 @@ class PdfLayout {
             .join(' · ')
         : '';
     if (sedeLine) {
-      this.doc.font('Helvetica').fontSize(8);
-      this.doc.text(sedeLine, this.left, 28, { width: this.contentWidth, align: 'right' });
+      this.doc.font('Helvetica').fontSize(8).fillColor(COLOR.white);
+      this.doc.text(sedeLine, this.left, 42, { width: this.contentWidth, align: 'right' });
     }
     if (entidad.telefono !== ND) {
-      this.doc.font('Helvetica').fontSize(8);
-      this.doc.text(`Tel: ${entidad.telefono}`, this.left, 42, { width: this.contentWidth, align: 'right' });
+      this.doc.font('Helvetica').fontSize(8).fillColor(COLOR.white);
+      this.doc.text(`Tel: ${entidad.telefono}`, this.left, 52, { width: this.contentWidth, align: 'right' });
     }
     this.doc.restore();
     this.y = bandH + 14;
@@ -920,7 +1010,7 @@ class PdfLayout {
     this.doc.save();
     this.doc.rect(this.left, this.y, this.contentWidth, h).fill(COLOR.brandSoft);
     this.doc.fillColor(COLOR.brandDark).font('Helvetica-Bold').fontSize(8);
-    this.doc.text('Vethos AI — continuación', this.left + 10, this.y + 7);
+    this.doc.text(`${this.currentEntidadNombre} — continuación`, this.left + 10, this.y + 7);
     this.doc.restore();
     this.y += h + 8;
     this.resetCursor();
