@@ -120,7 +120,16 @@ export class ConsultasService {
       );
     }
 
-    if (consulta.estado === 'aprobada') {
+    // pacientePendienteConfirmar es un flag de workflow (no contenido clinico): si es el
+    // UNICO campo que llega, se deja pasar aun con la consulta aprobada. Sin este permiso
+    // una consulta que quedo aprobada con el flag en true (p. ej. por una confirmacion que
+    // fallo antes de aprobar) nunca podria limpiarse, y el aviso de "confirmar paciente"
+    // quedaria mostrandose para siempre.
+    const soloFlagPendiente =
+      dto.pacientePendienteConfirmar !== undefined &&
+      Object.keys(stripUndefinedFields({ ...dto })).every((k) => k === 'pacientePendienteConfirmar');
+
+    if (consulta.estado === 'aprobada' && !soloFlagPendiente) {
       throw new BadRequestException(
         'Las consultas aprobadas son inmutables; use POST /v1/consultas/:id/enmienda para correcciones.',
       );

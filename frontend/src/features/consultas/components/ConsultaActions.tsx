@@ -85,15 +85,11 @@ const ConsultaActions: React.FC<Props> = ({
                   ? 'Enviar PDF al correo del propietario'
                   : 'Email real pendiente de activación — modo demo'
               }
-              style={
-                emailRealEnabled
-                  ? undefined
-                  : {
-                      background: 'var(--info-soft)',
-                      color: 'var(--info)',
-                      border: '1px solid color-mix(in srgb, var(--info) 24%, transparent)',
-                    }
-              }
+              style={{
+                background: 'var(--info-soft)',
+                color: 'var(--info)',
+                border: '1px solid color-mix(in srgb, var(--info) 24%, transparent)',
+              }}
             >
               <Mail className="h-4 w-4" />
               {isSendingEmail ? 'Enviando...' : 'Enviar por Email'}

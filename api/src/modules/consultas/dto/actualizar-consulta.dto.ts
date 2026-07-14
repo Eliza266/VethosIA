@@ -1,4 +1,4 @@
-import { IsArray, IsIn, IsObject, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsArray, IsBoolean, IsIn, IsObject, IsOptional, IsString, MaxLength } from 'class-validator';
 
 // Campos editables vía PATCH. orgId/veterinarioId/pacienteId/id quedan fuera (whitelist).
 export class ActualizarConsultaDto {
@@ -20,4 +20,9 @@ export class ActualizarConsultaDto {
   @IsOptional() @IsObject() soap?: Record<string, unknown>;
   @IsOptional() @IsObject() signosVitales?: Record<string, unknown>;
   @IsOptional() @IsArray() diagnosticoEstructurado?: unknown[];
+
+  // Flag de workflow (no es contenido clinico): permite confirmar/vincular el paciente
+  // detectado por IA en consultas de creacion rapida. Se puede limpiar aun en consultas
+  // aprobadas (ver ConsultasService.actualizar), a diferencia de los campos clinicos de arriba.
+  @IsOptional() @IsBoolean() pacientePendienteConfirmar?: boolean;
 }

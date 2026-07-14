@@ -8,6 +8,13 @@ interface Props {
   onAddMedToPlan: (med: MedicamentoSugerido) => void;
 }
 
+const CAMPOS: { label: string; key: keyof MedicamentoSugerido }[] = [
+  { label: 'Dosis', key: 'dosis' },
+  { label: 'Vía', key: 'via' },
+  { label: 'Frecuencia', key: 'frecuencia' },
+  { label: 'Duración', key: 'duracion' },
+];
+
 const PanelMedicamentos: React.FC<Props> = ({ consulta, onAddMedToPlan }) => {
   const meds = consulta.soap?.medicamentosSugeridos;
   const visible =
@@ -35,51 +42,48 @@ const PanelMedicamentos: React.FC<Props> = ({ consulta, onAddMedToPlan }) => {
         </span>
       </div>
 
-      <div className="overflow-x-auto rounded-2xl border border-[var(--border)] bg-white">
-        <table className="w-full min-w-[640px] text-left text-xs">
-          <thead className="border-b border-[var(--border)] bg-[var(--surface-2)] text-[10px] font-bold uppercase tracking-wider text-[var(--muted)]">
-            <tr>
-              <th className="px-4 py-3">Medicamento</th>
-              <th className="px-4 py-3">Dosis</th>
-              <th className="px-4 py-3">Vía</th>
-              <th className="px-4 py-3">Frecuencia</th>
-              <th className="px-4 py-3">Duración</th>
-              {consulta.estado === 'borrador' && <th className="px-4 py-3 text-center">Acción</th>}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[var(--border)]">
-            {meds.map((med, index) => (
-              <tr key={index} className="transition-colors hover:bg-[var(--surface-2)]">
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    <Pill className="h-3 w-3 text-[var(--accent)]" />
-                    <span className="font-bold text-[var(--text)]">{med.nombre}</span>
-                  </div>
-                  <div className="mt-0.5 max-w-[220px] truncate text-[10px] text-[var(--muted)]" title={med.indicacion}>
-                    {med.indicacion}
-                  </div>
-                </td>
-                <td className="px-4 py-3 font-medium text-[var(--text-secondary)]">{med.dosis}</td>
-                <td className="px-4 py-3 text-[var(--text-secondary)]">{med.via}</td>
-                <td className="px-4 py-3 text-[var(--text-secondary)]">{med.frecuencia}</td>
-                <td className="px-4 py-3 text-[var(--text-secondary)]">{med.duracion}</td>
-                {consulta.estado === 'borrador' && (
-                  <td className="px-4 py-3 text-center">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => onAddMedToPlan(med)}
-                      title="Agregar al Plan"
-                      aria-label={`Agregar ${med.nombre} al plan`}
-                    >
-                      <FilePlus className="h-4 w-4" />
-                    </Button>
-                  </td>
-                )}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="space-y-2.5">
+        {meds.map((med, index) => (
+          <div
+            key={index}
+            className="rounded-2xl border border-[var(--border)] bg-white p-3.5"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-2">
+                <Pill className="h-4 w-4 shrink-0 text-[var(--accent)]" />
+                <span className="font-black text-[var(--text)]">{med.nombre}</span>
+              </div>
+              {consulta.estado === 'borrador' && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => onAddMedToPlan(med)}
+                  title="Agregar al Plan"
+                  aria-label={`Agregar ${med.nombre} al plan`}
+                  className="shrink-0"
+                >
+                  <FilePlus className="h-4 w-4" />
+                  <span className="hidden sm:inline">Agregar al Plan</span>
+                </Button>
+              )}
+            </div>
+
+            {med.indicacion && (
+              <p className="mt-1.5 text-xs leading-relaxed text-[var(--muted)]">{med.indicacion}</p>
+            )}
+
+            <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-4">
+              {CAMPOS.map(({ label, key }) => (
+                <div key={key}>
+                  <p className="text-[10px] font-black uppercase tracking-[0.1em] text-[var(--muted)]">{label}</p>
+                  <p className="mt-0.5 text-xs font-semibold leading-snug text-[var(--text-secondary)]">
+                    {med[key] || '—'}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

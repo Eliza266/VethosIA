@@ -371,6 +371,27 @@ describe('ConsultasService.actualizar', () => {
     );
   });
 
+  it('permite limpiar pacientePendienteConfirmar aun en consulta aprobada (no es contenido clinico)', async () => {
+    const { svc, repo, repoState } = buildCrud();
+    repoState.id = 'c-new';
+    repoState.estado = 'aprobada';
+    const res = await svc.actualizar('c-new', { pacientePendienteConfirmar: false }, user);
+    expect(res.pacientePendienteConfirmar).toBe(false);
+    expect(repo.mergeRaw).toHaveBeenCalledWith(
+      'c-new',
+      expect.objectContaining({ pacientePendienteConfirmar: false }),
+    );
+  });
+
+  it('rechaza mezclar pacientePendienteConfirmar con un campo clinico en consulta aprobada', async () => {
+    const { svc, repoState } = buildCrud();
+    repoState.id = 'c-new';
+    repoState.estado = 'aprobada';
+    await expect(
+      svc.actualizar('c-new', { pacientePendienteConfirmar: false, motivo: 'x' }, user),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
   it('rechaza consulta de otro tenant', async () => {
     const { svc, repoState } = buildCrud();
     repoState.orgId = 'orgB';
