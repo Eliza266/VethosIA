@@ -114,4 +114,28 @@ describeIf('storage.rules - aislamiento por tenant', () => {
       uploadBytes(objectRef, png, { contentType: 'image/png' }),
     );
   });
+
+  it('logo veterinaria: miembro de la org puede subir y leer', async () => {
+    const storage = ctxOrg('vetA', 'orgA', 'admin_veterinaria').storage();
+    const objectRef = ref(storage, 'logos-veterinaria/orgA/logo.png');
+    await assertSucceeds(uploadBytes(objectRef, png, { contentType: 'image/png' }));
+    await assertSucceeds(getBytes(objectRef));
+  });
+
+  it('logo veterinaria: otro tenant no puede subir', async () => {
+    const storage = ctxOrg('vetB', 'orgB', 'admin').storage();
+    const objectRef = ref(storage, 'logos-veterinaria/orgA/logo.png');
+    await assertFails(uploadBytes(objectRef, png, { contentType: 'image/png' }));
+  });
+
+  it('logo veterinaria: cualquier autenticado puede leer (se muestra en encabezado/PDF)', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await uploadBytes(ref(ctx.storage(), 'logos-veterinaria/orgA/logo.png'), png, {
+        contentType: 'image/png',
+      });
+    });
+    const storage = ctxOrg('vetB', 'orgB', 'admin').storage();
+    const objectRef = ref(storage, 'logos-veterinaria/orgA/logo.png');
+    await assertSucceeds(getBytes(objectRef));
+  });
 });

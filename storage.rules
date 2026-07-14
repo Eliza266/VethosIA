@@ -78,6 +78,15 @@ service firebase.storage {
       allow delete: if isSignedIn() && request.auth.uid == userId;
     }
 
+    // Logo de la veterinaria (org-scoped): logos-veterinaria/{orgId}/logo.{ext}.
+    // Lectura para cualquier autenticado (se muestra en encabezado/PDF); escritura solo
+    // para miembros de esa org (admin_veterinaria la sube desde Configuracion).
+    match /logos-veterinaria/{orgId}/{fileName} {
+      allow read: if isSignedIn();
+      allow write: if hasOrgClaim() && tokenOrg() == orgId && isPatientPhotoUpload();
+      allow delete: if hasOrgClaim() && tokenOrg() == orgId;
+    }
+
     // Resto (incluida la ruta plana legacy historiales/{file}.pdf): cerrado por defecto.
     // El acceso a PDFs legacy pasa exclusivamente por signed URL generada por la API.
     match /{allPaths=**} {

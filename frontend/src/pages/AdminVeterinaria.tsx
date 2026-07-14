@@ -4,6 +4,9 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { Building2, CreditCard, FileClock, Syringe, Users } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { storage } from '../services/firebase';
+import { buildVeterinariaLogoStoragePath } from '../lib/veterinariaLogoStorage';
 import { useMe } from '../features/tenant/hooks';
 import { crearInvitacionVeterinaria, listarSolicitudesTecnicas } from '../features/tenant/api';
 import {
@@ -98,6 +101,16 @@ const AdminVeterinaria: React.FC = () => {
   const [nuevoVetPassword, setNuevoVetPassword] = useState('');
   const [credCreado, setCredCreado] = useState('');
   const [formVeterinaria, setFormVeterinaria] = useState(veterinariaFormInicial);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setLogoFile(file);
+      setLogoPreview(URL.createObjectURL(file));
+    }
+  };
   const scopeListo = Boolean(me?.orgId || me?.veterinariaId || me?.accountId);
   const puedeGestionarCatalogo = rol === 'admin_veterinaria' || rol === 'admin_entidad' || rol === 'veterinario' || rol === 'admin' || rol === 'vet' || rol === 'superadmin';
 
@@ -204,9 +217,19 @@ const AdminVeterinaria: React.FC = () => {
   const equipoTotal = (veterinarios.data ?? []).length;
 
   const actualizarVeterinaria = useMutation({
-    mutationFn: () => {
+    mutationFn: async () => {
       if (!veterinaria.data?.id) {
         throw new Error('No hay veterinaria activa para actualizar.');
+      }
+      let logoUrl = formVeterinaria.logoUrl;
+      if (logoFile) {
+        if (!me?.orgId) {
+          throw new Error('No se pudo subir el logo: tu cuenta no tiene organización asignada.');
+        }
+        const logoPath = buildVeterinariaLogoStoragePath(me.orgId, logoFile);
+        const storageRef = ref(storage, logoPath);
+        const uploadResult = await uploadBytes(storageRef, logoFile);
+        logoUrl = await getDownloadURL(uploadResult.ref);
       }
       return actualizarVeterinariaBackoffice(veterinaria.data.id, {
         nombre: formVeterinaria.nombre.trim(),
@@ -215,11 +238,13 @@ const AdminVeterinaria: React.FC = () => {
         pais: campoOpcional(formVeterinaria.pais),
         telefono: campoOpcional(formVeterinaria.telefono),
         emailContacto: campoOpcional(formVeterinaria.emailContacto),
-        logoUrl: campoOpcional(formVeterinaria.logoUrl),
+        logoUrl: campoOpcional(logoUrl),
       });
     },
     onSuccess: () => {
       setError('');
+      setLogoFile(null);
+      setLogoPreview(null);
       qc.invalidateQueries({ queryKey: ['backoffice-veterinaria'] });
     },
     onError: (e) => setError(getErrorMessage(e, 'No se pudo actualizar la veterinaria.')),
@@ -397,11 +422,33 @@ const AdminVeterinaria: React.FC = () => {
                   value={formVeterinaria.telefono}
                   onChange={(value) => setFormVeterinaria((prev) => ({ ...prev, telefono: value }))}
                 />
-                <CampoClinica
-                  label="Logo (URL)"
-                  value={formVeterinaria.logoUrl}
-                  onChange={(value) => setFormVeterinaria((prev) => ({ ...prev, logoUrl: value }))}
-                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-slate-500">
+                  Logo de la clínica
+                </label>
+                <div className="flex items-center gap-4">
+                  {logoPreview || formVeterinaria.logoUrl ? (
+                    <img
+                      src={logoPreview || formVeterinaria.logoUrl}
+                      alt="Logo de la clínica"
+                      className="h-14 w-14 rounded-xl border border-slate-200 object-contain bg-white p-1"
+                    />
+                  ) : (
+                    <div className="flex h-14 w-14 items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50">
+                      <Building2 className="h-6 w-6 text-slate-400" />
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleLogoChange}
+                    className="text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-accent/10 file:text-accent hover:file:bg-accent/20 cursor-pointer"
+                  />
+                </div>
+                <p className="mt-1.5 text-xs text-slate-400">
+                  Aparece en el encabezado de las historias clínicas en PDF. Formatos JPG, PNG o WEBP.
+                </p>
               </div>
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <span className="text-sm text-slate-500">Estado operativo protegido por scope de veterinaria.</span>
