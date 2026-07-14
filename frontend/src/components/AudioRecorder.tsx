@@ -57,6 +57,10 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<number | null>(null);
+  // Si el celular bloquea pantalla a mitad de una grabacion, el navegador puede suspender o
+  // matar la pestana y se pierde todo el audio en memoria (no se persiste hasta "Finalizar").
+  // El Wake Lock evita que la pantalla se bloquee sola por inactividad mientras se graba.
+  const wakeLockRef = useRef<WakeLockSentinel | null>(null);
   // Espejo de `seconds` en un ref: onstop es un closure y `seconds` quedaria viejo;
   // leemos secondsRef.current para registrar la duracion REAL del bloque al cerrarlo.
   const secondsRef = useRef(0);
@@ -83,11 +87,45 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
     }
   }, []);
 
+  const solicitarWakeLock = useCallback(async () => {
+    try {
+      if ('wakeLock' in navigator) {
+        wakeLockRef.current = await navigator.wakeLock.request('screen');
+      }
+    } catch {
+      // Best-effort: si el navegador lo rechaza (pestana no visible, sin soporte, etc.)
+      // seguimos grabando igual; el aviso en pantalla ya pide no bloquear el celular.
+    }
+  }, []);
+
+  const liberarWakeLock = useCallback(async () => {
+    try {
+      await wakeLockRef.current?.release();
+    } catch {
+      // no-op
+    } finally {
+      wakeLockRef.current = null;
+    }
+  }, []);
+
+  // Si el SO libera el wake lock solo (p. ej. al pasar la app a segundo plano y volver),
+  // lo volvemos a pedir mientras siga grabando activa.
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      if (isRecording && document.visibilityState === 'visible' && !wakeLockRef.current) {
+        void solicitarWakeLock();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange);
+  }, [isRecording, solicitarWakeLock]);
+
   useEffect(() => {
     return () => {
       stopTimer();
+      void liberarWakeLock();
     };
-  }, [stopTimer]);
+  }, [stopTimer, liberarWakeLock]);
 
   const formatTime = (totalSeconds: number) => {
     const mins = Math.floor(totalSeconds / 60);
@@ -134,6 +172,7 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
       mediaRecorder.start(250);
       setIsRecording(true);
       startTimer();
+      void solicitarWakeLock();
     } catch (err: unknown) {
       console.error('Microphone error:', err);
       onManualFallback?.();
@@ -146,6 +185,7 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
       mediaRecorderRef.current.stop();
       setIsRecording(false);
       stopTimer();
+      void liberarWakeLock();
     }
   };
 
@@ -228,6 +268,10 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
           <span className="text-xs font-semibold text-red-500 uppercase tracking-widest animate-pulse">
             Grabando Bloque {currentBlockNum}...
           </span>
+
+          <p className="text-center text-[11px] font-semibold text-slate-400">
+            No bloquees la pantalla ni cierres la app mientras grabas: podrías perder el audio.
+          </p>
 
           {currentBlockNum === 1 && (
             <div className="rounded-lg border border-[var(--border)] bg-[var(--accent-soft)] p-3 text-xs text-[var(--text)]">
