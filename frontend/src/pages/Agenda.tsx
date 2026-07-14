@@ -209,8 +209,10 @@ const Agenda: React.FC = () => {
             )}
           </div>
 
+          {/* En movil, MobileWeekAgenda ya muestra la agenda del dia seleccionado inline;
+              este panel quedaria duplicado, asi que solo se muestra en escritorio. */}
           {panelOpen && (
-            <Card padding="md" className="w-full shrink-0 lg:w-80">
+            <Card padding="md" className="hidden w-full shrink-0 lg:block lg:w-80">
               <div className="mb-4 flex items-start justify-between gap-2">
                 <SectionHeader
                   title="Citas de hoy"

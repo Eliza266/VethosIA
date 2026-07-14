@@ -133,6 +133,7 @@ export const Button: React.FC<
         alignItems: 'center',
         justifyContent: 'center',
         gap: 8,
+        whiteSpace: 'nowrap',
         ...sizeStyle,
         ...style,
       }}
@@ -392,7 +393,7 @@ export const PageHeader: React.FC<{
           </p>
         )}
       </div>
-      {action}
+      {action && <div style={{ flexShrink: 0 }}>{action}</div>}
     </div>
     {tabs && <div style={{ marginTop: 'var(--space-4)' }}>{tabs}</div>}
   </div>

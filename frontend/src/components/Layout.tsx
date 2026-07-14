@@ -8,6 +8,7 @@ import NotificationBell from './NotificationBell';
 import TourHelpButton from './TourHelpButton';
 import WelcomeInstallModal from './WelcomeInstallModal';
 import TrialBanner from './TrialBanner';
+import BottomNav from './BottomNav';
 import { useAuth } from '../hooks/useAuth';
 import { useInactivityLogout } from '../hooks/useInactivityLogout';
 import { ActiveTourProvider } from './ActiveTourProvider';
@@ -134,11 +135,14 @@ const LayoutContent: React.FC<LayoutProps> = ({ children }) => {
             )}
           </header>
 
-          <main className="mx-auto w-full max-w-[1900px] flex-1 px-4 py-5 sm:px-6 sm:py-7 lg:px-8">
+          {/* max-w mas conservador que el viewport tipico de 1920px: con 1900px el margen
+              derecho quedaba casi en cero contra la barra de scroll del navegador en
+              pantallas anchas, y el ultimo boton/elemento de cada fila se sentia "pegado". */}
+          <main className="mx-auto w-full max-w-[1680px] flex-1 px-4 py-5 pb-24 sm:px-6 sm:py-7 lg:px-10 lg:pb-7">
             {children || <Outlet />}
           </main>
 
-          <footer className="border-t py-5 text-center text-xs" style={{ borderColor: 'var(--border)', color: 'var(--muted)' }}>
+          <footer className="hidden border-t py-5 text-center text-xs lg:block" style={{ borderColor: 'var(--border)', color: 'var(--muted)' }}>
             <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 sm:flex-row">
               <div>
                 &copy; {new Date().getFullYear()} <span className="font-semibold" style={{ color: 'var(--text-secondary)' }}>Vethos AI</span>
@@ -151,6 +155,8 @@ const LayoutContent: React.FC<LayoutProps> = ({ children }) => {
           </footer>
         </div>
       </div>
+
+      <BottomNav onOpenMore={() => setMobileOpen(true)} />
     </div>
   );
 };

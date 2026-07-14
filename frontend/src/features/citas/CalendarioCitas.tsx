@@ -4,6 +4,7 @@ import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { es } from 'date-fns/locale/es';
 import { ChevronLeft, ChevronRight, PanelRightClose, PanelRightOpen } from 'lucide-react';
 import type { Cita } from './api';
+import MobileWeekAgenda from './MobileWeekAgenda';
 
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import './calendario.css';
@@ -158,12 +159,12 @@ export const CalendarioCitas: React.FC<CalendarioCitasProps> = ({
   panelOpen,
   onTogglePanel,
 }) => {
-  // En pantallas angostas, 7 columnas (vista Semana/Mes) quedan ilegibles: arrancamos en
-  // vista Dia y ni siquiera ofrecemos Mes/Semana como opcion hasta que la pantalla crezca.
+  // Debajo de este ancho se usa MobileWeekAgenda (vista propia), no react-big-calendar:
+  // 7 columnas de semana/mes no dan una experiencia usable en pantalla angosta.
   const [isNarrow, setIsNarrow] = useState(
     () => typeof window !== 'undefined' && window.innerWidth < 768
   );
-  const [view, setView] = useState<View>(() => (isNarrow ? Views.DAY : Views.WEEK));
+  const [view, setView] = useState<View>(Views.MONTH);
 
   useEffect(() => {
     const handleResize = () => setIsNarrow(window.innerWidth < 768);
@@ -171,13 +172,7 @@ export const CalendarioCitas: React.FC<CalendarioCitasProps> = ({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  useEffect(() => {
-    if (isNarrow && (view === Views.MONTH || view === Views.WEEK)) {
-      setView(Views.DAY);
-    }
-  }, [isNarrow, view]);
-
-  const availableViews = isNarrow ? [Views.DAY, Views.AGENDA] : [Views.MONTH, Views.WEEK, Views.DAY, Views.AGENDA];
+  const availableViews = [Views.MONTH, Views.WEEK, Views.DAY, Views.AGENDA];
 
   const ToolbarWithPanel = useCallback(
     (toolbarProps: RbcToolbarProps) => (
@@ -230,6 +225,25 @@ export const CalendarioCitas: React.FC<CalendarioCitasProps> = ({
     };
   };
 
+  // En movil se reemplaza react-big-calendar por completo: 7 columnas (incluso solo Dia)
+  // no dan una experiencia tipo Apple Calendar. MobileWeekAgenda es una vista propia con
+  // circulos de dia + agenda cronologica, mas fiel a lo pedido para pantallas angostas.
+  if (isNarrow) {
+    return (
+      <div
+        className="p-3"
+        style={{
+          background: 'var(--surface)',
+          border: '1px solid var(--border)',
+          borderRadius: 'var(--radius)',
+          boxShadow: 'var(--shadow-xs)',
+        }}
+      >
+        <MobileWeekAgenda citas={citas} onSelectCita={onSelectCita} onSelectSlot={onSelectSlot} />
+      </div>
+    );
+  }
+
   return (
     <div
       className="p-3 sm:p-4"
@@ -246,7 +260,7 @@ export const CalendarioCitas: React.FC<CalendarioCitasProps> = ({
           events={events}
           startAccessor="start"
           endAccessor="end"
-          style={{ height: isNarrow ? '68vh' : '72vh', minWidth: isNarrow ? undefined : 640 }}
+          style={{ height: '72vh', minWidth: 640 }}
           views={availableViews}
           view={view}
           onView={setView}
