@@ -60,6 +60,24 @@ const MOTIVOS = [
   'chequeo geriatrico',
 ];
 
+// Nombre corto de diagnostico por motivo (mismo orden/indice que MOTIVOS), para que el
+// grafico de "Top diagnosticos" del dashboard muestre etiquetas cortas y realistas en
+// vez de una oracion completa (que rompia el layout del eje del grafico).
+const DIAGNOSTICOS_CORTOS = [
+  'Control de rutina',
+  'Refuerzo vacunal',
+  'Gastroenteritis leve',
+  'Chequeo post-cirugia',
+  'Cojera leve',
+  'Anorexia parcial',
+  'Dermatitis leve',
+  'Diarrea leve',
+  'Sobrepeso',
+  'Sarro dental',
+  'Tos leve',
+  'Chequeo geriatrico',
+];
+
 function initAdmin(): admin.app.App {
   if (admin.apps.length && admin.apps[0]) return admin.apps[0];
   const projectId = process.env.GCLOUD_PROJECT ?? PROJECT_ID;
@@ -97,6 +115,7 @@ async function seedParaUsuario(
     const mascota = MASCOTAS[i % MASCOTAS.length];
     const dueno = DUENOS[i % DUENOS.length];
     const motivo = MOTIVOS[i % MOTIVOS.length];
+    const diagnosticoCorto = DIAGNOSTICOS_CORTOS[i % DIAGNOSTICOS_CORTOS.length];
 
     const pacienteRef = db.collection('pacientes').doc();
     await pacienteRef.set({
@@ -160,6 +179,18 @@ async function seedParaUsuario(
         plan: 'Seguimiento en 15 dias. Manejo sintomatico. (Plan generado para datos de prueba QA).',
         generadoPorIA: false,
       },
+      diagnosticoEstructurado: [
+        {
+          id: `diag-demo-${i + 1}`,
+          nombre: diagnosticoCorto,
+          tipo: 'principal',
+          estado: 'confirmado',
+          especie: mascota.especie,
+          notas: '[DATA DE PRUEBA] diagnostico de QA, no clinico real.',
+          origen: 'manual',
+          creadoEn: new Date().toISOString(),
+        },
+      ],
       origenPrueba: true,
       fechaHora: diasAtras((i + 1) * 4),
       creadoEn: ts,
