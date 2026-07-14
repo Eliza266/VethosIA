@@ -165,7 +165,10 @@ describe('AdminVeterinaria', () => {
     expect(screen.getByDisplayValue('Colombia')).toBeInTheDocument();
     expect(screen.getByDisplayValue('+57 300 111 2233')).toBeInTheDocument();
     expect(screen.getByDisplayValue('contacto@clinicanorte.com')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('https://cdn.test/clinica-norte.png')).toBeInTheDocument();
+    expect(screen.getByAltText('Logo de la clínica')).toHaveAttribute(
+      'src',
+      'https://cdn.test/clinica-norte.png',
+    );
   });
 
   it('muestra miembros y consumo filtrados de la clinica en la pestaña equipo', async () => {
@@ -193,9 +196,6 @@ describe('AdminVeterinaria', () => {
     fireEvent.change(screen.getByLabelText('Ciudad'), {
       target: { value: 'Medellin' },
     });
-    fireEvent.change(screen.getByLabelText('Logo (URL)'), {
-      target: { value: '' },
-    });
     fireEvent.click(screen.getByRole('button', { name: /guardar/i }));
 
     await waitFor(() => {
@@ -206,7 +206,7 @@ describe('AdminVeterinaria', () => {
         pais: 'Colombia',
         telefono: '+57 300 111 2233',
         emailContacto: 'contacto@clinicanorte.com',
-        logoUrl: null,
+        logoUrl: 'https://cdn.test/clinica-norte.png',
       });
     });
   });
