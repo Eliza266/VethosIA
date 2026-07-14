@@ -22,7 +22,8 @@
     "seed:data-prueba-demo": "ts-node scripts/seed-data-prueba-clinica-demo.ts",
     "e2e:runtime-smoke": "ts-node scripts/e2e-runtime-smoke.ts",
     "smoke": "ts-node scripts/smoke.ts",
-    "set-superadmin": "ts-node scripts/set-superadmin.ts"
+    "set-superadmin": "ts-node scripts/set-superadmin.ts",
+    "list-superadmins": "ts-node scripts/list-superadmins.ts"
   },
   "dependencies": {
     "@google-cloud/secret-manager": "^6.2.0",
