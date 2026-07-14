@@ -46,7 +46,7 @@ describe('SuperAdminCommandCenter', () => {
     renderCenter();
 
     expect(await screen.findByTestId('superadmin-command-center')).toBeInTheDocument();
-    expect(await screen.findByText(/Cantidad de pacientes/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Total pacientes/i)).toBeInTheDocument();
     expect(screen.getAllByText(/^Entidades$/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/^Veterinarias$/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/^Usuarios y miembros$/i).length).toBeGreaterThan(0);
@@ -61,7 +61,7 @@ describe('SuperAdminCommandCenter', () => {
   it('muestra el panel de metricas globales de plataforma', async () => {
     renderCenter();
 
-    expect(await screen.findByText(/Cantidad de pacientes/i)).toBeInTheDocument();
-    expect(screen.getByText(/Cantidad de consultas/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Total pacientes/i)).toBeInTheDocument();
+    expect(screen.getByText(/Total consultas/i)).toBeInTheDocument();
   });
 });

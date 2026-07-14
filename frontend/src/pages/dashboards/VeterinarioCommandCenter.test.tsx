@@ -49,7 +49,7 @@ describe('VeterinarioCommandCenter', () => {
     renderCenter();
 
     expect(await screen.findByTestId('veterinario-command-center')).toBeInTheDocument();
-    expect(await screen.findByText(/Cantidad de pacientes/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Total pacientes/i)).toBeInTheDocument();
     expect(screen.queryByText(/Centro cl[ií]nico/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Prioridad cl[ií]nica/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Vista entidad/i)).not.toBeInTheDocument();
@@ -59,8 +59,8 @@ describe('VeterinarioCommandCenter', () => {
   it('muestra el panel de metricas con graficos', async () => {
     renderCenter();
 
-    expect(await screen.findByText(/Cantidad de pacientes/i)).toBeInTheDocument();
-    expect(screen.getByText(/Cantidad de consultas/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Total pacientes/i)).toBeInTheDocument();
+    expect(screen.getByText(/Total consultas/i)).toBeInTheDocument();
     expect(screen.getByText(/Cupo de IA/i)).toBeInTheDocument();
   });
 
@@ -71,6 +71,6 @@ describe('VeterinarioCommandCenter', () => {
     renderCenter();
 
     expect(await screen.findByTestId('veterinario-command-center')).toBeInTheDocument();
-    expect(await screen.findByText(/Cantidad de pacientes/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Total pacientes/i)).toBeInTheDocument();
   });
 });

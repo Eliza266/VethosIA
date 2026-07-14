@@ -15,6 +15,7 @@ export interface Metricas {
   tiempoAhorradoMinutos?: number;
   citas: number;
   citasProgramadas?: number;
+  citasEnAtencion?: number;
   citasRealizadas?: number;
   citasNoAsistio?: number;
   citasCanceladas?: number;

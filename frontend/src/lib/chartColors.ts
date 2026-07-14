@@ -14,5 +14,5 @@ export const TEAL = '#0d9488';
 // pero en la practica una clinica rara vez maneja mas de 6-8 especies distintas a la vez.
 export const ESPECIES_COLORS = [NAVY, CYAN, LIME, AMBER, PURPLE, ORANGE, TEAL, RED];
 export const VACUNAS_COLORS = [LIME, CYAN, RED];
-export const AGENDA_COLORS = [CYAN, LIME, AMBER, ORANGE];
+export const AGENDA_COLORS = [CYAN, LIME, TEAL, AMBER, ORANGE];
 export const BRIGADAS_COLORS = [NAVY, LIME, CYAN];

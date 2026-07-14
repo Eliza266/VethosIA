@@ -119,7 +119,7 @@ describe('Dashboard role command center router', () => {
     renderDashboard();
 
     expect(await screen.findByTestId('veterinario-command-center')).toBeInTheDocument();
-    expect(await screen.findByText(/Cantidad de pacientes/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Total pacientes/i)).toBeInTheDocument();
     expect(screen.queryByTestId('admin-entidad-command-center')).not.toBeInTheDocument();
     expect(screen.queryByTestId('superadmin-command-center')).not.toBeInTheDocument();
   });
@@ -134,7 +134,7 @@ describe('Dashboard role command center router', () => {
     renderDashboard();
 
     expect(await screen.findByTestId('admin-veterinaria-command-center')).toBeInTheDocument();
-    expect(await screen.findByText(/Cantidad de pacientes/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Total pacientes/i)).toBeInTheDocument();
     expect(screen.queryByTestId('admin-entidad-command-center')).not.toBeInTheDocument();
     expect(screen.queryByTestId('superadmin-command-center')).not.toBeInTheDocument();
   });

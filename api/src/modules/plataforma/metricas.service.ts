@@ -61,6 +61,7 @@ export interface Metricas {
   tiempoAhorradoMinutos: number;
   citas: number;
   citasProgramadas: number;
+  citasEnAtencion: number;
   citasRealizadas: number;
   citasNoAsistio: number;
   citasCanceladas: number;
@@ -348,9 +349,10 @@ export class MetricasService {
 
   private resumenCitas(
     citas: Registro[],
-  ): Pick<Metricas, 'citasProgramadas' | 'citasRealizadas' | 'citasNoAsistio' | 'citasCanceladas'> {
+  ): Pick<Metricas, 'citasProgramadas' | 'citasEnAtencion' | 'citasRealizadas' | 'citasNoAsistio' | 'citasCanceladas'> {
     return {
-      citasProgramadas: citas.filter((r) => r.data.estado === 'programada' || r.data.estado === 'en_atencion').length,
+      citasProgramadas: citas.filter((r) => r.data.estado === 'programada').length,
+      citasEnAtencion: citas.filter((r) => r.data.estado === 'en_atencion').length,
       citasRealizadas: citas.filter((r) => r.data.estado === 'realizada').length,
       citasNoAsistio: citas.filter((r) => r.data.estado === 'no_asistio').length,
       citasCanceladas: citas.filter((r) => r.data.estado === 'cancelada').length,

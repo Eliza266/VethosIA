@@ -48,8 +48,8 @@ describe('AdminVeterinariaCommandCenter', () => {
     renderCenter();
 
     expect(await screen.findByTestId('admin-veterinaria-command-center')).toBeInTheDocument();
-    expect(await screen.findByText(/Cantidad de pacientes/i)).toBeInTheDocument();
-    expect(screen.getByText(/Cantidad de consultas/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Total pacientes/i)).toBeInTheDocument();
+    expect(screen.getByText(/Total consultas/i)).toBeInTheDocument();
     expect(screen.queryByText(/Operaci[oó]n de Cl[ií]nica/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Control de sede/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Plan, consumo y estado/i)).not.toBeInTheDocument();

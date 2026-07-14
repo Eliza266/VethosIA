@@ -15,6 +15,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import { CalendarClock, Sparkles, Stethoscope, TrendingDown, TrendingUp, Users } from 'lucide-react';
 import { obtenerMetricas, obtenerConsumo } from './api';
 import { listarVeterinariosBackoffice, listarVeterinariasBackoffice } from '../backoffice/api';
 import { Card, SectionHeader, Skeleton } from '../../components/ui/Primitives';
@@ -22,11 +23,14 @@ import type { Rol } from '../../lib/rbac';
 import { NAVY, CYAN, LIME, RED, ESPECIES_COLORS, VACUNAS_COLORS, AGENDA_COLORS, BRIGADAS_COLORS } from '../../lib/chartColors';
 
 const RANGOS = [
+  { value: 'hoy', label: 'Hoy' },
+  { value: '7', label: 'Última semana' },
   { value: '30', label: 'Últimos 30 días' },
   { value: '90', label: 'Últimos 90 días' },
   { value: '180', label: 'Últimos 6 meses' },
   { value: '365', label: 'Último año' },
-  { value: '', label: 'Todo' },
+  { value: 'todo', label: 'Todo' },
+  { value: 'personalizado', label: 'Personalizado…' },
 ] as const;
 
 const tooltipStyle = {
@@ -49,6 +53,62 @@ const fechaDesde = (dias: number): string => {
   d.setDate(d.getDate() - dias);
   return d.toISOString().slice(0, 10);
 };
+
+// % de cambio vs. el periodo anterior de igual duracion. null = sin base de comparacion
+// (periodo anterior en cero, o rango "Todo" sin limite inferior).
+const calcDelta = (actual: number, anterior: number | undefined): number | null => {
+  if (anterior === undefined || anterior === 0) return null;
+  return Math.round(((actual - anterior) / anterior) * 100);
+};
+
+const DeltaBadge: React.FC<{ deltaPct: number | null }> = ({ deltaPct }) =>
+  deltaPct === null ? (
+    <span className="text-[11px] font-semibold text-[var(--muted)]">Sin comparación</span>
+  ) : (
+    <span
+      className="inline-flex items-center gap-1 text-[11px] font-bold"
+      style={{ color: deltaPct >= 0 ? 'var(--success)' : 'var(--danger)' }}
+    >
+      {deltaPct >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+      {Math.abs(deltaPct)}% vs. anterior
+    </span>
+  );
+
+const MiniSparkline: React.FC<{ datos: Array<{ total: number }>; color: string }> = ({ datos, color }) =>
+  datos.length > 1 ? (
+    <div className="h-10 w-24 shrink-0">
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={datos}>
+          <Line type="monotone" dataKey="total" stroke={color} strokeWidth={2} dot={false} isAnimationActive={false} />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  ) : null;
+
+/** Tarjeta KPI: icono grande + etiqueta arriba, numero grande, y una fila inferior
+ * opcional (variacion vs. periodo anterior + mini-sparkline, o cualquier otro contenido
+ * chico como la barra de progreso de Cupo de IA). */
+const KpiCardShell: React.FC<{
+  icon: React.ReactNode;
+  label: string;
+  accent: string;
+  value: React.ReactNode;
+  children?: React.ReactNode;
+}> = ({ icon, label, accent, value, children }) => (
+  <Card padding="sm" className="!p-4">
+    <div className="flex items-center gap-2.5">
+      <span
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
+        style={{ background: `color-mix(in srgb, ${accent} 14%, transparent)`, color: accent }}
+      >
+        {icon}
+      </span>
+      <span className="truncate text-sm font-bold text-[var(--text-secondary)]">{label}</span>
+    </div>
+    <div className="mt-2.5 text-3xl font-black leading-none text-[var(--text)]">{value}</div>
+    {children}
+  </Card>
+);
 
 interface DonutDatum {
   nombre: string;
@@ -107,9 +167,42 @@ const DonutCard: React.FC<{ titulo: string; subtitulo?: string; datos: DonutDatu
 // admin_veterinaria puede ademas aterrizar en un veterinario puntual de su equipo.
 const MetricsPanel: React.FC<{ rol?: Rol | null }> = ({ rol }) => {
   const [rango, setRango] = useState<string>('180');
+  const [customDesde, setCustomDesde] = useState<string>('');
+  const [customHasta, setCustomHasta] = useState<string>('');
   const [veterinarioId, setVeterinarioId] = useState<string>('');
   const [veterinariaId, setVeterinariaId] = useState<string>('');
-  const desde = rango ? fechaDesde(Number(rango)) : undefined;
+
+  const hoyStr = new Date().toISOString().slice(0, 10);
+  let desde: string | undefined;
+  let hasta: string | undefined;
+  if (rango === 'personalizado') {
+    desde = customDesde || undefined;
+    hasta = customHasta || undefined;
+  } else if (rango === 'todo') {
+    desde = undefined;
+    hasta = undefined;
+  } else if (rango === 'hoy') {
+    desde = hoyStr;
+    hasta = hoyStr;
+  } else {
+    desde = fechaDesde(Number(rango));
+    hasta = undefined;
+  }
+
+  // Periodo anterior de igual duracion, inmediatamente antes del actual — base para las
+  // variaciones (%) de las tarjetas KPI. Sin "desde" (rango "Todo") no hay comparacion posible.
+  const periodoAnterior = (() => {
+    if (!desde) return null;
+    const finActual = hasta ? new Date(`${hasta}T00:00:00`) : new Date();
+    const inicioActual = new Date(`${desde}T00:00:00`);
+    const duracionMs = Math.max(finActual.getTime() - inicioActual.getTime(), 0);
+    const finAnterior = new Date(inicioActual.getTime() - 24 * 60 * 60 * 1000);
+    const inicioAnterior = new Date(finAnterior.getTime() - duracionMs);
+    return {
+      desde: inicioAnterior.toISOString().slice(0, 10),
+      hasta: finAnterior.toISOString().slice(0, 10),
+    };
+  })();
 
   const esAdminVeterinaria = rol === 'admin_veterinaria';
   const esAdminEntidad = rol === 'admin_entidad';
@@ -117,7 +210,7 @@ const MetricsPanel: React.FC<{ rol?: Rol | null }> = ({ rol }) => {
   const equipo = useQuery({
     queryKey: ['metricas-equipo'],
     queryFn: listarVeterinariosBackoffice,
-    enabled: esAdminVeterinaria,
+    enabled: esAdminVeterinaria || esAdminEntidad,
   });
 
   const sedes = useQuery({
@@ -127,9 +220,20 @@ const MetricsPanel: React.FC<{ rol?: Rol | null }> = ({ rol }) => {
   });
 
   const metricas = useQuery({
-    queryKey: ['metricas', desde, veterinarioId, veterinariaId],
+    queryKey: ['metricas', desde, hasta, veterinarioId, veterinariaId],
     queryFn: () =>
-      obtenerMetricas({ desde, veterinarioId: veterinarioId || undefined, veterinariaId: veterinariaId || undefined }),
+      obtenerMetricas({ desde, hasta, veterinarioId: veterinarioId || undefined, veterinariaId: veterinariaId || undefined }),
+  });
+  const metricasAnterior = useQuery({
+    queryKey: ['metricas-anterior', periodoAnterior?.desde, periodoAnterior?.hasta, veterinarioId, veterinariaId],
+    queryFn: () =>
+      obtenerMetricas({
+        desde: periodoAnterior?.desde,
+        hasta: periodoAnterior?.hasta,
+        veterinarioId: veterinarioId || undefined,
+        veterinariaId: veterinariaId || undefined,
+      }),
+    enabled: !!periodoAnterior,
   });
   const consumo = useQuery({ queryKey: ['consumo'], queryFn: obtenerConsumo });
 
@@ -150,7 +254,7 @@ const MetricsPanel: React.FC<{ rol?: Rol | null }> = ({ rol }) => {
 
   const m = metricas.data;
   const c = consumo.data;
-  const topDiagnosticos = [...(m.topDiagnosticos ?? [])].reverse(); // barras horizontales: el mayor arriba
+  const topDiagnosticos = m.topDiagnosticos ?? []; // ya viene ordenado descendente desde el backend
   const especies = (m.distribucionEspecies ?? []).map((e) => ({ nombre: e.clave, valor: e.total }));
   const pacientesPorMes = m.pacientesPorMes ?? [];
   const consultasPorMes = m.consultasPorMes ?? [];
@@ -172,7 +276,7 @@ const MetricsPanel: React.FC<{ rol?: Rol | null }> = ({ rol }) => {
     Consultas: v.total,
     'Historias IA': consumoPorVetMap.get(v.veterinarioId) ?? 0,
   }));
-  const mostrarRendimiento = esAdminVeterinaria && !veterinarioId && rendimientoPorVet.length > 0;
+  const mostrarRendimiento = (esAdminVeterinaria || esAdminEntidad) && !veterinarioId && rendimientoPorVet.length > 0;
 
   const vacunacionDatos: DonutDatum[] = [
     { nombre: 'Al día', valor: m.vacunasAlDia ?? 0 },
@@ -182,6 +286,7 @@ const MetricsPanel: React.FC<{ rol?: Rol | null }> = ({ rol }) => {
   const agendaDatos: DonutDatum[] = [
     { nombre: 'Realizadas', valor: m.citasRealizadas ?? 0 },
     { nombre: 'Programadas', valor: m.citasProgramadas ?? 0 },
+    { nombre: 'En atención', valor: m.citasEnAtencion ?? 0 },
     { nombre: 'No asistió', valor: m.citasNoAsistio ?? 0 },
     { nombre: 'Canceladas', valor: m.citasCanceladas ?? 0 },
   ];
@@ -194,6 +299,13 @@ const MetricsPanel: React.FC<{ rol?: Rol | null }> = ({ rol }) => {
   const usadosIa = m.soapUsados ?? c?.usados ?? 0;
   const limiteIa = m.soapLimite ?? c?.limite ?? 0;
   const porcentajeIa = limiteIa > 0 ? Math.min(100, Math.round((usadosIa / limiteIa) * 100)) : 0;
+
+  const mAnt = metricasAnterior.data;
+  const citasCerradas = (m.citasRealizadas ?? 0) + (m.citasNoAsistio ?? 0);
+  const tasaAsistencia = citasCerradas > 0 ? Math.round(((m.citasRealizadas ?? 0) / citasCerradas) * 100) : null;
+  const citasCerradasAnt = (mAnt?.citasRealizadas ?? 0) + (mAnt?.citasNoAsistio ?? 0);
+  const tasaAsistenciaAnt =
+    citasCerradasAnt > 0 ? Math.round(((mAnt?.citasRealizadas ?? 0) / citasCerradasAnt) * 100) : undefined;
 
   return (
     <div className="grid gap-4">
@@ -213,7 +325,7 @@ const MetricsPanel: React.FC<{ rol?: Rol | null }> = ({ rol }) => {
             ))}
           </select>
         )}
-        {esAdminVeterinaria && (
+        {(esAdminVeterinaria || esAdminEntidad) && (
           <select
             value={veterinarioId}
             onChange={(e) => setVeterinarioId(e.target.value)}
@@ -240,30 +352,58 @@ const MetricsPanel: React.FC<{ rol?: Rol | null }> = ({ rol }) => {
             </option>
           ))}
         </select>
+        {rango === 'personalizado' && (
+          <>
+            <input
+              type="date"
+              value={customDesde}
+              max={customHasta || hoyStr}
+              onChange={(e) => setCustomDesde(e.target.value)}
+              aria-label="Desde"
+              className="min-h-9 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 outline-none focus:border-accent"
+            />
+            <span className="text-xs text-[var(--muted)]">–</span>
+            <input
+              type="date"
+              value={customHasta}
+              min={customDesde}
+              max={hoyStr}
+              onChange={(e) => setCustomHasta(e.target.value)}
+              aria-label="Hasta"
+              className="min-h-9 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 outline-none focus:border-accent"
+            />
+          </>
+        )}
       </div>
 
-      <div className="grid grid-cols-3 gap-2 sm:gap-3">
-        <Card padding="sm">
-          <span className="mb-1 inline-block h-1.5 w-5 rounded-full" style={{ background: NAVY }} />
-          <div className="text-[10px] font-semibold leading-tight text-[var(--muted)] sm:text-xs">Cantidad de pacientes</div>
-          <div className="mt-1 text-lg font-black text-[var(--text)] sm:text-2xl">{m.pacientes}</div>
-        </Card>
-        <Card padding="sm">
-          <span className="mb-1 inline-block h-1.5 w-5 rounded-full" style={{ background: CYAN }} />
-          <div className="text-[10px] font-semibold leading-tight text-[var(--muted)] sm:text-xs">Cantidad de consultas</div>
-          <div className="mt-1 text-lg font-black text-[var(--text)] sm:text-2xl">{m.consultas}</div>
-        </Card>
-        <Card padding="sm">
-          <span className="mb-1 inline-block h-1.5 w-5 rounded-full" style={{ background: c?.bloqueado ? RED : LIME }} />
-          <div className="text-[10px] font-semibold leading-tight text-[var(--muted)] sm:text-xs">Cupo de IA</div>
-          <div className="mt-1 text-lg font-black text-[var(--text)] sm:text-2xl">
-            {usadosIa}
-            <span className="text-[10px] font-normal text-[var(--muted)] sm:text-sm"> /{limiteIa}</span>
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {/* "Total pacientes" es un conteo acumulado (no se filtra por fecha en el backend
+            a proposito: es el total de la cuenta, no algo que fluctue por periodo), asi
+            que no tiene sentido mostrarle una variacion vs. periodo anterior — siempre
+            daria 0%. Solo se muestra la mini-tendencia de altas por mes. */}
+        <KpiCardShell icon={<Users className="h-5 w-5" />} label="Total pacientes" accent={NAVY} value={m.pacientes}>
+          <div className="mt-2 flex items-end justify-end gap-2">
+            <MiniSparkline datos={pacientesPorMes} color={NAVY} />
           </div>
-          <div className="mt-1.5 flex items-center justify-between text-[10px] font-semibold text-[var(--muted)] sm:text-xs">
-            <span>{porcentajeIa}%</span>
+        </KpiCardShell>
+        <KpiCardShell icon={<Stethoscope className="h-5 w-5" />} label="Total consultas" accent={CYAN} value={m.consultas}>
+          <div className="mt-2 flex items-end justify-between gap-2">
+            <DeltaBadge deltaPct={calcDelta(m.consultas, mAnt?.consultas)} />
+            <MiniSparkline datos={consultasPorMes} color={CYAN} />
           </div>
-          <div className="mt-1" style={{ height: 6, borderRadius: 999, background: 'var(--surface-2)' }}>
+        </KpiCardShell>
+        <KpiCardShell
+          icon={<Sparkles className="h-5 w-5" />}
+          label="Cupo de IA"
+          accent={c?.bloqueado ? RED : LIME}
+          value={
+            <>
+              {usadosIa}
+              <span className="text-sm font-normal text-[var(--muted)]"> /{limiteIa}</span>
+            </>
+          }
+        >
+          <div className="mt-2" style={{ height: 6, borderRadius: 999, background: 'var(--surface-2)' }}>
             <div
               style={{
                 height: 6,
@@ -273,7 +413,18 @@ const MetricsPanel: React.FC<{ rol?: Rol | null }> = ({ rol }) => {
               }}
             />
           </div>
-        </Card>
+          <div className="mt-1 text-[11px] font-semibold text-[var(--muted)]">{porcentajeIa}% usado</div>
+        </KpiCardShell>
+        <KpiCardShell
+          icon={<CalendarClock className="h-5 w-5" />}
+          label="Tasa de asistencia"
+          accent="var(--success)"
+          value={tasaAsistencia !== null ? `${tasaAsistencia}%` : '—'}
+        >
+          <div className="mt-2">
+            <DeltaBadge deltaPct={tasaAsistencia !== null ? calcDelta(tasaAsistencia, tasaAsistenciaAnt) : null} />
+          </div>
+        </KpiCardShell>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -296,23 +447,32 @@ const MetricsPanel: React.FC<{ rol?: Rol | null }> = ({ rol }) => {
 
         <Card className="premium-card">
           <SectionHeader title="Top 5 diagnósticos" description="Consultas aprobadas en el rango seleccionado." />
-          <div className="mt-4 h-52">
+          {/* Lista HTML en vez de grafico SVG: con la tarjeta angosta (va a media pantalla,
+              al lado de la evolucion), el eje de categorias de Recharts recortaba los
+              nombres a "..." ilegibles sin forma confiable de darles mas espacio. Con
+              texto real se puede leer completo (truncate + title si no cabe) y a un
+              tamano de letra normal, no los 9-10px que usaba el grafico. */}
+          <div className="mt-4 space-y-3">
             {topDiagnosticos.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={topDiagnosticos} layout="vertical" margin={{ left: 12 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
-                  <XAxis type="number" tick={axisTick} axisLine={false} tickLine={false} allowDecimals={false} />
-                  <YAxis type="category" dataKey="nombre" tick={axisTick} axisLine={false} tickLine={false} width={140} />
-                  <Tooltip contentStyle={tooltipStyle} />
-                  <Bar dataKey="total" radius={[0, 4, 4, 0]}>
-                    {topDiagnosticos.map((entry, index) => (
-                      <Cell key={entry.nombre} fill={index === topDiagnosticos.length - 1 ? NAVY : CYAN} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+              (() => {
+                const maxTotal = Math.max(...topDiagnosticos.map((d) => d.total), 1);
+                return topDiagnosticos.map((d, index) => (
+                  <div key={d.nombre} className="flex items-center gap-3">
+                    <span className="w-2/5 shrink-0 truncate text-sm font-semibold text-[var(--text)]" title={d.nombre}>
+                      {d.nombre}
+                    </span>
+                    <div className="h-3 flex-1 overflow-hidden rounded-full bg-[var(--surface-2)]">
+                      <div
+                        className="h-3 rounded-full"
+                        style={{ width: `${Math.max((d.total / maxTotal) * 100, 6)}%`, background: index === 0 ? NAVY : CYAN }}
+                      />
+                    </div>
+                    <span className="w-6 shrink-0 text-right text-sm font-black text-[var(--text)]">{d.total}</span>
+                  </div>
+                ));
+              })()
             ) : (
-              <div className="flex h-full items-center justify-center text-xs text-[var(--muted)]">Sin diagnósticos todavía.</div>
+              <div className="flex h-40 items-center justify-center text-xs text-[var(--muted)]">Sin diagnósticos todavía.</div>
             )}
           </div>
         </Card>
