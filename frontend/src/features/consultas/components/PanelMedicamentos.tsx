@@ -15,21 +15,23 @@ const PanelMedicamentos: React.FC<Props> = ({ consulta, onAddMedToPlan }) => {
   if (!visible) return null;
 
   return (
-    <div className="premium-card space-y-5 p-6">
-      <div className="flex items-center gap-3 border-b border-[var(--border)] pb-3">
-        <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[var(--accent-soft)] text-[var(--accent)]">
+    <div className="premium-card space-y-3.5 p-4">
+      <div className="flex items-center gap-2.5 border-b border-[var(--border)] pb-2.5">
+        <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[var(--accent-soft)] text-[var(--accent)]">
           <Sparkles className="h-4 w-4" />
         </span>
         <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[var(--accent)]">Plan terapeutico</p>
-          <h3 className="text-sm font-black text-[var(--text)]">Medicamentos sugeridos por IA</h3>
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[var(--accent)]">Sugerencia de IA</p>
+          <h3 className="text-sm font-black text-[var(--text)]">Medicamentos sugeridos</h3>
         </div>
       </div>
 
       <div className="flex items-start gap-3 rounded-xl border border-[color-mix(in_srgb,var(--warn)_25%,var(--border))] bg-[var(--warn-soft)] p-3">
         <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[var(--warn)]" />
         <span className="text-xs font-medium leading-relaxed text-[var(--warn)]">
-          Sugerencias de IA. Validar antes de prescribir y agregar al plan terapéutico.
+          Esto es un borrador de la IA, no el registro oficial. Valida cada medicamento y usa{' '}
+          <FilePlus className="inline h-3 w-3 -translate-y-px" aria-hidden /> para agregarlo al Plan (P) — solo lo
+          que quede ahí se imprime, envía por correo o WhatsApp.
         </span>
       </div>
 

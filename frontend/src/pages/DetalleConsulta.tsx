@@ -513,8 +513,8 @@ const DetalleConsulta: React.FC = () => {
   const iaFallida = consulta.estado !== 'aprobada' && consulta.soap?.generadoPorIA === false;
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="command-hero p-4 sm:p-5 lg:p-6">
+    <div className="space-y-5 animate-fade-in">
+      <div className="command-hero p-4 sm:p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="flex min-w-0 items-start gap-3 sm:gap-4">
             <Link
@@ -580,14 +580,14 @@ const DetalleConsulta: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <ColumnaIzquierda
           consulta={consulta}
           editData={editData}
           onChangeEditData={setEditData}
         />
 
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-5">
           {consulta.estado === 'procesando' ? (
             <div className="space-y-4 rounded-2xl border border-slate-200/70 bg-white p-12 text-center shadow-[0_14px_35px_-30px_rgba(15,23,42,0.45)]">
               <div className="h-10 w-10 animate-spin rounded-full border-4 border-accent border-t-transparent mx-auto"></div>
@@ -621,7 +621,7 @@ const DetalleConsulta: React.FC = () => {
               )}
               {consulta.estado === 'borrador' && (
                 <div
-                  className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-[0_14px_35px_-30px_rgba(15,23,42,0.45)]"
+                  className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-[0_14px_35px_-30px_rgba(15,23,42,0.45)]"
                   data-tour="consulta-agregar-audio"
                 >
                   {mostrarAgregarAudio ? (
@@ -633,9 +633,9 @@ const DetalleConsulta: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setMostrarAgregarAudio(true)}
-                      className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 py-3 text-sm font-bold text-slate-600 transition hover:border-accent hover:text-accent"
+                      className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 py-2.5 text-xs font-bold text-slate-600 transition hover:border-accent hover:text-accent"
                     >
-                      <Sparkles className="h-4 w-4" />
+                      <Sparkles className="h-3.5 w-3.5" />
                       Agregar más audio a esta consulta
                     </button>
                   )}
@@ -656,10 +656,22 @@ const DetalleConsulta: React.FC = () => {
               <PanelMedicamentos consulta={consulta} onAddMedToPlan={handleAddMedToPlan} />
 
               <div
-                className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-[0_14px_35px_-30px_rgba(15,23,42,0.45)] space-y-3"
+                className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-[0_14px_35px_-30px_rgba(15,23,42,0.45)] space-y-2.5"
                 data-tour="consulta-examenes"
               >
-                <h3 className="text-sm font-extrabold text-slate-800">Exámenes complementarios</h3>
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="text-sm font-extrabold text-slate-800">Exámenes complementarios</h3>
+                  {!mostrarSubirExamen && (
+                    <button
+                      type="button"
+                      onClick={() => setMostrarSubirExamen(true)}
+                      className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-dashed border-slate-300 px-2.5 py-1.5 text-[11px] font-bold text-slate-500 transition hover:border-accent hover:text-accent"
+                    >
+                      <Upload className="h-3 w-3" />
+                      Agregar
+                    </button>
+                  )}
+                </div>
 
                 {consulta.examenes?.length ? (
                   <ul className="space-y-2">
@@ -671,10 +683,10 @@ const DetalleConsulta: React.FC = () => {
                     ))}
                   </ul>
                 ) : (
-                  <p className="text-xs text-slate-400">Sin exámenes subidos todavía.</p>
+                  !mostrarSubirExamen && <p className="text-xs text-slate-400">Sin exámenes subidos todavía.</p>
                 )}
 
-                {mostrarSubirExamen ? (
+                {mostrarSubirExamen && (
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                     <input
                       type="text"
@@ -699,15 +711,6 @@ const DetalleConsulta: React.FC = () => {
                       {isSubiendoExamen ? 'Subiendo...' : 'Subir resultado'}
                     </button>
                   </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setMostrarSubirExamen(true)}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 py-3 text-sm font-bold text-slate-600 transition hover:border-accent hover:text-accent"
-                  >
-                    <Upload className="h-4 w-4" />
-                    Agregar resultado de examen (PDF o imagen)
-                  </button>
                 )}
               </div>
             </>

@@ -10,7 +10,7 @@ interface Props {
   onChangeEditData: (data: EditDataConsulta) => void;
 }
 
-const panelClass = 'premium-card space-y-3 p-5';
+const panelClass = 'premium-card space-y-2.5 p-4';
 const panelTitleClass =
   'flex items-center justify-between border-b border-[var(--border)] pb-2.5 text-sm font-bold text-[var(--text)]';
 

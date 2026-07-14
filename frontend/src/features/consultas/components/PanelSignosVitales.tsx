@@ -23,7 +23,7 @@ const PanelSignosVitales: React.FC<Props> = ({ consulta, signosVitales, onChange
   if (consulta.estado !== 'borrador' && !hayVitales) return null;
 
   return (
-    <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-3">
+    <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-2.5">
       <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2 border-b border-slate-50 pb-2">
         <Activity className="h-4 w-4 text-accent" />
         Signos Vitales

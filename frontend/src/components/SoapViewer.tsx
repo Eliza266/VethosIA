@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import type { SOAP } from '../types';
-import { Edit2, Save, X, BookOpen, Activity, FileSearch, Calendar } from 'lucide-react';
+import { Edit2, Save, X, BookOpen, Activity, FileSearch, Calendar, ChevronDown } from 'lucide-react';
+
+// Un texto largo (parrafo dictado, analisis extenso) no debe hacer crecer la tarjeta sin
+// limite: mas alla de este umbral se recorta con line-clamp y se ofrece "Ver mas/menos".
+const UMBRAL_TEXTO_LARGO = 220;
 
 interface SoapViewerProps {
   soap?: SOAP;
@@ -19,6 +23,7 @@ const SoapViewer: React.FC<SoapViewerProps> = ({ soap, onSave }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editSoap, setEditSoap] = useState<SOAP>(() => toEditableSoap(soap));
   const [isSaving, setIsSaving] = useState(false);
+  const [expandido, setExpandido] = useState<Record<string, boolean>>({});
   const visibleSoap = isEditing ? editSoap : toEditableSoap(soap);
 
   if (!soap && !isEditing) {
@@ -96,7 +101,7 @@ const SoapViewer: React.FC<SoapViewerProps> = ({ soap, onSave }) => {
 
   return (
     <div className="soap-intelligence-card overflow-hidden">
-      <div className="flex flex-col gap-3 border-b border-slate-200/70 bg-gradient-to-r from-slate-950 via-[#073f36] to-[#173b73] px-5 py-5 text-white sm:flex-row sm:items-center sm:justify-between sm:px-6">
+      <div className="flex flex-col gap-3 border-b border-slate-200/70 bg-gradient-to-r from-slate-950 via-[#073f36] to-[#173b73] px-4 py-3.5 text-white sm:flex-row sm:items-center sm:justify-between sm:px-5">
         <div>
           <p className="text-[10px] font-black uppercase tracking-[0.18em] text-emerald-100">Expediente inteligente</p>
           <h3 className="mt-1 font-black text-white">Nota Medica SOAP</h3>
@@ -139,12 +144,16 @@ const SoapViewer: React.FC<SoapViewerProps> = ({ soap, onSave }) => {
         )}
       </div>
 
-      <div className="space-y-6 p-5 sm:p-6">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        {soapSections.map((sec) => (
+      <div className="space-y-4 p-4 sm:p-5">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        {soapSections.map((sec) => {
+          const texto = visibleSoap[sec.key] as string;
+          const esLargo = texto.length > UMBRAL_TEXTO_LARGO;
+          const verMas = expandido[sec.key] ?? false;
+          return (
           <div
             key={sec.key}
-            className={`flex flex-col rounded-3xl border p-4 transition-all shadow-[0_18px_40px_-34px_rgba(7,17,31,0.55)] ${sec.bgColor} ${sec.borderColor}`}
+            className={`flex flex-col rounded-2xl border p-3.5 transition-all shadow-[0_18px_40px_-34px_rgba(7,17,31,0.55)] ${sec.bgColor} ${sec.borderColor}`}
           >
             <div className="flex items-center gap-2 mb-2">
               <span className="p-1.5 rounded-lg bg-white shadow-sm border border-slate-100">
@@ -155,7 +164,7 @@ const SoapViewer: React.FC<SoapViewerProps> = ({ soap, onSave }) => {
                 <p className="text-[10px] text-slate-400 font-medium">{sec.subtitle}</p>
               </div>
             </div>
-            
+
             {isEditing ? (
               <textarea
                 name={sec.key}
@@ -166,12 +175,29 @@ const SoapViewer: React.FC<SoapViewerProps> = ({ soap, onSave }) => {
                 placeholder={`Detalles para el apartado ${sec.title}...`}
               />
             ) : (
-              <p className="mt-2 flex-1 whitespace-pre-line rounded-xl border border-white/80 bg-white/70 p-3 text-sm leading-relaxed text-slate-600">
-                {(visibleSoap[sec.key] as string) || <span className="italic text-slate-400">Sin registrar</span>}
-              </p>
+              <div className="mt-2 flex-1 rounded-xl border border-white/80 bg-white/70 p-3">
+                <p
+                  className={`whitespace-pre-line text-sm leading-relaxed text-slate-600 ${
+                    esLargo && !verMas ? 'line-clamp-4' : ''
+                  }`}
+                >
+                  {texto || <span className="italic text-slate-400">Sin registrar</span>}
+                </p>
+                {esLargo && (
+                  <button
+                    type="button"
+                    onClick={() => setExpandido((prev) => ({ ...prev, [sec.key]: !verMas }))}
+                    className="mt-1.5 flex items-center gap-1 text-xs font-bold text-[var(--accent)] hover:underline"
+                  >
+                    {verMas ? 'Ver menos' : 'Ver más'}
+                    <ChevronDown className={`h-3 w-3 transition-transform ${verMas ? 'rotate-180' : ''}`} />
+                  </button>
+                )}
+              </div>
             )}
           </div>
-        ))}
+          );
+        })}
         </div>
       </div>
     </div>
