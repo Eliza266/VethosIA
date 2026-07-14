@@ -312,6 +312,38 @@ describe('PdfService', () => {
     );
   });
 
+  it('usa el logo/nombre de veterinarias/{id} (backoffice v2) por encima de organizaciones/{orgId} (legacy)', async () => {
+    delete process.env.FIRESTORE_EMULATOR_HOST;
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      arrayBuffer: async () => new Uint8Array([1, 2, 3]).buffer,
+    });
+    const originalFetch = global.fetch;
+    global.fetch = fetchMock as unknown as typeof fetch;
+    try {
+      const { svc, storage } = build(
+        { id: 'c1', estado: 'aprobada', pacienteId: 'p1', orgId: 'orgA', veterinarioId: 'u1', veterinariaId: 'vetA' },
+        {
+          'veterinarias/vetA': {
+            nombre: 'Clínica Demo',
+            ciudad: 'Bucaramanga',
+            telefono: '+57 3117652435',
+            logoUrl: 'https://storage.test/logos-veterinaria/orgA/logo.png',
+          },
+        },
+      );
+      await svc.generar('c1', user);
+      expect(fetchMock).toHaveBeenCalledWith('https://storage.test/logos-veterinaria/orgA/logo.png');
+      expect(storage.subirBuffer).toHaveBeenCalledWith(
+        'historiales/orgA/c1.pdf',
+        expect.any(Buffer),
+        'application/pdf',
+      );
+    } finally {
+      global.fetch = originalFetch;
+    }
+  });
+
   it('exporta aprobada sin emulador: sube PDF y devuelve signed URL de Storage', async () => {
     delete process.env.FIRESTORE_EMULATOR_HOST;
     const { svc, storage, auditoria } = build({

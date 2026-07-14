@@ -201,14 +201,15 @@ export class PdfService {
       throw new BadRequestException('Solo se pueden exportar historias aprobadas.');
     }
 
-    const [consultaRaw, paciente, vet, entidad] = await Promise.all([
+    const [consultaRaw, paciente, vet, entidad, veterinaria] = await Promise.all([
       this.leerDoc(COLLECTIONS.consultas, consultaId),
       this.leerDoc(COLLECTIONS.pacientes, consulta.pacienteId),
       this.leerDoc(COLLECTIONS.veterinarios, consulta.veterinarioId),
       this.leerDoc(COLLECTIONS.organizaciones, consulta.orgId),
+      this.leerDoc(COLLECTIONS.veterinarias, consulta.veterinariaId),
     ]);
 
-    const modelo = this.construirModelo(consultaRaw, paciente, vet, entidad);
+    const modelo = this.construirModelo(consultaRaw, paciente, vet, this.fusionarEntidad(entidad, veterinaria));
     const logoEntidad = await this.obtenerLogoEntidad(modelo.entidad.logoUrl);
     const buffer = await this.render(modelo, { logoEntidad });
     const tenant = consulta.orgId ?? particionTenant(user, consulta);
@@ -253,6 +254,18 @@ export class PdfService {
     const { buffer } = await this.storage.descargar(path);
     const numero = consulta.numeroHC ?? consultaId;
     return { buffer, filename: `HC_${numero}.pdf` };
+  }
+
+  // El nombre/logo/ciudad/telefono que edita el admin_veterinaria desde Configuracion se
+  // guardan en veterinarias/{id} (backoffice v2), NO en organizaciones/{orgId} (modelo legacy
+  // que sigue leyendo el resto de esta clase). Sin esta fusion, un logo recien subido nunca
+  // aparecia en el PDF porque se leia del doc equivocado. veterinaria pisa a entidad cuando
+  // trae el campo; si no existe (id vacio o doc no encontrado) esto es un no-op.
+  private fusionarEntidad(
+    entidad: Record<string, unknown>,
+    veterinaria: Record<string, unknown>,
+  ): Record<string, unknown> {
+    return { ...entidad, ...veterinaria };
   }
 
   /** Descarga el logo de la veterinaria para embeberlo en el encabezado; null si falla o no hay. */
@@ -463,11 +476,13 @@ export class PdfService {
     }
 
     const orgId = (paciente.orgId as string | undefined) ?? user.orgId;
-    const [vet, entidad] = await Promise.all([
+    const [vet, entidad, veterinaria] = await Promise.all([
       this.leerDoc(COLLECTIONS.veterinarios, (paciente.veterinarioId as string) ?? user.uid),
       this.leerDoc(COLLECTIONS.organizaciones, orgId),
+      this.leerDoc(COLLECTIONS.veterinarias, paciente.veterinariaId as string | undefined),
     ]);
-    const modelos = aprobadasScope.map((c) => this.construirModelo(c, paciente, vet, entidad));
+    const entidadCombinada = this.fusionarEntidad(entidad, veterinaria);
+    const modelos = aprobadasScope.map((c) => this.construirModelo(c, paciente, vet, entidadCombinada));
     const logoEntidad = await this.obtenerLogoEntidad(modelos[0]?.entidad.logoUrl ?? null);
     const buffer = await this.renderHistorial(modelos, logoEntidad);
 
