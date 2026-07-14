@@ -41,10 +41,30 @@ describe('AccesoService', () => {
     await expect(svc.validarEmailPermitido('a@b.com')).rejects.toBeInstanceOf(ForbiddenException);
   });
 
-  it('fail-closed 503 si falla la lectura', async () => {
+  it('fail-closed 503 si falla la lectura en todos los reintentos', async () => {
     const { svc } = build({ exists: true, throws: true });
     await expect(svc.validarEmailPermitido('a@b.com')).rejects.toBeInstanceOf(
       ServiceUnavailableException,
     );
+  });
+
+  it('se recupera de un fallo transitorio de Firestore sin tumbar el login', async () => {
+    let intentos = 0;
+    const get = jest.fn(async () => {
+      intentos += 1;
+      if (intentos < 3) throw new Error('firestore blip transitorio');
+      return { exists: true, data: () => ({ emailsPermitidos: ['a@b.com'] }) };
+    });
+    const firebase = {
+      firestore: {
+        collection: jest.fn(() => ({
+          doc: jest.fn(() => ({ get })),
+        })),
+      },
+    } as unknown as FirebaseService;
+    const svc = new AccesoService(firebase);
+
+    await expect(svc.validarEmailPermitido('a@b.com')).resolves.toBeUndefined();
+    expect(get).toHaveBeenCalledTimes(3);
   });
 });
