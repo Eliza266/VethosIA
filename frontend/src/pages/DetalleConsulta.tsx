@@ -179,15 +179,17 @@ const DetalleConsulta: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [consultaId, consulta?.estado]);
 
-  const handleSaveSoap = async (updatedSoap: SOAP) => {
-    if (!consultaId) return;
+  const handleSaveSoap = async (updatedSoap: SOAP): Promise<boolean> => {
+    if (!consultaId) return false;
     try {
       const ok = await actualizarConsulta(consultaId, { soap: updatedSoap });
       if (ok) setConsulta((prev) => (prev ? { ...prev, soap: updatedSoap } : null));
       else throw new Error('No se pudo guardar la nota en la base de datos.');
+      return ok;
     } catch (err) {
       console.error(err);
       toast(getErrorMessage(err, 'Error al actualizar la nota SOAP.'), 'error');
+      return false;
     }
   };
 
@@ -380,7 +382,8 @@ const DetalleConsulta: React.FC = () => {
     const currentPlan = consulta.soap.plan || '';
     const medLine = `• ${med.nombre} | ${med.dosis} | ${med.via} | ${med.frecuencia} | ${med.duracion}`;
     const newPlan = currentPlan ? `${currentPlan}\n${medLine}` : medLine;
-    await handleSaveSoap({ ...consulta.soap, plan: newPlan });
+    const ok = await handleSaveSoap({ ...consulta.soap, plan: newPlan });
+    if (ok) toast(`${med.nombre} agregado al Plan.`, 'success');
   };
 
   // Datos del vet para el PDF: perfil de la clinica con fallback al user logueado.

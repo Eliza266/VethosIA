@@ -8,7 +8,7 @@ const UMBRAL_TEXTO_LARGO = 220;
 
 interface SoapViewerProps {
   soap?: SOAP;
-  onSave?: (updatedSoap: SOAP) => Promise<void>;
+  onSave?: (updatedSoap: SOAP) => Promise<boolean>;
 }
 
 const toEditableSoap = (soap?: SOAP): SOAP => ({
