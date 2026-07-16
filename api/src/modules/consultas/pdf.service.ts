@@ -1,6 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import * as admin from 'firebase-admin';
 import * as fs from 'fs';
 import * as path from 'path';
+import { randomBytes } from 'node:crypto';
 import PDFDocument from 'pdfkit';
 import { FirebaseService } from '../../common/firebase/firebase.service';
 import { COLLECTIONS } from '../../common/firebase/collections';
@@ -286,7 +288,45 @@ export class PdfService {
     if (cfg.useEmulators) {
       return `http://127.0.0.1:${cfg.port}/${cfg.apiPrefix}/consultas/${consultaId}/pdf/download`;
     }
-    return this.storage.signedUrl(storagePath);
+    return this.crearLinkPublico(storagePath);
+  }
+
+  // Duracion del link corto compartible (WhatsApp/correo). Independiente del vencimiento
+  // de la signed URL real de Storage: esa se regenera fresca en cada clic (ver
+  // resolverLinkPublico), asi que el propietario de la mascota nunca ve el link largo de
+  // Google ni su error crudo al vencer.
+  private static readonly DURACION_LINK_PUBLICO_MS = 30 * 24 * 60 * 60 * 1000;
+
+  /**
+   * Crea un link corto propio (dominio del frontend) que resuelve a un PDF en Storage.
+   * En vez del signed URL de Google (larguisimo, y cuyo error de vencimiento no podemos
+   * personalizar), el propietario recibe un link corto nuestro; al abrirlo, el frontend
+   * consulta si sigue vigente y muestra un mensaje propio si ya vencio.
+   */
+  private async crearLinkPublico(storagePath: string): Promise<string> {
+    const token = randomBytes(9).toString('base64url');
+    const expiraEn = new Date(Date.now() + PdfService.DURACION_LINK_PUBLICO_MS);
+    await this.firebase.firestore.collection(COLLECTIONS.pdfLinks).doc(token).set({
+      storagePath,
+      expiraEn,
+      creadoEn: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    const cfg = loadAppConfig();
+    return `${cfg.frontendUrl}/pdf/${token}`;
+  }
+
+  /** Resuelve un token de link publico: null si no existe o ya vencio. */
+  async resolverLinkPublico(token: string): Promise<{ ok: true; downloadUrl: string } | { ok: false }> {
+    const snap = await this.firebase.firestore.collection(COLLECTIONS.pdfLinks).doc(token).get();
+    if (!snap.exists) return { ok: false };
+    const data = snap.data() as { storagePath?: string; expiraEn?: FirebaseFirestore.Timestamp | Date };
+    if (!data.storagePath || !data.expiraEn) return { ok: false };
+    const expira = data.expiraEn instanceof Date ? data.expiraEn : data.expiraEn.toDate();
+    if (expira.getTime() < Date.now()) return { ok: false };
+    // Signed URL real, de corta duracion: solo se genera al momento del clic, nunca se
+    // expone en el link que se comparte.
+    const downloadUrl = await this.storage.signedUrl(data.storagePath, 5 * 60 * 1000);
+    return { ok: true, downloadUrl };
   }
 
   // Modelo puro a partir de los docs crudos (testeable sin renderizar el PDF).
@@ -489,7 +529,11 @@ export class PdfService {
     const tenant = orgId ?? particionTenant(user, paciente as { orgId?: string; veterinarioId?: string });
     const path = `historiales/${tenant}/paciente-${pacienteId}.pdf`;
     await this.storage.subirBuffer(path, buffer, 'application/pdf');
-    const url = await this.storage.signedUrl(path);
+    // En emulador, signedUrl() ya devuelve una URL directa del emulador; en prod usamos
+    // nuestro link corto propio (ver crearLinkPublico) en vez del signed URL de Google.
+    const url = loadAppConfig().useEmulators
+      ? await this.storage.signedUrl(path)
+      : await this.crearLinkPublico(path);
 
     await this.auditoria.registrar({
       accion: 'pdf.exportar',

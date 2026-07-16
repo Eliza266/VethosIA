@@ -165,7 +165,13 @@ function build(consulta: ConsultaDoc, extraDocs: Record<string, Record<string, u
   const firestore = {
     collection: (col: string) => ({
       doc: (id: string) => ({
-        get: async () => ({ data: () => fbDocs[`${col}/${id}`] }),
+        get: async () => ({
+          exists: fbDocs[`${col}/${id}`] !== undefined,
+          data: () => fbDocs[`${col}/${id}`],
+        }),
+        set: async (data: Record<string, unknown>) => {
+          fbDocs[`${col}/${id}`] = data;
+        },
       }),
       where: (campo: string, op: string, val: unknown) => query(col).where(campo, op, val),
     }),
@@ -344,7 +350,7 @@ describe('PdfService', () => {
     }
   });
 
-  it('exporta aprobada sin emulador: sube PDF y devuelve signed URL de Storage', async () => {
+  it('exporta aprobada sin emulador: sube PDF y devuelve link publico corto (no el signed URL de Storage)', async () => {
     delete process.env.FIRESTORE_EMULATOR_HOST;
     const { svc, storage, auditoria } = build({
       id: 'c1',
@@ -354,16 +360,21 @@ describe('PdfService', () => {
       veterinarioId: 'u1',
     });
     const res = await svc.generar('c1', user);
-    expect(res.url).toContain('historiales/orgA/c1.pdf');
+    expect(res.url).toMatch(/^https:\/\/vethosia-5895b\.web\.app\/pdf\/[\w-]+$/);
     expect(storage.subirBuffer).toHaveBeenCalledWith(
       'historiales/orgA/c1.pdf',
       expect.any(Buffer),
       'application/pdf',
     );
-    expect(storage.signedUrl).toHaveBeenCalledWith('historiales/orgA/c1.pdf');
+    expect(storage.signedUrl).not.toHaveBeenCalled();
     expect(auditoria.registrar).toHaveBeenCalledWith(
       expect.objectContaining({ accion: 'pdf.exportar', recurso: 'c1' }),
     );
+
+    // El token del link corto resuelve, en el momento del clic, al PDF real subido.
+    const token = res.url.split('/pdf/')[1];
+    const resuelto = await svc.resolverLinkPublico(token);
+    expect(resuelto).toEqual({ ok: true, downloadUrl: 'https://signed/historiales/orgA/c1.pdf' });
   });
 
   it('historial completo solo incluye consultas aprobadas del scope clinico del paciente', async () => {
@@ -432,12 +443,18 @@ describe('PdfService', () => {
 
     const res = await svc.generarHistorialCompleto('p1', adminVeterinariaV2);
 
-    expect(res.url).toContain('historiales/orgA/paciente-p1.pdf');
+    expect(res.url).toMatch(/^https:\/\/vethosia-5895b\.web\.app\/pdf\/[\w-]+$/);
     expect(storage.subirBuffer).toHaveBeenCalledWith(
       'historiales/orgA/paciente-p1.pdf',
       expect.any(Buffer),
       'application/pdf',
     );
+    const token = res.url.split('/pdf/')[1];
+    const resuelto = await svc.resolverLinkPublico(token);
+    expect(resuelto).toEqual({
+      ok: true,
+      downloadUrl: 'https://signed/historiales/orgA/paciente-p1.pdf',
+    });
     expect(auditoria.registrar).toHaveBeenCalledWith(
       expect.objectContaining({
         accion: 'pdf.exportar',
@@ -445,6 +462,25 @@ describe('PdfService', () => {
         meta: { historialCompleto: true, consultas: 1 },
       }),
     );
+  });
+
+  it('resolverLinkPublico: token inexistente -> ok:false', async () => {
+    const { svc } = build({ id: 'c1', estado: 'aprobada', pacienteId: 'p1', orgId: 'orgA' });
+    expect(await svc.resolverLinkPublico('token-que-no-existe')).toEqual({ ok: false });
+  });
+
+  it('resolverLinkPublico: token vencido -> ok:false, no genera signed URL', async () => {
+    const { svc, storage } = build(
+      { id: 'c1', estado: 'aprobada', pacienteId: 'p1', orgId: 'orgA' },
+      {
+        'pdfLinks/token-vencido': {
+          storagePath: 'historiales/orgA/c1.pdf',
+          expiraEn: new Date(Date.now() - 1000),
+        },
+      },
+    );
+    expect(await svc.resolverLinkPublico('token-vencido')).toEqual({ ok: false });
+    expect(storage.signedUrl).not.toHaveBeenCalled();
   });
 
   it('borrador NO es exportable', async () => {

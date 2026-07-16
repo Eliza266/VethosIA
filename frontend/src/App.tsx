@@ -33,6 +33,7 @@ import Vacunas from './pages/Vacunas';
 import Brigadas from './pages/Brigadas';
 import ComoFunciona from './pages/ComoFunciona';
 import Invitacion from './pages/Invitacion';
+import PdfPublico from './pages/PdfPublico';
 import AdminEntidad from './pages/AdminEntidad';
 import SuperAdmin from './pages/SuperAdmin';
 import Suscripcion from './pages/Suscripcion';
@@ -51,6 +52,7 @@ function App() {
               <Routes>
                 {/* Public Routes */}
                 <Route path="/login" element={<Login />} />
+                <Route path="/pdf/:token" element={<PdfPublico />} />
 
                 {/* Protected Routes */}
                 <Route element={<ProtectedRoute />}>

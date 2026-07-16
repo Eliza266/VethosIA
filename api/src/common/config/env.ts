@@ -12,6 +12,9 @@ export interface AppConfig {
   storageBucket: string;
   // si esta seteado, firebase-admin habla con los emuladores en vez de la nube real.
   useEmulators: boolean;
+  // Origen publico del frontend (Firebase Hosting), usado para armar los links cortos
+  // de PDF que se comparten por WhatsApp/correo (ver PdfService.crearLinkPublico).
+  frontendUrl: string;
 }
 
 export interface GeminiConfig {
@@ -69,6 +72,7 @@ export function loadAppConfig(): AppConfig {
     storageBucket: process.env.STORAGE_BUCKET ?? 'vethosia-5895b.firebasestorage.app',
     // si hay host de emulador de firestore, asumimos modo emulador.
     useEmulators: !!process.env.FIRESTORE_EMULATOR_HOST,
+    frontendUrl: (process.env.FRONTEND_URL ?? 'https://vethosia-5895b.web.app').replace(/\/$/, ''),
   };
 }
 

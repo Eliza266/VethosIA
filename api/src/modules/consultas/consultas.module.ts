@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConsultasController } from './consultas.controller';
+import { PdfLinkController } from './pdf-link.controller';
 import { ConsultasRepository } from './consultas.repository';
 import { ConsultasService } from './consultas.service';
 import { HcService } from './hc.service';
@@ -13,7 +14,7 @@ import { CitasModule } from '../citas/citas.module';
 
 @Module({
   imports: [EmailModule, StorageModule, IaModule, SaasModule, PlataformaModule, CitasModule],
-  controllers: [ConsultasController],
+  controllers: [ConsultasController, PdfLinkController],
   providers: [ConsultasRepository, ConsultasService, HcService, PdfService],
   exports: [ConsultasRepository, PdfService],
 })

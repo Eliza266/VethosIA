@@ -25,6 +25,7 @@ export const COLLECTIONS = {
   solicitudesTecnicas: 'solicitudesTecnicas',
   jobEventos: 'jobEventos',
   configuracion: 'configuracion',
+  pdfLinks: 'pdfLinks',
 } as const;
 
 export type CollectionName = (typeof COLLECTIONS)[keyof typeof COLLECTIONS];
