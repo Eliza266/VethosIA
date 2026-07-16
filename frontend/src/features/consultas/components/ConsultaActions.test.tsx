@@ -168,4 +168,33 @@ describe('ConsultaActions (documentos aprobados)', () => {
     expect(screen.getByRole('button', { name: /enviar por email/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /descargar pdf/i })).toBeInTheDocument();
   });
+
+  it('sin correo del propietario, muestra Enviar por Email bloqueado en vez de ocultarlo', () => {
+    mockUseMe.mockReturnValue({ data: { rol: 'vet' } });
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={qc}>
+        <ConsultaActions
+          consulta={consultaAprobada}
+          paciente={paciente}
+          isDeleting={false}
+          isSavingDatos={false}
+          isApproving={false}
+          isSendingWhatsApp={false}
+          isSendingEmail={false}
+          onDelete={noop}
+          onSaveDatos={noop}
+          onApprove={noop}
+          onSendWhatsApp={noop}
+          onSendEmail={noop}
+          onDownloadPDF={noop}
+        />
+      </QueryClientProvider>,
+    );
+
+    const boton = screen.getByRole('button', { name: /enviar por email/i });
+    expect(boton).toBeInTheDocument();
+    expect(boton).toBeDisabled();
+    expect(boton.closest('span')).toHaveAttribute('title', 'No se ha registrado correo del propietario');
+  });
 });

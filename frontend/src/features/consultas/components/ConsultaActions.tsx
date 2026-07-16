@@ -74,32 +74,44 @@ const ConsultaActions: React.FC<Props> = ({
             {isSendingWhatsApp ? 'Enviando...' : 'WhatsApp'}
           </Button>
 
-          {paciente?.propietario?.email && (
-            <Button
-              variant="ghost"
-              size="md"
-              onClick={onSendEmail}
-              disabled={isSendingEmail}
-              title={
-                emailRealEnabled
-                  ? 'Enviar PDF al correo del propietario'
-                  : 'Email real pendiente de activación — modo demo'
-              }
-              style={{
-                background: 'var(--info-soft)',
-                color: 'var(--info)',
-                border: '1px solid color-mix(in srgb, var(--info) 24%, transparent)',
-              }}
-            >
-              <Mail className="h-4 w-4" />
-              {isSendingEmail ? 'Enviando...' : 'Enviar por Email'}
-              {!emailRealEnabled && (
-                <Badge size="sm" estado="info">
-                  Demo
-                </Badge>
-              )}
-            </Button>
-          )}
+          {(() => {
+            const tieneEmail = !!paciente?.propietario?.email;
+            // El boton deshabilitado usa pointer-events:none (ver Button), asi que el
+            // title del <button> nunca se veria en hover: el tooltip va en este span
+            // envolvente, que si recibe el hover aunque el boton de adentro este bloqueado.
+            return (
+              <span
+                title={!tieneEmail ? 'No se ha registrado correo del propietario' : undefined}
+              >
+                <Button
+                  variant="ghost"
+                  size="md"
+                  onClick={onSendEmail}
+                  disabled={!tieneEmail || isSendingEmail}
+                  title={
+                    tieneEmail
+                      ? emailRealEnabled
+                        ? 'Enviar PDF al correo del propietario'
+                        : 'Email real pendiente de activación — modo demo'
+                      : undefined
+                  }
+                  style={{
+                    background: 'var(--info-soft)',
+                    color: 'var(--info)',
+                    border: '1px solid color-mix(in srgb, var(--info) 24%, transparent)',
+                  }}
+                >
+                  <Mail className="h-4 w-4" />
+                  {isSendingEmail ? 'Enviando...' : 'Enviar por Email'}
+                  {tieneEmail && !emailRealEnabled && (
+                    <Badge size="sm" estado="info">
+                      Demo
+                    </Badge>
+                  )}
+                </Button>
+              </span>
+            );
+          })()}
 
           <Button variant="primary" size="md" onClick={onDownloadPDF} title="Descargar PDF de historia clínica">
             <Download className="h-4 w-4" />
