@@ -23,7 +23,7 @@ export default defineConfig(({ mode }) => {
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['logo-vethos.png'],
+      includeAssets: ['logo-vethos.png', 'pwa-icon-192.png', 'pwa-icon-512.png'],
       manifest: {
         name: 'Vethos AI - Notas Clínicas Veterinarias',
         short_name: 'Vethos AI',
@@ -35,10 +35,13 @@ export default defineConfig(({ mode }) => {
         start_url: '/',
         scope: '/',
         lang: 'es',
+        // Icono con fondo solido: el logo transparente se veia "flotando" sin fondo al
+        // agregar la app a la pantalla de inicio (reporte de Nico). Este icono es solo el
+        // simbolo (sin el texto "VETHOS IA", ilegible a este tamano) sobre fondo blanco.
         icons: [
-          { src: '/logo-vethos.png', sizes: '192x192', type: 'image/png' },
-          { src: '/logo-vethos.png', sizes: '512x512', type: 'image/png' },
-          { src: '/logo-vethos.png', sizes: '1254x1254', type: 'image/png', purpose: 'any maskable' },
+          { src: '/pwa-icon-192.png', sizes: '192x192', type: 'image/png' },
+          { src: '/pwa-icon-512.png', sizes: '512x512', type: 'image/png' },
+          { src: '/pwa-icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
       workbox: {
