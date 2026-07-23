@@ -8,17 +8,17 @@ const ProtectedRoute: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50">
-        <div className="flex flex-col items-center gap-4">
-          <video
-            src={videoCarga}
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="h-40 w-40 rounded-2xl object-cover sm:h-48 sm:w-48"
-          />
-          <p className="text-sm font-medium text-slate-500 animate-pulse">Cargando sesión...</p>
+      <div className="fixed inset-0 overflow-hidden bg-slate-950">
+        <video
+          src={videoCarga}
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+        <div className="absolute inset-x-0 bottom-0 flex justify-center pb-10 pt-16 bg-gradient-to-t from-black/60 to-transparent">
+          <p className="text-sm font-medium text-white/90 animate-pulse">Cargando sesión...</p>
         </div>
       </div>
     );
