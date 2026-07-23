@@ -129,19 +129,6 @@ const Login: React.FC = () => {
               </div>
             ))}
           </div>
-
-          <div className="mt-10 grid grid-cols-3 gap-3">
-            {[
-              ['SOAP', 'S/O/A/P listo'],
-              ['PDF', 'Historia compartible'],
-              ['RBAC', 'Roles seguros'],
-            ].map(([label, value]) => (
-              <div key={label} className="command-panel-dark p-3">
-                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/50">{label}</p>
-                <strong className="mt-1 block text-sm text-white">{value}</strong>
-              </div>
-            ))}
-          </div>
         </div>
 
         <div className="relative z-10 flex flex-wrap items-center gap-4 text-xs text-cyan-100/80">
