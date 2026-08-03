@@ -309,13 +309,15 @@ const MetricsPanel: React.FC<{ rol?: Rol | null }> = ({ rol }) => {
 
   return (
     <div className="grid gap-4">
-      <div className="flex flex-wrap items-center justify-end gap-2">
+      {/* overflow-x-auto de respaldo: si algun select (p. ej. un correo largo de equipo)
+          fuera mas ancho que la pantalla, que se desplace esta franja, no todo el dashboard. */}
+      <div className="flex flex-wrap items-center justify-end gap-2 overflow-x-auto">
         {esAdminEntidad && (
           <select
             value={veterinariaId}
             onChange={(e) => setVeterinariaId(e.target.value)}
             aria-label="Ver métricas de sede"
-            className="min-h-9 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 outline-none focus:border-accent"
+            className="min-h-9 max-w-[45vw] rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 outline-none focus:border-accent sm:max-w-[220px]"
           >
             <option value="">Ver: Todas las sedes</option>
             {(sedes.data ?? []).map((v) => (
@@ -330,7 +332,7 @@ const MetricsPanel: React.FC<{ rol?: Rol | null }> = ({ rol }) => {
             value={veterinarioId}
             onChange={(e) => setVeterinarioId(e.target.value)}
             aria-label="Ver métricas de"
-            className="min-h-9 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 outline-none focus:border-accent"
+            className="min-h-9 max-w-[45vw] rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 outline-none focus:border-accent sm:max-w-[220px]"
           >
             <option value="">Ver: Todo el equipo</option>
             {(equipo.data ?? []).map((v) => (
@@ -344,7 +346,7 @@ const MetricsPanel: React.FC<{ rol?: Rol | null }> = ({ rol }) => {
           value={rango}
           onChange={(e) => setRango(e.target.value)}
           aria-label="Rango de fechas"
-          className="min-h-9 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 outline-none focus:border-accent"
+          className="min-h-9 max-w-[45vw] rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 outline-none focus:border-accent sm:max-w-none"
         >
           {RANGOS.map((r) => (
             <option key={r.value} value={r.value}>
@@ -360,7 +362,7 @@ const MetricsPanel: React.FC<{ rol?: Rol | null }> = ({ rol }) => {
               max={customHasta || hoyStr}
               onChange={(e) => setCustomDesde(e.target.value)}
               aria-label="Desde"
-              className="min-h-9 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 outline-none focus:border-accent"
+              className="min-h-9 min-w-0 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 outline-none focus:border-accent"
             />
             <span className="text-xs text-[var(--muted)]">–</span>
             <input
@@ -370,7 +372,7 @@ const MetricsPanel: React.FC<{ rol?: Rol | null }> = ({ rol }) => {
               max={hoyStr}
               onChange={(e) => setCustomHasta(e.target.value)}
               aria-label="Hasta"
-              className="min-h-9 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 outline-none focus:border-accent"
+              className="min-h-9 min-w-0 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 outline-none focus:border-accent"
             />
           </>
         )}
