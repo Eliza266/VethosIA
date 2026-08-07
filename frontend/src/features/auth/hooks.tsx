@@ -37,7 +37,7 @@ interface AuthContextType {
   // whitelist y onAuthStateChanged cerraria la sesion solo. Estas dos funciones
   // pausan ese chequeo automatico mientras la pagina de registro aprovisiona la
   // cuenta via POST /v1/registro.
-  beginSelfRegistration: () => Promise<import('firebase/auth').UserCredential>;
+  beginSelfRegistration: (email: string, password: string) => Promise<import('firebase/auth').UserCredential>;
   beginSelfRegistrationWithGoogle: () => Promise<import('firebase/auth').UserCredential>;
   finishSelfRegistration: () => Promise<void>;
 }
@@ -317,7 +317,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const finishSelfRegistration = async () => {
     suppressAutoMeFetchRef.current = false;
     const fUser = auth.currentUser;
-    if (fUser) await refreshMeAfterSignIn(fUser);
+    if (fUser) {
+      await refreshMeAfterSignIn(fUser);
+      // El onAuthStateChanged que corrio al crear/loguear este uid se suprimio (todavia
+      // no habia veterinaria/membresia), asi que nunca poblo `user`: sin esto, el
+      // ProtectedRoute ve user=null y manda de vuelta a /login aunque el registro
+      // ya haya terminado bien.
+      try {
+        const me = await obtenerMe();
+        queryClient.setQueryData(meQueryKey(me.uid), me);
+        setUser(mapMeToVeterinario(me));
+      } catch (error) {
+        console.error('Error cargando perfil tras registro:', error);
+        setUser(vetFromFirebaseUser(fUser));
+      }
+    }
     setLoading(false);
   };
 

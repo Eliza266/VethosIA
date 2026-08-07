@@ -53,7 +53,7 @@ describe('Login (sin auto-registro)', () => {
     fireEvent.change(screen.getByLabelText(/correo electrónico/i), {
       target: { value: 'vet@vethosia.com' },
     });
-    fireEvent.change(screen.getByLabelText(/contraseña/i), { target: { value: 'secreto123' } });
+    fireEvent.change(screen.getByLabelText('Contraseña'), { target: { value: 'secreto123' } });
     fireEvent.click(screen.getByRole('button', { name: /^iniciar sesión$/i }));
 
     await waitFor(() =>

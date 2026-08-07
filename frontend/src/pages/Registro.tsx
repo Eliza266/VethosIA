@@ -3,7 +3,7 @@ import { useNavigate, Navigate, Link } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { useAuth } from '../hooks/useAuth';
 import { auth } from '../lib/firebase';
-import { ShieldCheck, Loader2, Sparkles } from 'lucide-react';
+import { ShieldCheck, Loader2, Sparkles, Eye, EyeOff } from 'lucide-react';
 import { getErrorMessage } from '../lib/errors';
 import { isFirebaseConfigured, missingFirebaseConfig } from '../lib/firebase';
 import { registrarCuenta } from '../features/tenant/api';
@@ -26,6 +26,7 @@ const Registro: React.FC = () => {
   const [ciudad, setCiudad] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [mostrarPassword, setMostrarPassword] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -220,16 +221,26 @@ const Registro: React.FC = () => {
               onChange={(e) => setEmail(e.target.value)}
               className={inputClass}
             />
-            <input
-              type="password"
-              required
-              minLength={6}
-              aria-label="Contraseña"
-              placeholder="Contraseña (mínimo 6 caracteres)"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className={inputClass}
-            />
+            <div className="relative">
+              <input
+                type={mostrarPassword ? 'text' : 'password'}
+                required
+                minLength={6}
+                aria-label="Contraseña"
+                placeholder="Contraseña (mínimo 6 caracteres)"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className={`${inputClass} pr-11`}
+              />
+              <button
+                type="button"
+                onClick={() => setMostrarPassword((v) => !v)}
+                aria-label={mostrarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--muted)] hover:text-[var(--text)]"
+              >
+                {mostrarPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
             <button
               type="submit"
               disabled={enviando || loading || !isFirebaseConfigured}

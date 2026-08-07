@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Navigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { ShieldCheck, Loader2, Sparkles, Lock } from 'lucide-react';
+import { ShieldCheck, Loader2, Sparkles, Lock, Eye, EyeOff } from 'lucide-react';
 import { getErrorMessage } from '../lib/errors';
 import { isFirebaseConfigured, missingFirebaseConfig } from '../lib/firebase';
 import logoVethos from '../assets/logo-vethos.png';
@@ -14,6 +14,7 @@ const Login: React.FC = () => {
   const [info, setInfo] = useState<string | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [mostrarPassword, setMostrarPassword] = useState(false);
   const navigate = useNavigate();
   const firebaseConfigMessage = isFirebaseConfigured
     ? null
@@ -212,16 +213,26 @@ const Login: React.FC = () => {
               onChange={(e) => setEmail(e.target.value)}
               className={inputClass}
             />
-            <input
-              type="password"
-              required
-              minLength={6}
-              aria-label="Contraseña"
-              placeholder="Contraseña"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className={inputClass}
-            />
+            <div className="relative">
+              <input
+                type={mostrarPassword ? 'text' : 'password'}
+                required
+                minLength={6}
+                aria-label="Contraseña"
+                placeholder="Contraseña"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className={`${inputClass} pr-11`}
+              />
+              <button
+                type="button"
+                onClick={() => setMostrarPassword((v) => !v)}
+                aria-label={mostrarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--muted)] hover:text-[var(--text)]"
+              >
+                {mostrarPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
             <button
               type="submit"
               disabled={isLoggingIn || loading || !isFirebaseConfigured}
