@@ -48,7 +48,7 @@ const MSG_DENEGADO = 'Tu cuenta no tiene acceso a Vethos AI. Contacta al adminis
 const MSG_NO_VERIFICABLE =
   'No pudimos verificar tu acceso en este momento. Intenta de nuevo más tarde o contacta al administrador.';
 
-const mapMeToVeterinario = (me: Awaited<ReturnType<typeof obtenerMe>>): Veterinario => ({
+const mapMeToVeterinario = (me: Awaited<ReturnType<typeof obtenerMe>>, creationTime?: string): Veterinario => ({
   uid: me.uid,
   nombre: displayUserLabel({ nombre: me.nombre, email: me.email }),
   email: me.email ?? '',
@@ -59,7 +59,7 @@ const mapMeToVeterinario = (me: Awaited<ReturnType<typeof obtenerMe>>): Veterina
   sede: me.sede ?? undefined,
   veterinaria: me.veterinaria ?? undefined,
   matriculaProfesional: me.matriculaProfesional ?? undefined,
-  creadoEn: new Date(),
+  creadoEn: creationTime ? new Date(creationTime) : new Date(),
 });
 
 const vetFromFirebaseUser = (fUser: FirebaseUser): Veterinario => ({
@@ -67,7 +67,7 @@ const vetFromFirebaseUser = (fUser: FirebaseUser): Veterinario => ({
   nombre: fUser.displayName || 'Veterinario',
   email: fUser.email || '',
   foto: fUser.photoURL || undefined,
-  creadoEn: new Date(),
+  creadoEn: fUser.metadata.creationTime ? new Date(fUser.metadata.creationTime) : new Date(),
 });
 
 const apiErrorMessage = (error: unknown): string | null => {
@@ -126,7 +126,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         try {
           const me = await obtenerMe();
           queryClient.setQueryData(meQueryKey(me.uid), me);
-          setUser(mapMeToVeterinario(me));
+          setUser(mapMeToVeterinario(me, fUser.metadata.creationTime));
         } catch (error) {
           if (isAxiosError(error)) {
             const status = error.response?.status;
@@ -326,7 +326,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         const me = await obtenerMe();
         queryClient.setQueryData(meQueryKey(me.uid), me);
-        setUser(mapMeToVeterinario(me));
+        setUser(mapMeToVeterinario(me, fUser.metadata.creationTime));
       } catch (error) {
         console.error('Error cargando perfil tras registro:', error);
         setUser(vetFromFirebaseUser(fUser));
