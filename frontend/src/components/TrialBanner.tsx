@@ -7,7 +7,7 @@ const TrialBanner: React.FC = () => {
 
   if (!user || isInternalTestAccount(user.email)) return null;
 
-  const mensaje = getTrialBannerMessage();
+  const mensaje = getTrialBannerMessage(user);
   if (!mensaje) return null;
 
   return (
