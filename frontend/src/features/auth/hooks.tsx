@@ -67,7 +67,7 @@ const vetFromFirebaseUser = (fUser: FirebaseUser): Veterinario => ({
   nombre: fUser.displayName || 'Veterinario',
   email: fUser.email || '',
   foto: fUser.photoURL || undefined,
-  creadoEn: fUser.metadata.creationTime ? new Date(fUser.metadata.creationTime) : new Date(),
+  creadoEn: fUser.metadata?.creationTime ? new Date(fUser.metadata.creationTime) : new Date(),
 });
 
 const apiErrorMessage = (error: unknown): string | null => {
@@ -126,7 +126,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         try {
           const me = await obtenerMe();
           queryClient.setQueryData(meQueryKey(me.uid), me);
-          setUser(mapMeToVeterinario(me, fUser.metadata.creationTime));
+          setUser(mapMeToVeterinario(me, fUser.metadata?.creationTime));
         } catch (error) {
           if (isAxiosError(error)) {
             const status = error.response?.status;
