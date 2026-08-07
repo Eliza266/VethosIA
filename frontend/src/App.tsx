@@ -19,6 +19,7 @@ const queryClient = new QueryClient({
 });
 
 import Login from './pages/Login';
+import Registro from './pages/Registro';
 import Dashboard from './pages/Dashboard';
 import Pacientes from './pages/Pacientes';
 import NuevosPaciente from './pages/NuevosPaciente';
@@ -52,6 +53,7 @@ function App() {
               <Routes>
                 {/* Public Routes */}
                 <Route path="/login" element={<Login />} />
+                <Route path="/registro" element={<Registro />} />
                 <Route path="/pdf/:token" element={<PdfPublico />} />
 
                 {/* Protected Routes */}

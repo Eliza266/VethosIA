@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Navigate } from 'react-router-dom';
+import { useNavigate, Navigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { ShieldCheck, Loader2, Sparkles, Lock } from 'lucide-react';
 import { getErrorMessage } from '../lib/errors';
@@ -168,6 +168,13 @@ const Login: React.FC = () => {
             </p>
             <p className="mt-3 rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-xs text-[var(--muted)]">
               Entorno demo: usa las credenciales asignadas a tu rol. No compartas contraseñas fuera del equipo.
+            </p>
+            <p className="mt-3 text-xs text-[var(--muted)]">
+              ¿Eres nuevo en Vethos AI?{' '}
+              <Link to="/registro" className="font-bold text-[var(--accent)]">
+                Crea tu cuenta gratis
+              </Link>
+              .
             </p>
           </div>
 

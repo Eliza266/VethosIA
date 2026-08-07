@@ -1,10 +1,19 @@
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../hooks/useAuth';
+import { miSuscripcion } from '../features/saas/api';
+import TrialVencidoOverlay from './TrialVencidoOverlay';
 import videoCarga from '../assets/video-carga.mp4';
 
 const ProtectedRoute: React.FC = () => {
   const { user, loading } = useAuth();
+  const sub = useQuery({
+    queryKey: ['suscripcion-me'],
+    queryFn: miSuscripcion,
+    enabled: Boolean(user),
+    staleTime: 60_000,
+  });
 
   if (loading) {
     return (
@@ -26,6 +35,10 @@ const ProtectedRoute: React.FC = () => {
 
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (sub.data?.suscripcion?.estado === 'bloqueado_fin_trial') {
+    return <TrialVencidoOverlay />;
   }
 
   return <Outlet />;

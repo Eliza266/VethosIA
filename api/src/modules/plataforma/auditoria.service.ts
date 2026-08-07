@@ -42,6 +42,7 @@ export type AccionAuditada =
   | 'veterinaria.crear'
   | 'veterinaria.editar'
   | 'veterinario.crear_credenciales'
+  | 'cuenta.autoregistro'
   | 'brigada.crear'
   | 'brigada.editar'
   | 'brigada.atencion_crear'

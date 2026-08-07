@@ -269,3 +269,24 @@ export const actualizarMe = async (input: ActualizarPerfilInput): Promise<MeProf
   const res = await apiClient.patch<MeProfile>('/v1/me', input);
   return res.data;
 };
+
+export interface RegistroPublicoInput {
+  nombre: string;
+  veterinariaNombre: string;
+  matriculaProfesional: string;
+  telefono?: string;
+  ciudad?: string;
+  pais?: string;
+}
+
+export interface RegistroPublicoResponse {
+  veterinariaId: string;
+  trialHasta: string;
+}
+
+export const registrarCuenta = async (
+  input: RegistroPublicoInput,
+): Promise<RegistroPublicoResponse> => {
+  const res = await apiClient.post<RegistroPublicoResponse>('/v1/registro', input);
+  return res.data;
+};

@@ -32,6 +32,14 @@ interface AuthContextType {
   registerWithEmail: (email: string, password: string) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   logout: () => Promise<void>;
+  // Usados por la pagina de registro publico (/registro): mientras el uid nuevo
+  // todavia no tiene veterinaria/membresia asignada, /v1/me responderia 403 por la
+  // whitelist y onAuthStateChanged cerraria la sesion solo. Estas dos funciones
+  // pausan ese chequeo automatico mientras la pagina de registro aprovisiona la
+  // cuenta via POST /v1/registro.
+  beginSelfRegistration: () => Promise<import('firebase/auth').UserCredential>;
+  beginSelfRegistrationWithGoogle: () => Promise<import('firebase/auth').UserCredential>;
+  finishSelfRegistration: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -73,6 +81,7 @@ const apiErrorMessage = (error: unknown): string | null => {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const queryClient = useQueryClient();
   const previousUidRef = useRef<string | null>(null);
+  const suppressAutoMeFetchRef = useRef(false);
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [user, setUser] = useState<Veterinario | null>(null);
   const [loading, setLoading] = useState(true);
@@ -103,6 +112,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       setFirebaseUser(fUser);
+
+      if (suppressAutoMeFetchRef.current) {
+        // La pagina de registro publico esta aprovisionando la cuenta (POST
+        // /v1/registro); todavia no hay veterinaria/membresia asignada, asi que
+        // /v1/me responderia 403 y este efecto cerraria la sesion. Se espera a
+        // que la pagina llame finishSelfRegistration().
+        setLoading(false);
+        return;
+      }
 
       if (getFeatureFlags().useApiCRUD) {
         try {
@@ -270,6 +288,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await sendPasswordResetEmail(auth, email);
   };
 
+  const beginSelfRegistration = async (email: string, password: string) => {
+    suppressAutoMeFetchRef.current = true;
+    setLoading(true);
+    setAccessDeniedMessage(null);
+    try {
+      return await createUserWithEmailAndPassword(auth, email, password);
+    } catch (error) {
+      suppressAutoMeFetchRef.current = false;
+      setLoading(false);
+      throw error;
+    }
+  };
+
+  const beginSelfRegistrationWithGoogle = async () => {
+    suppressAutoMeFetchRef.current = true;
+    setLoading(true);
+    setAccessDeniedMessage(null);
+    try {
+      return await signInWithPopup(auth, googleProvider);
+    } catch (error) {
+      suppressAutoMeFetchRef.current = false;
+      setLoading(false);
+      throw error;
+    }
+  };
+
+  const finishSelfRegistration = async () => {
+    suppressAutoMeFetchRef.current = false;
+    const fUser = auth.currentUser;
+    if (fUser) await refreshMeAfterSignIn(fUser);
+    setLoading(false);
+  };
+
   const logout = async () => {
     setLoading(true);
     try {
@@ -296,6 +347,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         registerWithEmail,
         resetPassword,
         logout,
+        beginSelfRegistration,
+        beginSelfRegistrationWithGoogle,
+        finishSelfRegistration,
       }}
     >
       {children}
