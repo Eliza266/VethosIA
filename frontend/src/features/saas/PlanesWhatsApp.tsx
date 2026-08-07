@@ -62,5 +62,6 @@ export const PlanesWhatsAppGrid: React.FC<{ className?: string }> = ({ className
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export { linkWhatsApp, WHATSAPP_NUMERO };
 export default PlanesWhatsAppGrid;

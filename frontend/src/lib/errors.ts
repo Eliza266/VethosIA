@@ -21,7 +21,7 @@ export class AppError extends Error {
 export const getErrorMessage = (error: unknown, fallback = 'Ocurrio un error inesperado.'): string => {
   if (error instanceof AppError) return error.message;
   
-  const anyError = error as any;
+  const anyError = error as { code?: string };
   if (anyError?.code === 'auth/email-already-in-use') {
     return 'Esta cuenta ya está registrada. Por favor, inicia sesión normalmente.';
   }
