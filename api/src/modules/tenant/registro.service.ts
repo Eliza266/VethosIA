@@ -34,7 +34,11 @@ export class RegistroService {
     user: AuthUser,
     dto: RegistroPublicoDto,
   ): Promise<RegistroPublicoResultado> {
-    if (user.accountId || user.orgId) {
+    // Cualquier claim previo (V2 accountId/orgId, rol legacy, o role V2 -- incluye
+    // superadmin, que no lleva accountId/orgId por ser cross-tenant) bloquea el
+    // auto-registro: una cuenta ya vinculada a Vethos AI no puede volver a pasar por
+    // este flujo, o sus claims quedarian pisados por los de una veterinaria nueva.
+    if (user.accountId || user.orgId || user.rol || user.role) {
       throw new ConflictException('Esta cuenta ya está registrada en Vethos AI.');
     }
     const email = (user.email ?? '').trim().toLowerCase();
