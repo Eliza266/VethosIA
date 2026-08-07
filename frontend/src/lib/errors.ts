@@ -20,6 +20,12 @@ export class AppError extends Error {
 // Firebase tira objetos con .code y .message; axios mete error.response.data.
 export const getErrorMessage = (error: unknown, fallback = 'Ocurrio un error inesperado.'): string => {
   if (error instanceof AppError) return error.message;
+  
+  const anyError = error as any;
+  if (anyError?.code === 'auth/email-already-in-use') {
+    return 'Esta cuenta ya está registrada. Por favor, inicia sesión normalmente.';
+  }
+
   if (error instanceof Error) return error.message;
   if (typeof error === 'string') return error;
   if (error && typeof error === 'object') {
