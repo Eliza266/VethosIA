@@ -52,7 +52,7 @@ const Login: React.FC = () => {
     }
     try {
       await resetPassword(email);
-      setInfo('Te enviamos un correo para restablecer tu contraseña.');
+      setInfo('Te enviamos un correo para restablecer tu contraseña. (Recuerda verificar en spam)');
     } catch {
       setError('No se pudo enviar el correo de recuperación.');
     }
