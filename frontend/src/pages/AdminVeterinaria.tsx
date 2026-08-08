@@ -17,7 +17,6 @@ import {
   obtenerVeterinariaBackoffice,
   setBloqueoMiembroBackoffice,
 } from '../features/backoffice/api';
-import { BusinessOverview } from '../features/saas/BusinessOverview';
 import { Button, Card, EmptyState, SectionHeader } from '../components/ui/Primitives';
 import { puedeVerSuscripcion, rolLabel } from '../lib/rbac';
 import { getErrorMessage } from '../lib/errors';
@@ -299,33 +298,13 @@ const AdminVeterinaria: React.FC = () => {
   return (
     <div className="mx-auto grid max-w-6xl gap-6">
       <section className="premium-card bg-white p-6 sm:p-8 border border-slate-200" data-tour="admin-vet-panel">
-        <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
-          <div>
-            <span className="inline-flex rounded-full border border-[color-mix(in_srgb,var(--accent)_20%,transparent)] bg-[var(--accent-soft)] px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-[var(--accent)]">
-              {rolLabel(rol) ?? 'Admin veterinaria'}
-            </span>
-            <h1 className="mt-4 text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">Configuración</h1>
-            <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
-              Gestiona sede, equipo clínico, catálogo de vacunas y solicitudes técnicas desde una consola ejecutiva.
-            </p>
-          </div>
-          <div className="grid min-w-[min(100%,520px)] grid-cols-3 gap-3">
-            <div className="rounded-2xl border border-slate-200/60 bg-slate-50 p-3">
-              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">Equipo</p>
-              <strong className="mt-1 block text-2xl font-black text-slate-950">{equipoTotal}</strong>
-            </div>
-            <div className="rounded-2xl border border-slate-200/60 bg-slate-50 p-3">
-              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">Consumo</p>
-              <strong className="mt-1 block text-2xl font-black text-slate-950">
-                {consumoUsadoTotal}{consumoLimiteTotal > 0 ? `/${consumoLimiteTotal}` : ''}
-              </strong>
-            </div>
-            <div className="rounded-2xl border border-slate-200/60 bg-slate-50 p-3">
-              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">Solicitudes</p>
-              <strong className="mt-1 block text-2xl font-black text-slate-950">{(solicitudes.data ?? []).length}</strong>
-            </div>
-          </div>
-        </div>
+        <span className="inline-flex rounded-full border border-[color-mix(in_srgb,var(--accent)_20%,transparent)] bg-[var(--accent-soft)] px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-[var(--accent)]">
+          {rolLabel(rol) ?? 'Admin veterinaria'}
+        </span>
+        <h1 className="mt-4 text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">Configuración</h1>
+        <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
+          Gestiona sede, equipo clínico, catálogo de vacunas y solicitudes técnicas desde una consola ejecutiva.
+        </p>
       </section>
 
       {demoSession && (
@@ -333,10 +312,6 @@ const AdminVeterinaria: React.FC = () => {
           {DEMO_ACTION_HINT}
         </div>
       )}
-
-      <section>
-        <BusinessOverview rol={rol} profile={me ?? null} />
-      </section>
 
       {!tab && (
         <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
