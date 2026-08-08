@@ -1,17 +1,13 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useMemo, useState } from 'react';
 import {
   Building2,
-  Hospital,
   Users,
   DollarSign,
   FileText,
-  CreditCard,
-  CheckCircle2
 } from 'lucide-react';
 import { Card, KpiCard, SectionHeader } from '../../components/ui/Primitives';
 import type { SuperAdminDataset } from './types';
-import { isVeterinario, planOwnerLabel } from './utils';
+import { isVeterinario } from './utils';
 import { ESPECIES_COLORS } from '../../lib/chartColors';
 import {
   BarChart,
@@ -31,9 +27,26 @@ import {
 
 export const SuperAdminOverview: React.FC<{ data: SuperAdminDataset }> = ({ data }) => {
   const now = new Date();
-  const currentYear = now.getFullYear();
-  const currentMonth = now.getMonth(); // 0-indexed
-  const currentPeriodStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
+
+  // Filtro de mes: por defecto el mes actual, pero el super admin puede mirar
+  // meses anteriores. Solo mueve los KPIs y graficas "del mes"; el estado en
+  // vivo (trial activo, bloqueadas) siempre refleja el momento real (`now`).
+  const opcionesMes = useMemo(() => {
+    const opciones: Array<{ value: string; label: string }> = [];
+    for (let i = 0; i < 12; i += 1) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      const label = d.toLocaleDateString('es-CO', { month: 'long', year: 'numeric' });
+      opciones.push({ value, label: label.charAt(0).toUpperCase() + label.slice(1) });
+    }
+    return opciones;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const [currentPeriodStr, setCurrentPeriodStr] = useState(opcionesMes[0].value);
+  const [periodoYear, periodoMesHumano] = currentPeriodStr.split('-').map(Number);
+  const currentYear = periodoYear;
+  const currentMonth = periodoMesHumano - 1; // 0-indexed, para calzar con Date.getMonth()
 
   // Helper to parse dates robustly
   function parseFirebaseDate(val: unknown): Date | null {
@@ -166,22 +179,27 @@ export const SuperAdminOverview: React.FC<{ data: SuperAdminDataset }> = ({ data
     { name: 'Independientes', value: totalIndependientes },
   ].filter((item) => item.value > 0);
 
-  // --- Alerts ---
-  const cuentasPorVencer = data.suscripciones.filter((s) => {
-    const date = parseFirebaseDate(s.vigenteHasta || s.trialHasta);
-    if (!date) return false;
-    const diffTime = date.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays >= 0 && diffDays <= 5;
-  });
-
-  const suscripcionesMora = data.suscripciones.filter((s) => {
-    const estado = String(s.estado || s.status || '').toLowerCase();
-    return estado === 'mora' || estado === 'deuda' || estado === 'bloqueada_mora';
-  });
-
   return (
     <div className="grid gap-5" data-testid="superadmin-overview-panel">
+      {/* Filtro de mes: mueve los KPIs y graficas marcadas "del mes" / tendencia */}
+      <div className="flex items-center justify-end">
+        <label className="flex items-center gap-2 text-xs font-bold text-[var(--muted)]">
+          Mes de referencia
+          <select
+            aria-label="Mes de referencia"
+            value={currentPeriodStr}
+            onChange={(e) => setCurrentPeriodStr(e.target.value)}
+            className="min-h-9 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 text-xs font-semibold text-[var(--text)] outline-none focus:border-accent"
+          >
+            {opcionesMes.map((opcion) => (
+              <option key={opcion.value} value={opcion.value}>
+                {opcion.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
       {/* 4 KPIs Principales */}
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard label="Entidades activas" value={entidadesActivas} icon={<Building2 className="h-5 w-5" />} accent="default" />
@@ -220,7 +238,7 @@ export const SuperAdminOverview: React.FC<{ data: SuperAdminDataset }> = ({ data
         </div>
       </section>
 
-      {/* Gráficas y Alertas */}
+      {/* Gráficas */}
       <div className="grid gap-5 lg:grid-cols-3">
         {/* Gráfica 1: SOAP por mes */}
         <Card className="premium-card lg:col-span-2">
@@ -287,7 +305,7 @@ export const SuperAdminOverview: React.FC<{ data: SuperAdminDataset }> = ({ data
         </Card>
 
         {/* Gráfica 2: Crecimiento de usuarios */}
-        <Card className="premium-card lg:col-span-2">
+        <Card className="premium-card lg:col-span-3">
           <SectionHeader title="Crecimiento de Usuarios" description="Evolución de cuentas activas en la plataforma" />
           <div className="h-64 mt-4">
             <ResponsiveContainer width="100%" height="100%">
@@ -315,90 +333,6 @@ export const SuperAdminOverview: React.FC<{ data: SuperAdminDataset }> = ({ data
             </ResponsiveContainer>
           </div>
         </Card>
-
-        {/* Tarjeta de Alertas y Accesos Rápidos */}
-        <div className="grid gap-5">
-          {/* Tarjeta de Alertas */}
-          <Card className="premium-card">
-            <SectionHeader title="Alertas de Negocio" />
-            <div className="mt-3 space-y-3 max-h-[160px] overflow-y-auto">
-              {cuentasPorVencer.length === 0 && suscripcionesMora.length === 0 ? (
-                <div className="flex items-center gap-2 text-xs text-[var(--muted)] p-2">
-                  <CheckCircle2 className="h-4 w-4 text-[var(--success)]" />
-                  <span>Sin alertas críticas de vigencia o cobro.</span>
-                </div>
-              ) : (
-                <>
-                  {cuentasPorVencer.map((s) => {
-                    const owner = planOwnerLabel(s);
-                    const date = parseFirebaseDate(s.vigenteHasta || s.trialHasta);
-                    const dateStr = date ? date.toLocaleDateString() : '—';
-                    return (
-                      <div key={String(s.id)} className="flex items-center justify-between py-1.5 border-b border-[var(--border)] last:border-0 text-xs">
-                        <div className="min-w-0">
-                          <span className="font-bold text-[var(--text)] block truncate">{owner}</span>
-                          <p className="text-[10px] text-[var(--muted)]">Vence: {dateStr}</p>
-                        </div>
-                        <span className="inline-flex rounded-full bg-amber-500/10 px-2 py-0.5 text-[9px] text-amber-700 dark:text-amber-400 font-bold shrink-0">
-                          Por vencer
-                        </span>
-                      </div>
-                    );
-                  })}
-                  {suscripcionesMora.map((s) => {
-                    const owner = planOwnerLabel(s);
-                    return (
-                      <div key={String(s.id)} className="flex items-center justify-between py-1.5 border-b border-[var(--border)] last:border-0 text-xs">
-                        <div className="min-w-0">
-                          <span className="font-bold text-[var(--text)] block truncate">{owner}</span>
-                          <p className="text-[10px] text-[var(--muted)]">Bloqueada por mora</p>
-                        </div>
-                        <span className="inline-flex rounded-full bg-red-500/10 px-2 py-0.5 text-[9px] text-red-700 dark:text-red-400 font-bold shrink-0">
-                          Mora
-                        </span>
-                      </div>
-                    );
-                  })}
-                </>
-              )}
-            </div>
-          </Card>
-
-          {/* Accesos Rápidos */}
-          <Card className="premium-card">
-            <SectionHeader title="Accesos Rápidos" />
-            <div className="grid grid-cols-2 gap-2 mt-3">
-              <Link
-                to="/admin?panel=entidades"
-                className="flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] p-2.5 hover:bg-[var(--surface)] hover:border-[var(--accent)] transition-all"
-              >
-                <Building2 className="h-4 w-4 text-[var(--accent)] shrink-0" />
-                <span className="text-xs font-black text-[var(--text)] truncate">Ver Entidades</span>
-              </Link>
-              <Link
-                to="/admin?panel=veterinarias"
-                className="flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] p-2.5 hover:bg-[var(--surface)] hover:border-[var(--accent)] transition-all"
-              >
-                <Hospital className="h-4 w-4 text-[var(--accent)] shrink-0" />
-                <span className="text-xs font-black text-[var(--text)] truncate">Ver Veterinarias</span>
-              </Link>
-              <Link
-                to="/planes"
-                className="flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] p-2.5 hover:bg-[var(--surface)] hover:border-[var(--accent)] transition-all"
-              >
-                <CreditCard className="h-4 w-4 text-[var(--accent)] shrink-0" />
-                <span className="text-xs font-black text-[var(--text)] truncate">Ver Planes</span>
-              </Link>
-              <Link
-                to="/admin?panel=pagos"
-                className="flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] p-2.5 hover:bg-[var(--surface)] hover:border-[var(--accent)] transition-all"
-              >
-                <DollarSign className="h-4 w-4 text-[var(--accent)] shrink-0" />
-                <span className="text-xs font-black text-[var(--text)] truncate">Ver Cobros</span>
-              </Link>
-            </div>
-          </Card>
-        </div>
       </div>
     </div>
   );
