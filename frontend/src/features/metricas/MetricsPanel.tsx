@@ -79,14 +79,14 @@ const calcDelta = (actual: number, anterior: number | undefined): number | null 
 
 const DeltaBadge: React.FC<{ deltaPct: number | null }> = ({ deltaPct }) =>
   deltaPct === null ? (
-    <span className="text-[11px] font-semibold text-[var(--muted)]">Sin comparación</span>
+    <span className="truncate text-[10px] font-semibold text-[var(--muted)] sm:text-[11px]">Sin comparación</span>
   ) : (
     <span
-      className="inline-flex items-center gap-1 text-[11px] font-bold"
+      className="inline-flex min-w-0 items-center gap-1 truncate text-[10px] font-bold sm:text-[11px]"
       style={{ color: deltaPct >= 0 ? 'var(--success)' : 'var(--danger)' }}
     >
-      {deltaPct >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-      {Math.abs(deltaPct)}% vs. anterior
+      {deltaPct >= 0 ? <TrendingUp className="h-3 w-3 shrink-0" /> : <TrendingDown className="h-3 w-3 shrink-0" />}
+      <span className="truncate">{Math.abs(deltaPct)}% vs. anterior</span>
     </span>
   );
 
@@ -96,7 +96,7 @@ const MiniSparkline: React.FC<{ datos: Array<{ total: number }>; color: string; 
   id,
 }) =>
   datos.length > 1 ? (
-    <div className="h-12 w-28 shrink-0">
+    <div className="h-9 w-16 shrink-0 sm:h-12 sm:w-28">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={datos} margin={{ top: 4, right: 2, bottom: 0, left: 2 }}>
           <defs>
@@ -130,17 +130,17 @@ const KpiCardShell: React.FC<{
   value: React.ReactNode;
   children?: React.ReactNode;
 }> = ({ icon, label, accent, value, children }) => (
-  <Card padding="sm" className="!p-4">
-    <div className="flex items-center gap-2.5">
+  <Card padding="sm" className="min-w-0 !p-3 sm:!p-4">
+    <div className="flex min-w-0 items-center gap-2 sm:gap-2.5">
       <span
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg sm:h-11 sm:w-11 sm:rounded-xl [&>svg]:h-4 [&>svg]:w-4 sm:[&>svg]:h-5 sm:[&>svg]:w-5"
         style={{ background: `color-mix(in srgb, ${accent} 14%, transparent)`, color: accent }}
       >
         {icon}
       </span>
-      <span className="truncate text-sm font-bold text-[var(--text-secondary)]">{label}</span>
+      <span className="min-w-0 truncate text-xs font-bold text-[var(--text-secondary)] sm:text-sm">{label}</span>
     </div>
-    <div className="mt-2.5 text-3xl font-black leading-none text-[var(--text)]">{value}</div>
+    <div className="mt-2 truncate text-xl font-black leading-none text-[var(--text)] sm:mt-2.5 sm:text-3xl">{value}</div>
     {children}
   </Card>
 );
@@ -424,7 +424,7 @@ const MetricsPanel: React.FC<{ rol?: Rol | null; veterinarioIdForzado?: string }
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">
         {/* "Total pacientes" es un conteo acumulado (no se filtra por fecha en el backend
             a proposito: es el total de la cuenta, no algo que fluctue por periodo), asi
             que no tiene sentido mostrarle una variacion vs. periodo anterior — siempre

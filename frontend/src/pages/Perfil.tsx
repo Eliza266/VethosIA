@@ -77,6 +77,7 @@ const Perfil: React.FC = () => {
   const [waPais, setWaPais] = useState<PaisIndicativo>(PAIS_DEFAULT);
   const [waNumero, setWaNumero] = useState('');
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [rolActual, setRolActual] = useState<string | null>(null);
   const [nuevaContrasena, setNuevaContrasena] = useState('');
   const [confirmarContrasena, setConfirmarContrasena] = useState('');
   const [verContrasena, setVerContrasena] = useState(false);
@@ -108,6 +109,7 @@ const Perfil: React.FC = () => {
         if (getFeatureFlags().useApiCRUD) {
           const me = await obtenerMe();
           setIsSuperAdmin(me.rol === 'superadmin' || me.role === 'superadmin');
+          setRolActual(me.role ?? me.rol ?? null);
           setFields({
             nombre: me.nombre || '',
             telefono: me.telefono || '',
@@ -265,7 +267,7 @@ const Perfil: React.FC = () => {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6 animate-fade-in py-6">
+    <div className="max-w-4xl mx-auto space-y-6 animate-fade-in py-6">
       <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
         {/* Header background decoration */}
         <div className="h-32 bg-gradient-to-r from-accent to-[#148F70]"></div>
@@ -411,7 +413,7 @@ const Perfil: React.FC = () => {
                 {/* Divider */}
                 <div className="border-t border-slate-100 pt-5">
                   <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Información de Contacto</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                     <PhoneInput
                       id="perfil-telefono"
                       label="Teléfono"
@@ -457,24 +459,37 @@ const Perfil: React.FC = () => {
                 {/* Clinical Info */}
                 <div className="border-t border-slate-100 pt-5">
                   <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Información Clínica</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                    {CLINICAL_FIELDS.map(({ field, label, Icon, placeholder, type }) => (
-                      <div key={field}>
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{label}</label>
-                        <div className="relative">
-                          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                            <Icon className="h-4 w-4" />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                    {CLINICAL_FIELDS.map(({ field, label, Icon, placeholder, type }) => {
+                      // Un veterinario raso queda vinculado a la veterinaria/sede que lo
+                      // registro: cambiar esos datos es cosa del admin de la clinica, no
+                      // de cada veterinario desde su perfil personal.
+                      const soloAdminEditaEsteCampo = field === 'veterinaria' || field === 'sede';
+                      const bloqueado = soloAdminEditaEsteCampo && rolActual === 'veterinario';
+                      return (
+                        <div key={field}>
+                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{label}</label>
+                          <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                              <Icon className="h-4 w-4" />
+                            </div>
+                            <input
+                              type={type}
+                              placeholder={placeholder}
+                              value={fields[field]}
+                              disabled={bloqueado}
+                              title={bloqueado ? 'Lo administra quien gestiona tu veterinaria.' : undefined}
+                              onChange={(e) => handleChange(field as keyof VetFields, e.target.value)}
+                              className={`block w-full pl-10 pr-3 py-2.5 border rounded-xl text-sm placeholder-slate-400 outline-none transition-shadow ${
+                                bloqueado
+                                  ? 'bg-slate-50 border-slate-200 text-slate-500 cursor-not-allowed'
+                                  : 'border-slate-200 text-slate-800 focus:border-accent focus:ring-1 focus:ring-accent'
+                              }`}
+                            />
                           </div>
-                          <input
-                            type={type}
-                            placeholder={placeholder}
-                            value={fields[field]}
-                            onChange={(e) => handleChange(field as keyof VetFields, e.target.value)}
-                            className="block w-full pl-10 pr-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-shadow"
-                          />
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               </>
