@@ -9,6 +9,7 @@ import { storage } from '../services/firebase';
 import { buildVeterinariaLogoStoragePath } from '../lib/veterinariaLogoStorage';
 import { useMe } from '../features/tenant/hooks';
 import { crearInvitacionVeterinaria } from '../features/tenant/api';
+import { miSuscripcion } from '../features/saas/api';
 import {
   actualizarVeterinariaBackoffice,
   crearVeterinarioCredencialesBackoffice,
@@ -202,6 +203,16 @@ const AdminVeterinaria: React.FC = () => {
     0,
   );
   const equipoTotal = (veterinarios.data ?? []).length;
+
+  const suscripcion = useQuery({
+    queryKey: ['suscripcion-me'],
+    queryFn: miSuscripcion,
+    enabled: scopeListo,
+    retry: false,
+  });
+  const asientos = suscripcion.data?.asientos ?? null;
+  const asientosLibres = asientos ? (asientos.libres ?? Math.max(0, asientos.max - asientos.usados)) : null;
+  const sinAsientosDisponibles = Boolean(asientos && asientos.max > 0 && asientosLibres !== null && asientosLibres <= 0);
 
   const actualizarVeterinaria = useMutation({
     mutationFn: async () => {
@@ -430,6 +441,22 @@ const AdminVeterinaria: React.FC = () => {
 
       {tab === 'equipo' && (
         <>
+          {sinAsientosDisponibles && (
+            <Card className="premium-card border-amber-200 bg-amber-50/60">
+              <p className="text-sm font-bold text-amber-900">
+                Alcanzaste el límite de veterinarios de tu plan ({asientos?.usados} de {asientos?.max}).
+              </p>
+              <p className="mt-1 text-sm text-amber-800">
+                Cambia de plan para agregar más veterinarios a tu equipo.
+              </p>
+              <Link
+                to="/suscripcion?planes=1"
+                className="mt-3 inline-flex w-fit items-center gap-2 rounded-xl bg-amber-600 px-4 py-2 text-sm font-black text-white transition hover:bg-amber-700"
+              >
+                Cambiar de plan
+              </Link>
+            </Card>
+          )}
           <Card className="premium-card">
             <SectionHeader
               title="Crear veterinario con credenciales"
@@ -476,13 +503,20 @@ const AdminVeterinaria: React.FC = () => {
                 onClick={() => crearVetCredenciales.mutate()}
                 disabled={
                   demoSession ||
+                  sinAsientosDisponibles ||
                   !nuevoVetNombre.trim() ||
                   !nuevoVetEmail.trim() ||
                   nuevoVetPassword.length < 6 ||
                   !me?.veterinariaId ||
                   crearVetCredenciales.isPending
                 }
-                title={demoSession ? DEMO_ACTION_HINT : undefined}
+                title={
+                  demoSession
+                    ? DEMO_ACTION_HINT
+                    : sinAsientosDisponibles
+                      ? 'Debes cambiar tu plan para agregar más veterinarios.'
+                      : undefined
+                }
               >
                 {crearVetCredenciales.isPending ? 'Creando...' : 'Crear veterinario'}
               </Button>
@@ -513,8 +547,20 @@ const AdminVeterinaria: React.FC = () => {
                 <Button
                   aria-label="Generar invitacion"
                   onClick={() => invitarVeterinario.mutate()}
-                  disabled={demoSession || !email || !me?.veterinariaId || invitarVeterinario.isPending}
-                  title={demoSession ? DEMO_ACTION_HINT : undefined}
+                  disabled={
+                    demoSession ||
+                    sinAsientosDisponibles ||
+                    !email ||
+                    !me?.veterinariaId ||
+                    invitarVeterinario.isPending
+                  }
+                  title={
+                    demoSession
+                      ? DEMO_ACTION_HINT
+                      : sinAsientosDisponibles
+                        ? 'Debes cambiar tu plan para agregar más veterinarios.'
+                        : undefined
+                  }
                 >
                   Generar invitación
                 </Button>

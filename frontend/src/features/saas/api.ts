@@ -35,6 +35,7 @@ export interface SuscripcionActual {
 export interface AsientosSuscripcion {
   usados: number;
   max: number;
+  libres?: number;
 }
 
 export interface MiSuscripcionResponse {
