@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate, Navigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { ShieldCheck, Loader2, Sparkles, Lock, Eye, EyeOff } from 'lucide-react';
+import { ShieldCheck, Loader2, Lock, Eye, EyeOff } from 'lucide-react';
 import { getErrorMessage } from '../lib/errors';
 import { isFirebaseConfigured, missingFirebaseConfig } from '../lib/firebase';
 import logoVethos from '../assets/logo-vethos.png';
+import heroVideo from '../assets/hero-vethosia.mp4';
 
 const Login: React.FC = () => {
   const { user, loginWithGoogle, loginWithEmail, resetPassword, loading, accessDeniedMessage } =
@@ -87,9 +88,18 @@ const Login: React.FC = () => {
   return (
     <div className="flex min-h-screen veth-page-shell">
       {/* Hero desktop */}
-      <div className="command-hero relative hidden rounded-none border-0 lg:flex lg:w-[54%] flex-col justify-between overflow-hidden p-12 text-white">
-        <div className="pointer-events-none absolute -left-[10%] -top-[10%] h-[55%] w-[55%] rounded-full bg-white/5 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-[15%] -right-[15%] h-[70%] w-[70%] rounded-full bg-white/8 blur-3xl" />
+      <div className="relative hidden lg:flex lg:w-[54%] flex-col justify-between overflow-hidden p-12 text-white">
+        <video
+          src={heroVideo}
+          autoPlay
+          loop
+          muted
+          playsInline
+          poster={logoVethos}
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#08090dcc] via-[#08090d59] to-[#0e1116e0]" />
+        <div className="pointer-events-none absolute -left-[10%] -top-[10%] h-[55%] w-[55%] rounded-full bg-[color-mix(in_srgb,var(--accent)_35%,transparent)] blur-3xl" />
 
         <div className="relative z-10 flex items-center gap-3">
           <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-white shadow-lg">
@@ -104,35 +114,40 @@ const Login: React.FC = () => {
         </div>
 
         <div className="relative z-10 my-auto max-w-lg animate-fade-in">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold">
-            <Sparkles className="h-3.5 w-3.5 text-cyan-200" />
-            IA clínica para veterinarios
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/18 bg-white/12 px-3 py-1.5 text-xs font-semibold backdrop-blur-sm">
+            🐾 Software veterinario con IA
           </div>
-          <h1 className="mb-6 text-5xl font-black leading-[1.02] tracking-tight">
-            Historias clínicas inteligentes para equipos veterinarios modernos.
+          <h1 className="mb-5 text-[2.75rem] font-black leading-[1.1] tracking-tight">
+            El veterinario atiende a la mascota y{' '}
+            <span className="bg-gradient-to-r from-[var(--clinical-cyan)] to-[#7ea8ff] bg-clip-text text-transparent">
+              Vethos IA
+            </span>{' '}
+            hace el resto.
           </h1>
-          <p className="text-base leading-relaxed text-cyan-50/90">
-            Graba el audio de tus consultas. Vethos transcribe, estructura SOAP y deja listo el expediente para
-            aprobar, compartir PDF o WhatsApp en segundos.
+          <p className="text-base leading-relaxed text-white/85">
+            Graba la consulta, y la IA arma la historia clínica en formato SOAP mientras tú sigues con tu paciente.
           </p>
+        </div>
 
-          <div className="mt-9 space-y-3.5">
-            {[
-              'Ahorra hasta 2 horas diarias de papeleo',
-              'Formato SOAP estándar (S / O / A / P)',
-              'Historial digital seguro con control por rol',
-            ].map((item) => (
-              <div key={item} className="flex items-center gap-3">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/12 text-cyan-200 text-xs">
-                  ✓
-                </span>
-                <span className="text-sm font-medium">{item}</span>
-              </div>
+        {/* Tarjeta flotante — mismo motivo visual que el hero de vethosia.com */}
+        <div className="relative z-10 mb-16 w-64 -rotate-2 rounded-2xl bg-white p-4 text-[var(--ink,#181d2c)] shadow-2xl">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-extrabold">Firulais</span>
+            <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-600">Al día</span>
+          </div>
+          <p className="mt-0.5 text-xs text-slate-400">Golden Retriever · 4 años</p>
+          <div className="mt-3 flex h-4 items-end gap-[3px]" aria-hidden="true">
+            {[60, 100, 40, 80, 55].map((h, i) => (
+              <span
+                key={i}
+                className="w-[3px] rounded-sm bg-[var(--accent)]"
+                style={{ height: `${h}%` }}
+              />
             ))}
           </div>
         </div>
 
-        <div className="relative z-10 flex flex-wrap items-center gap-4 text-xs text-cyan-100/80">
+        <div className="relative z-10 flex flex-wrap items-center gap-4 text-xs text-white/65">
           <span>&copy; {new Date().getFullYear()} Vethos AI</span>
           <span className="hidden h-3 w-px bg-white/20 sm:block" />
           <span className="flex items-center gap-1.5">

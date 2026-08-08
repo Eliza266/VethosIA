@@ -3,11 +3,12 @@ import { useNavigate, Navigate, Link } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { useAuth } from '../hooks/useAuth';
 import { auth } from '../lib/firebase';
-import { ShieldCheck, Loader2, Sparkles, Eye, EyeOff } from 'lucide-react';
+import { ShieldCheck, Loader2, Eye, EyeOff } from 'lucide-react';
 import { getErrorMessage } from '../lib/errors';
 import { isFirebaseConfigured, missingFirebaseConfig } from '../lib/firebase';
 import { registrarCuenta } from '../features/tenant/api';
 import logoVethos from '../assets/logo-vethos.png';
+import heroVideo from '../assets/hero-vethosia.mp4';
 
 const Registro: React.FC = () => {
   const {
@@ -114,9 +115,19 @@ const Registro: React.FC = () => {
 
   return (
     <div className="flex min-h-screen veth-page-shell">
-      <div className="command-hero relative hidden rounded-none border-0 lg:flex lg:w-[46%] flex-col justify-between overflow-hidden p-12 text-white">
-        <div className="pointer-events-none absolute -left-[10%] -top-[10%] h-[55%] w-[55%] rounded-full bg-white/5 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-[15%] -right-[15%] h-[70%] w-[70%] rounded-full bg-white/8 blur-3xl" />
+      <div className="relative hidden lg:flex lg:w-[46%] flex-col justify-between overflow-hidden p-12 text-white">
+        <video
+          src={heroVideo}
+          autoPlay
+          loop
+          muted
+          playsInline
+          poster={logoVethos}
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#08090dcc] via-[#08090d59] to-[#0e1116e0]" />
+        <div className="pointer-events-none absolute -left-[10%] -top-[10%] h-[55%] w-[55%] rounded-full bg-[color-mix(in_srgb,var(--accent)_35%,transparent)] blur-3xl" />
+
         <div className="relative z-10 flex items-center gap-3">
           <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-white shadow-lg">
             <img src={logoVethos} alt="Vethos AI" className="h-8 w-8 object-contain" />
@@ -125,18 +136,40 @@ const Registro: React.FC = () => {
             Vethos<span className="text-cyan-200"> AI</span>
           </span>
         </div>
+
         <div className="relative z-10 my-auto max-w-lg animate-fade-in">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold">
-            <Sparkles className="h-3.5 w-3.5 text-cyan-200" />
-            7 días de prueba gratis
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/18 bg-white/12 px-3 py-1.5 text-xs font-semibold backdrop-blur-sm">
+            🎁 7 días de prueba gratis
           </div>
-          <h1 className="mb-6 text-4xl font-black leading-[1.05] tracking-tight">
-            Crea tu cuenta y prueba Vethos AI sin costo.
+          <h1 className="mb-5 text-4xl font-black leading-[1.1] tracking-tight">
+            Crea tu cuenta y prueba{' '}
+            <span className="bg-gradient-to-r from-[var(--clinical-cyan)] to-[#7ea8ff] bg-clip-text text-transparent">
+              Vethos IA
+            </span>{' '}
+            sin costo.
           </h1>
-          <p className="text-base leading-relaxed text-cyan-50/90">
+          <p className="text-base leading-relaxed text-white/85">
             Al terminar tu prueba, elige un plan y activamos tu cuenta por WhatsApp. Sin tarjeta,
             sin compromiso.
           </p>
+        </div>
+
+        <div className="relative z-10 mb-4 w-64 rotate-2 rounded-2xl bg-white p-4 text-[var(--ink,#181d2c)] shadow-2xl">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-extrabold">Tu veterinaria</span>
+            <span className="rounded-full bg-[var(--accent-soft)] px-2 py-0.5 text-[10px] font-bold text-[var(--accent-strong)]">
+              Trial activo
+            </span>
+          </div>
+          <p className="mt-0.5 text-xs text-slate-400">150 pacientes/mes incluidos</p>
+          <div className="mt-3 flex gap-1">
+            {[1, 2, 3, 4, 5, 6, 7].map((d) => (
+              <span
+                key={d}
+                className={`h-1.5 flex-1 rounded-full ${d <= 1 ? 'bg-[var(--accent)]' : 'bg-slate-200'}`}
+              />
+            ))}
+          </div>
         </div>
       </div>
 
