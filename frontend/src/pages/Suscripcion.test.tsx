@@ -148,7 +148,9 @@ describe('Suscripcion', () => {
     renderSuscripcion();
 
     expect((await screen.findAllByText(/Pagos en l[i\u00ed]nea no configurados/i)).length).toBeGreaterThan(0);
-    expect(screen.getByRole('button', { name: /iniciar pago con wompi/i })).toBeDisabled();
+    // Sin Wompi configurado (Fase 1), el checkout se reemplaza por las tarjetas
+    // de planes con boton de WhatsApp en vez de un boton de pago deshabilitado.
+    expect(screen.getByRole('heading', { name: /planes disponibles/i })).toBeInTheDocument();
     expect(screen.getByRole('region', { name: /configurar pagos wompi/i })).toBeInTheDocument();
   });
 

@@ -12,18 +12,22 @@ const linkWhatsApp = (nombrePlan: string): string =>
 
 const formatCOP = (valor: number): string => `$${valor.toLocaleString('es-CO')}`;
 
-export const PlanesWhatsAppGrid: React.FC<{ className?: string }> = ({ className = '' }) => {
+export const PlanesWhatsAppGrid: React.FC<{ className?: string; dark?: boolean }> = ({
+  className = '',
+  dark = true,
+}) => {
   const planes = useQuery({ queryKey: ['planes-checkout'], queryFn: listarPlanes });
   const activos = (planes.data ?? []).filter((p) => p.activo);
+  const mutedClass = dark ? 'text-white/60' : 'text-[var(--muted)]';
 
   if (planes.isLoading) {
-    return <p className="text-sm text-slate-400">Cargando planes...</p>;
+    return <p className={`text-sm ${mutedClass}`}>Cargando planes...</p>;
   }
   if (planes.isError || activos.length === 0) {
     return (
-      <p className="text-sm text-slate-400">
+      <p className={`text-sm ${mutedClass}`}>
         No pudimos cargar los planes. Escríbenos por WhatsApp al{' '}
-        <a href={linkWhatsApp('')} className="font-bold text-cyan-300 underline">
+        <a href={linkWhatsApp('')} className="font-bold text-[var(--clinical-cyan)] underline">
           +57 301 9188657
         </a>
         .
@@ -36,14 +40,24 @@ export const PlanesWhatsAppGrid: React.FC<{ className?: string }> = ({ className
       {activos.map((plan) => (
         <div
           key={plan.id}
-          className="flex flex-col rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm"
+          className={
+            dark
+              ? 'flex flex-col rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm'
+              : 'flex flex-col rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-sm'
+          }
         >
-          <h3 className="text-sm font-black uppercase tracking-wide text-cyan-200">{plan.nombre}</h3>
-          <p className="mt-2 text-2xl font-black text-white">
+          <h3
+            className={`text-sm font-black uppercase tracking-wide ${
+              dark ? 'text-cyan-200' : 'text-[var(--accent-strong)]'
+            }`}
+          >
+            {plan.nombre}
+          </h3>
+          <p className={`mt-2 text-2xl font-black ${dark ? 'text-white' : 'text-[var(--text)]'}`}>
             {formatCOP(plan.precioMensualCOP)}
-            <span className="text-xs font-medium text-white/60">/mes</span>
+            <span className={`text-xs font-medium ${mutedClass}`}>/mes</span>
           </p>
-          <p className="mt-1 text-xs text-white/60">
+          <p className={`mt-1 text-xs ${mutedClass}`}>
             Hasta {plan.asientosMax} veterinario{plan.asientosMax === 1 ? '' : 's'} ·{' '}
             {plan.limiteHistoriasMes.toLocaleString('es-CO')} pacientes/mes
           </p>

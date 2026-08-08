@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { CreditCard } from 'lucide-react';
+import { CreditCard, Gift } from 'lucide-react';
 import {
   miSuscripcion,
   crearCheckout,
@@ -12,11 +12,19 @@ import {
 import { BusinessOverview } from '../features/saas/BusinessOverview';
 import { BillingSummary } from '../features/saas/BillingSummary';
 import { WompiConfigPanel } from '../features/saas/WompiConfigPanel';
+import { PlanesWhatsAppGrid } from '../features/saas/PlanesWhatsApp';
 import { checkoutHabilitado } from '../features/saas/business';
 import { useMe } from '../features/tenant/hooks';
 import { Card, Button, Skeleton, PageHeader } from '../components/ui/Primitives';
 import { getErrorMessage } from '../lib/errors';
 import { puedeGestionarSuscripcion } from '../lib/rbac';
+
+const diasTrialRestantes = (trialHasta: unknown): number | null => {
+  if (typeof trialHasta !== 'string') return null;
+  const ms = new Date(trialHasta).getTime() - Date.now();
+  if (Number.isNaN(ms)) return null;
+  return Math.max(0, Math.ceil(ms / (24 * 60 * 60 * 1000)));
+};
 
 const Suscripcion: React.FC = () => {
   const { data: me } = useMe();
@@ -64,6 +72,28 @@ const Suscripcion: React.FC = () => {
         description="Plan, consumo, estado de cuenta y checkout seguro para la cuenta activa."
       />
 
+      {sub.data?.suscripcion?.estado === 'trial_activa' && (
+        <div className="flex flex-col gap-3 rounded-2xl border border-[color-mix(in_srgb,var(--accent)_18%,var(--border))] bg-[linear-gradient(90deg,var(--accent-soft),color-mix(in_srgb,var(--clinical-cyan)_10%,var(--surface)))] p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--accent)] text-white">
+              <Gift className="h-5 w-5" />
+            </span>
+            <div>
+              <p className="text-sm font-black text-[var(--text)]">Estás en tu prueba gratuita</p>
+              <p className="text-xs text-[var(--muted)]">Todas las funciones activas, sin necesidad de plan todavía.</p>
+            </div>
+          </div>
+          {(() => {
+            const dias = diasTrialRestantes(sub.data?.suscripcion?.trialHasta);
+            return dias !== null ? (
+              <span className="shrink-0 rounded-full bg-[var(--accent)] px-3 py-1 text-xs font-black text-white">
+                {dias === 0 ? 'Último día' : `${dias} día${dias === 1 ? '' : 's'} restantes`}
+              </span>
+            ) : null;
+          })()}
+        </div>
+      )}
+
       <BusinessOverview rol={me?.role ?? me?.rol} profile={me ?? null} />
       <BillingSummary
         estadoSuscripcion={sub.data?.suscripcion?.estado}
@@ -75,7 +105,19 @@ const Suscripcion: React.FC = () => {
 
       {puedeGestionarPlan && pagosConfig.data && <WompiConfigPanel config={pagosConfig.data} />}
 
-      {puedeGestionarPlan ? (
+      {puedeGestionarPlan && !checkoutOk ? (
+        <Card>
+          <section aria-label="Planes disponibles" className="space-y-4">
+            <div>
+              <h2 className="text-base font-black text-[var(--text)]">Planes disponibles</h2>
+              <p className="mt-1 text-sm text-[var(--muted)]">
+                Elige el plan que más se ajuste a tu clínica y escríbenos por WhatsApp para activarlo.
+              </p>
+            </div>
+            <PlanesWhatsAppGrid dark={false} />
+          </section>
+        </Card>
+      ) : puedeGestionarPlan ? (
       <Card>
         <section aria-label="Pagar o cambiar plan" className="space-y-4">
           <div>
