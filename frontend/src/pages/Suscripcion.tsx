@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { CreditCard, Gift } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { CreditCard, ExternalLink, Gift, Receipt } from 'lucide-react';
 import {
   miSuscripcion,
   crearCheckout,
@@ -9,6 +10,7 @@ import {
   pagosConfigMe,
   type CicloFacturacion,
 } from '../features/saas/api';
+import { obtenerConsumo } from '../features/metricas/api';
 import { BusinessOverview } from '../features/saas/BusinessOverview';
 import { BillingSummary } from '../features/saas/BillingSummary';
 import { WompiConfigPanel } from '../features/saas/WompiConfigPanel';
@@ -19,6 +21,8 @@ import { Card, Button, Skeleton, PageHeader } from '../components/ui/Primitives'
 import { getErrorMessage } from '../lib/errors';
 import { puedeGestionarSuscripcion } from '../lib/rbac';
 
+const DIAS_TRIAL_TOTAL = 7;
+
 const diasTrialRestantes = (trialHasta: unknown): number | null => {
   if (typeof trialHasta !== 'string') return null;
   const ms = new Date(trialHasta).getTime() - Date.now();
@@ -26,9 +30,34 @@ const diasTrialRestantes = (trialHasta: unknown): number | null => {
   return Math.max(0, Math.ceil(ms / (24 * 60 * 60 * 1000)));
 };
 
+const formatFecha = (valor: unknown): string | null => {
+  if (typeof valor !== 'string') return null;
+  const d = new Date(valor);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' });
+};
+
+const TrialBannerDots: React.FC<{ diaActual: number }> = ({ diaActual }) => (
+  <div className="flex items-center gap-1.5">
+    {Array.from({ length: DIAS_TRIAL_TOTAL }, (_, i) => (
+      <span
+        key={i}
+        className={`h-2 w-2 rounded-full ${
+          i < diaActual ? 'bg-[var(--accent)]' : 'bg-[var(--border-strong)]'
+        }`}
+      />
+    ))}
+    <span className="ml-2 shrink-0 rounded-full bg-[var(--accent)] px-3 py-1 text-xs font-black text-white">
+      Día {diaActual} de {DIAS_TRIAL_TOTAL}
+    </span>
+  </div>
+);
+
 const Suscripcion: React.FC = () => {
   const { data: me } = useMe();
+  const [searchParams] = useSearchParams();
   const sub = useQuery({ queryKey: ['suscripcion-me'], queryFn: miSuscripcion });
+  const consumo = useQuery({ queryKey: ['consumo-actual'], queryFn: obtenerConsumo, retry: false });
   const cuentaPagos = useQuery({ queryKey: ['pagos-me'], queryFn: estadoCuentaPagos, retry: false });
   const pagosConfig = useQuery({ queryKey: ['pagos-config-me'], queryFn: pagosConfigMe, retry: false });
   const planes = useQuery({ queryKey: ['planes-checkout'], queryFn: listarPlanes });
@@ -42,6 +71,13 @@ const Suscripcion: React.FC = () => {
   const planSel = activos.find((p) => p.id === planId);
   const checkoutOk = checkoutHabilitado(pagosConfig.data);
   const puedeGestionarPlan = puedeGestionarSuscripcion(me ?? null);
+
+  const estadoSub = sub.data?.suscripcion?.estado ?? null;
+  const enTrial = estadoSub === 'trial_activa';
+  const tienePlanActivo = Boolean(estadoSub) && !enTrial && estadoSub !== 'cancelada' && estadoSub !== 'desactivado';
+  const mostrarPlanesForzado = searchParams.get('planes') === '1';
+  const asientos = sub.data?.asientos ?? null;
+  const vigenciaTexto = formatFecha(sub.data?.suscripcion?.vigenteHasta);
 
   const pagar = async () => {
     if (!checkoutOk) {
@@ -72,7 +108,7 @@ const Suscripcion: React.FC = () => {
         description="Plan, consumo, estado de cuenta y checkout seguro para la cuenta activa."
       />
 
-      {sub.data?.suscripcion?.estado === 'trial_activa' && (
+      {enTrial && (
         <div className="flex flex-col gap-3 rounded-2xl border border-[color-mix(in_srgb,var(--accent)_18%,var(--border))] bg-[linear-gradient(90deg,var(--accent-soft),color-mix(in_srgb,var(--clinical-cyan)_10%,var(--surface)))] p-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--accent)] text-white">
@@ -84,28 +120,108 @@ const Suscripcion: React.FC = () => {
             </div>
           </div>
           {(() => {
-            const dias = diasTrialRestantes(sub.data?.suscripcion?.trialHasta);
-            return dias !== null ? (
-              <span className="shrink-0 rounded-full bg-[var(--accent)] px-3 py-1 text-xs font-black text-white">
-                {dias === 0 ? 'Último día' : `${dias} día${dias === 1 ? '' : 's'} restantes`}
-              </span>
-            ) : null;
+            const restantes = diasTrialRestantes(sub.data?.suscripcion?.trialHasta);
+            const diaActual = restantes !== null ? Math.min(DIAS_TRIAL_TOTAL, DIAS_TRIAL_TOTAL - restantes + 1) : null;
+            return diaActual !== null ? <TrialBannerDots diaActual={diaActual} /> : null;
           })()}
         </div>
       )}
 
+      {tienePlanActivo && (
+        <div className="relative overflow-hidden rounded-2xl p-6 text-white shadow-lg [background:linear-gradient(135deg,var(--ink,#0e1116),#16233f_55%,var(--ink,#0e1116))]">
+          <div className="pointer-events-none absolute inset-0 [background:radial-gradient(50%_70%_at_90%_0%,color-mix(in_srgb,var(--clinical-cyan)_18%,transparent),transparent_70%)]" />
+          <div className="relative flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-widest text-[#9db3ff]">Tu plan actual</p>
+              <p className="mt-1 text-xl font-black">{sub.data?.suscripcion?.planNombre ?? 'Plan activo'}</p>
+            </div>
+            <span className="rounded-full border border-emerald-400/30 bg-emerald-400/15 px-2.5 py-1 text-[11px] font-bold text-emerald-300">
+              ● Activo
+            </span>
+          </div>
+
+          <div className="relative mt-3 flex items-baseline gap-2">
+            {(() => {
+              const planActual = activos.find((p) => p.id === sub.data?.suscripcion?.planId);
+              return planActual ? (
+                <>
+                  <span className="text-3xl font-black">${planActual.precioMensualCOP.toLocaleString('es-CO')}</span>
+                  <span className="text-xs text-[#b7c2e0]">COP / mes</span>
+                </>
+              ) : null;
+            })()}
+          </div>
+
+          <div className="relative mt-5 grid gap-px overflow-hidden rounded-xl bg-white/10 sm:grid-cols-3">
+            <div className="bg-white/[0.03] p-3.5">
+              <p className="text-[11px] text-[#93a0c2]">Veterinarios</p>
+              <p className="mt-1 text-base font-black">
+                {asientos ? `${asientos.usados} / ${asientos.max}` : '—'}
+              </p>
+              {asientos && asientos.max > 0 && (
+                <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-white/10">
+                  <div
+                    className="h-full rounded-full [background:linear-gradient(90deg,var(--clinical-cyan),var(--accent-strong))]"
+                    style={{ width: `${Math.min(100, (asientos.usados / asientos.max) * 100)}%` }}
+                  />
+                </div>
+              )}
+            </div>
+            <div className="bg-white/[0.03] p-3.5">
+              <p className="text-[11px] text-[#93a0c2]">Pacientes este mes</p>
+              <p className="mt-1 text-base font-black">
+                {consumo.data ? `${consumo.data.usados} / ${consumo.data.limite}` : '—'}
+              </p>
+              {consumo.data && consumo.data.limite > 0 && (
+                <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-white/10">
+                  <div
+                    className="h-full rounded-full [background:linear-gradient(90deg,var(--clinical-cyan),var(--accent-strong))]"
+                    style={{ width: `${Math.min(100, consumo.data.porcentaje)}%` }}
+                  />
+                </div>
+              )}
+            </div>
+            <div className="bg-white/[0.03] p-3.5">
+              <p className="text-[11px] text-[#93a0c2]">Vigencia</p>
+              <p className="mt-1 text-base font-black">{vigenciaTexto ?? 'Sin vencimiento'}</p>
+            </div>
+          </div>
+
+          <div className="relative mt-5 flex flex-wrap gap-2.5">
+            <a
+              href="/suscripcion?planes=1"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-xl bg-[var(--clinical-cyan)] px-4 py-2.5 text-sm font-black text-[#05242e] transition hover:brightness-95"
+            >
+              <ExternalLink className="h-4 w-4" />
+              Ver otros planes
+            </a>
+            <a
+              href="#estado-de-cuenta"
+              className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/5 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-white/10"
+            >
+              <Receipt className="h-4 w-4" />
+              Ver historial de pagos
+            </a>
+          </div>
+        </div>
+      )}
+
       <BusinessOverview rol={me?.role ?? me?.rol} profile={me ?? null} />
-      <BillingSummary
-        estadoSuscripcion={sub.data?.suscripcion?.estado}
-        cartera={cuentaPagos.data?.cartera ?? null}
-        recibos={cuentaPagos.data?.recibos ?? []}
-        pagosConfig={pagosConfig.data ?? null}
-        isLoading={cuentaPagos.isLoading || pagosConfig.isLoading}
-      />
+      <div id="estado-de-cuenta" className="scroll-mt-20">
+        <BillingSummary
+          estadoSuscripcion={sub.data?.suscripcion?.estado}
+          cartera={cuentaPagos.data?.cartera ?? null}
+          recibos={cuentaPagos.data?.recibos ?? []}
+          pagosConfig={pagosConfig.data ?? null}
+          isLoading={cuentaPagos.isLoading || pagosConfig.isLoading}
+        />
+      </div>
 
       {puedeGestionarPlan && pagosConfig.data && <WompiConfigPanel config={pagosConfig.data} />}
 
-      {puedeGestionarPlan && !checkoutOk ? (
+      {puedeGestionarPlan && (!checkoutOk || mostrarPlanesForzado) ? (
         <Card>
           <section aria-label="Planes disponibles" className="space-y-4">
             <div>
