@@ -57,6 +57,12 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<number | null>(null);
+  // Visualizador de ondas en vivo: analiza el nivel de audio del microfono con
+  // Web Audio API (no toca el audio grabado, solo lo escucha para dibujar).
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const ondaRafRef = useRef<number | null>(null);
   // Si el celular bloquea pantalla a mitad de una grabacion, el navegador puede suspender o
   // matar la pestana y se pierde todo el audio en memoria (no se persiste hasta "Finalizar").
   // El Wake Lock evita que la pantalla se bloquee sola por inactividad mientras se graba.
@@ -84,6 +90,71 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
+    }
+  }, []);
+
+  const detenerVisualizador = useCallback(() => {
+    if (ondaRafRef.current !== null) {
+      cancelAnimationFrame(ondaRafRef.current);
+      ondaRafRef.current = null;
+    }
+    analyserRef.current = null;
+    const ctx = audioCtxRef.current;
+    audioCtxRef.current = null;
+    if (ctx) void ctx.close().catch(() => {});
+    const canvas = canvasRef.current;
+    const ctx2d = canvas?.getContext('2d');
+    if (canvas && ctx2d) ctx2d.clearRect(0, 0, canvas.width, canvas.height);
+  }, []);
+
+  const iniciarVisualizador = useCallback((stream: MediaStream) => {
+    try {
+      const AudioContextCtor =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      if (!AudioContextCtor) return;
+      const ctx = new AudioContextCtor();
+      const source = ctx.createMediaStreamSource(stream);
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 64;
+      analyser.smoothingTimeConstant = 0.75;
+      source.connect(analyser);
+      audioCtxRef.current = ctx;
+      analyserRef.current = analyser;
+
+      const data = new Uint8Array(analyser.frequencyBinCount);
+      const styles = getComputedStyle(document.documentElement);
+      const colorAccent = styles.getPropertyValue('--accent').trim() || '#3358f4';
+      const colorCyan = styles.getPropertyValue('--clinical-cyan').trim() || '#07c7f2';
+
+      const dibujar = () => {
+        const canvas = canvasRef.current;
+        const ctx2d = canvas?.getContext('2d');
+        if (!canvas || !ctx2d) {
+          ondaRafRef.current = requestAnimationFrame(dibujar);
+          return;
+        }
+        analyser.getByteFrequencyData(data);
+        const { width, height } = canvas;
+        ctx2d.clearRect(0, 0, width, height);
+        const barCount = data.length;
+        const gap = 3;
+        const barWidth = (width - gap * (barCount - 1)) / barCount;
+        for (let i = 0; i < barCount; i += 1) {
+          const nivel = data[i] / 255;
+          const barHeight = Math.max(3, nivel * height);
+          const x = i * (barWidth + gap);
+          const y = (height - barHeight) / 2;
+          ctx2d.fillStyle = i < barCount / 2 ? colorAccent : colorCyan;
+          ctx2d.beginPath();
+          ctx2d.roundRect(x, y, barWidth, barHeight, barWidth / 2);
+          ctx2d.fill();
+        }
+        ondaRafRef.current = requestAnimationFrame(dibujar);
+      };
+      ondaRafRef.current = requestAnimationFrame(dibujar);
+    } catch {
+      // Sin visualizador el navegador sigue grabando igual; es solo decorativo.
     }
   }, []);
 
@@ -124,8 +195,9 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
     return () => {
       stopTimer();
       void liberarWakeLock();
+      detenerVisualizador();
     };
-  }, [stopTimer, liberarWakeLock]);
+  }, [stopTimer, liberarWakeLock, detenerVisualizador]);
 
   const formatTime = (totalSeconds: number) => {
     const mins = Math.floor(totalSeconds / 60);
@@ -173,6 +245,7 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
       setIsRecording(true);
       startTimer();
       void solicitarWakeLock();
+      iniciarVisualizador(stream);
     } catch (err: unknown) {
       console.error('Microphone error:', err);
       onManualFallback?.();
@@ -186,6 +259,7 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
       setIsRecording(false);
       stopTimer();
       void liberarWakeLock();
+      detenerVisualizador();
     }
   };
 
@@ -264,7 +338,15 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
           <div className="text-2xl font-bold text-slate-800 tracking-wider">
             {formatTime(seconds)}
           </div>
-          
+
+          <canvas
+            ref={canvasRef}
+            width={280}
+            height={56}
+            className="h-14 w-full max-w-[280px]"
+            aria-hidden="true"
+          />
+
           <span className="text-xs font-semibold text-red-500 uppercase tracking-widest animate-pulse">
             Grabando Bloque {currentBlockNum}...
           </span>
