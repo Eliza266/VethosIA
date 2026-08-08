@@ -278,11 +278,6 @@ const NuevaConsulta: React.FC = () => {
   return (
     <div className="space-y-6 animate-fade-in">
       <PageHeader
-        breadcrumbs={[
-          { label: 'Pacientes', to: '/pacientes' },
-          { label: paciente.nombre, to: `/pacientes/${paciente.id}` },
-          { label: 'Nueva consulta' },
-        ]}
         title="Nueva Consulta Automática"
         description={`Paciente: ${paciente.nombre}${paciente.especie ? ` · ${paciente.especie}` : ''}`}
       />

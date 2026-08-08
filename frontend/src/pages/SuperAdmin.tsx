@@ -378,7 +378,7 @@ const SuperAdmin: React.FC = () => {
           />
         );
       case 'pagos':
-        return <PagosPanel pagos={data.pagos} systemConfig={data.systemConfig} />;
+        return <PagosPanel dataset={data} />;
       case 'auditoria':
         return <AuditoriaPanel eventos={data.auditoria} dataset={data} />;
       case 'configuracion':

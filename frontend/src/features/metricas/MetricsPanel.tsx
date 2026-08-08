@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
+  Area,
+  AreaChart,
   Bar,
   BarChart,
   CartesianGrid,
@@ -54,6 +56,20 @@ const fechaDesde = (dias: number): string => {
   return d.toISOString().slice(0, 10);
 };
 
+// Nombre visible para un veterinario en graficos: si solo hay correo (el equipo aun
+// no tiene nombre en su perfil), se muestra la parte local capitalizada en vez del
+// correo completo o un uid crudo, que no dicen nada en un eje de grafico.
+const etiquetaAmigable = (valor: string): string => {
+  if (valor.includes('@')) {
+    const local = valor.split('@')[0];
+    return local.charAt(0).toUpperCase() + local.slice(1);
+  }
+  if (valor.length > 20 && !/\s/.test(valor)) return 'Veterinario';
+  return valor;
+};
+
+const PALETA_EQUIPO = [BRAND_BLUE, CYAN, LIME, '#ffb703', '#7c3aed', '#ea580c', '#0d9488', RED];
+
 // % de cambio vs. el periodo anterior de igual duracion. null = sin base de comparacion
 // (periodo anterior en cero, o rango "Todo" sin limite inferior).
 const calcDelta = (actual: number, anterior: number | undefined): number | null => {
@@ -74,13 +90,32 @@ const DeltaBadge: React.FC<{ deltaPct: number | null }> = ({ deltaPct }) =>
     </span>
   );
 
-const MiniSparkline: React.FC<{ datos: Array<{ total: number }>; color: string }> = ({ datos, color }) =>
+const MiniSparkline: React.FC<{ datos: Array<{ total: number }>; color: string; id: string }> = ({
+  datos,
+  color,
+  id,
+}) =>
   datos.length > 1 ? (
-    <div className="h-10 w-24 shrink-0">
+    <div className="h-12 w-28 shrink-0">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={datos}>
-          <Line type="monotone" dataKey="total" stroke={color} strokeWidth={2} dot={false} isAnimationActive={false} />
-        </LineChart>
+        <AreaChart data={datos} margin={{ top: 4, right: 2, bottom: 0, left: 2 }}>
+          <defs>
+            <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={color} stopOpacity={0.35} />
+              <stop offset="100%" stopColor={color} stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <Area
+            type="monotone"
+            dataKey="total"
+            stroke={color}
+            strokeWidth={2}
+            fill={`url(#${id})`}
+            dot={{ r: 2, fill: color, strokeWidth: 0 }}
+            activeDot={{ r: 3 }}
+            isAnimationActive={false}
+          />
+        </AreaChart>
       </ResponsiveContainer>
     </div>
   ) : null;
@@ -165,12 +200,22 @@ const DonutCard: React.FC<{ titulo: string; subtitulo?: string; datos: DonutDatu
 // Panel de metricas + consumo, con graficos (recharts) en vez de listas planas. Alcance
 // segun rol (Super Admin: global; Admin entidad/veterinaria: su alcance; Vet: individual).
 // admin_veterinaria puede ademas aterrizar en un veterinario puntual de su equipo.
-const MetricsPanel: React.FC<{ rol?: Rol | null }> = ({ rol }) => {
+//
+// veterinarioIdForzado: cuando un admin_veterinaria cambia al modo "Veterinario" (barra
+// lateral), sigue siendo admin_veterinaria en sus claims reales -- sin esto, el backend
+// le devuelve las metricas de TODA la clinica en vez de solo las suyas, que es justo lo
+// que se espera ver en modo "Veterinario". Fuerza el filtro a su propio uid y oculta el
+// selector de equipo/sede (no tiene sentido comparar contra otro colega en ese modo).
+const MetricsPanel: React.FC<{ rol?: Rol | null; veterinarioIdForzado?: string }> = ({
+  rol,
+  veterinarioIdForzado,
+}) => {
   const [rango, setRango] = useState<string>('180');
   const [customDesde, setCustomDesde] = useState<string>('');
   const [customHasta, setCustomHasta] = useState<string>('');
-  const [veterinarioId, setVeterinarioId] = useState<string>('');
+  const [veterinarioId, setVeterinarioId] = useState<string>(veterinarioIdForzado ?? '');
   const [veterinariaId, setVeterinariaId] = useState<string>('');
+  const modoPersonal = Boolean(veterinarioIdForzado);
 
   const hoyStr = new Date().toISOString().slice(0, 10);
   let desde: string | undefined;
@@ -204,8 +249,8 @@ const MetricsPanel: React.FC<{ rol?: Rol | null }> = ({ rol }) => {
     };
   })();
 
-  const esAdminVeterinaria = rol === 'admin_veterinaria';
-  const esAdminEntidad = rol === 'admin_entidad';
+  const esAdminVeterinaria = rol === 'admin_veterinaria' && !modoPersonal;
+  const esAdminEntidad = rol === 'admin_entidad' && !modoPersonal;
 
   const equipo = useQuery({
     queryKey: ['metricas-equipo'],
@@ -269,7 +314,8 @@ const MetricsPanel: React.FC<{ rol?: Rol | null }> = ({ rol }) => {
   const nombresSedes = new Map((sedes.data ?? []).map((v) => [v.id, v.nombre]));
   const sedeLabel = (id: string) => nombresSedes.get(id) ?? id;
   const nombresEquipo = new Map((equipo.data ?? []).map((v) => [v.uid, v.email ?? v.uid]));
-  const equipoLabel = (id: string) => nombresEquipo.get(id) ?? (id === 'sin_veterinario' ? 'Sin asignar' : id);
+  const equipoLabel = (id: string) =>
+    id === 'sin_veterinario' ? 'Sin asignar' : etiquetaAmigable(nombresEquipo.get(id) ?? id);
   const consumoPorVetMap = new Map(consumoPorVet.map((v) => [v.veterinarioId, v.usados]));
   const rendimientoPorVet = consultasPorVet.map((v) => ({
     nombre: equipoLabel(v.veterinarioId),
@@ -385,13 +431,13 @@ const MetricsPanel: React.FC<{ rol?: Rol | null }> = ({ rol }) => {
             daria 0%. Solo se muestra la mini-tendencia de altas por mes. */}
         <KpiCardShell icon={<Users className="h-5 w-5" />} label="Total pacientes" accent={BRAND_BLUE} value={m.pacientes}>
           <div className="mt-2 flex items-end justify-end gap-2">
-            <MiniSparkline datos={pacientesPorMes} color={BRAND_BLUE} />
+            <MiniSparkline datos={pacientesPorMes} color={BRAND_BLUE} id="spark-pacientes" />
           </div>
         </KpiCardShell>
         <KpiCardShell icon={<Stethoscope className="h-5 w-5" />} label="Total consultas" accent={CYAN} value={m.consultas}>
           <div className="mt-2 flex items-end justify-between gap-2">
             <DeltaBadge deltaPct={calcDelta(m.consultas, mAnt?.consultas)} />
-            <MiniSparkline datos={consultasPorMes} color={CYAN} />
+            <MiniSparkline datos={consultasPorMes} color={CYAN} id="spark-consultas" />
           </div>
         </KpiCardShell>
         <KpiCardShell
@@ -466,7 +512,10 @@ const MetricsPanel: React.FC<{ rol?: Rol | null }> = ({ rol }) => {
                     <div className="h-3 flex-1 overflow-hidden rounded-full bg-[var(--surface-2)]">
                       <div
                         className="h-3 rounded-full"
-                        style={{ width: `${Math.max((d.total / maxTotal) * 100, 6)}%`, background: index === 0 ? BRAND_BLUE : CYAN }}
+                        style={{
+                          width: `${Math.max((d.total / maxTotal) * 100, 6)}%`,
+                          background: PALETA_EQUIPO[index % PALETA_EQUIPO.length],
+                        }}
                       />
                     </div>
                     <span className="w-6 shrink-0 text-right text-sm font-black text-[var(--text)]">{d.total}</span>
@@ -503,8 +552,13 @@ const MetricsPanel: React.FC<{ rol?: Rol | null }> = ({ rol }) => {
                   <XAxis dataKey="nombre" tick={axisTick} axisLine={false} tickLine={false} />
                   <YAxis tick={axisTick} axisLine={false} tickLine={false} width={20} allowDecimals={false} />
                   <Tooltip contentStyle={tooltipStyle} />
-                  <Bar dataKey="Consultas" fill={BRAND_BLUE} radius={[3, 3, 0, 0]} />
-                  <Bar dataKey="Historias IA" fill={LIME} radius={[3, 3, 0, 0]} />
+                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                  <Bar dataKey="Consultas" radius={[3, 3, 0, 0]}>
+                    {rendimientoPorVet.map((v, i) => (
+                      <Cell key={v.nombre} fill={PALETA_EQUIPO[i % PALETA_EQUIPO.length]} />
+                    ))}
+                  </Bar>
+                  <Bar dataKey="Historias IA" fill="var(--border-strong)" radius={[3, 3, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

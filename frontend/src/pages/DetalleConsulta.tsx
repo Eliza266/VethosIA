@@ -517,19 +517,19 @@ const DetalleConsulta: React.FC = () => {
 
   return (
     <div className="space-y-5 animate-fade-in">
-      <div className="command-hero p-4 sm:p-5">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="flex min-w-0 items-start gap-3 sm:gap-4">
+      <div className="command-hero p-3 sm:p-4">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
             <Link
               to={`/pacientes/${paciente.id}`}
-              className="shrink-0 rounded-2xl border border-white/15 bg-white/12 p-2.5 text-white/75 transition-colors hover:bg-white hover:text-[var(--accent-strong)]"
+              className="shrink-0 rounded-xl border border-white/15 bg-white/12 p-2 text-white/75 transition-colors hover:bg-white hover:text-[var(--accent-strong)]"
               title="Volver al expediente"
             >
-              <ArrowLeft className="h-5 w-5" />
+              <ArrowLeft className="h-4 w-4" />
             </Link>
             <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                <h1 className="text-lg font-black tracking-tight text-white sm:text-xl">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                <h1 className="text-sm font-black tracking-tight text-white sm:text-base">
                   Historia Clínica{' '}
                   {consulta.numeroHC && (
                     <span className="text-emerald-100">#{consulta.numeroHC}</span>
@@ -537,13 +537,13 @@ const DetalleConsulta: React.FC = () => {
                 </h1>
                 {consulta.prioridad && (
                   <span
-                    className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${PRIORIDAD_COLORS[consulta.prioridad]}`}
+                    className={`rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${PRIORIDAD_COLORS[consulta.prioridad]}`}
                   >
                     {PRIORIDAD_LABELS[consulta.prioridad]}
                   </span>
                 )}
                 <span
-                  className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                  className={`rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
                     consulta.estado === 'aprobada'
                       ? 'bg-white/18 text-emerald-100 ring-1 ring-emerald-200/20'
                       : consulta.estado === 'procesando'
@@ -554,7 +554,7 @@ const DetalleConsulta: React.FC = () => {
                   {consulta.estado === 'aprobada' ? 'Aprobada' : consulta.estado}
                 </span>
               </div>
-              <p className="mt-1.5 text-xs text-white/72 sm:text-sm">
+              <p className="mt-1 text-[11px] text-white/72 sm:text-xs">
                 Paciente:{' '}
                 <Link to={`/pacientes/${paciente.id}`} className="font-bold text-white hover:underline">
                   {paciente.nombre}

@@ -321,7 +321,7 @@ describe('SuperAdmin', () => {
     cleanup();
     renderSuperAdmin('/admin?panel=pagos');
     expect(await screen.findByTestId('superadmin-pagos-panel')).toBeInTheDocument();
-    expect(screen.getAllByText(/checkout global/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/cobro manual/i).length).toBeGreaterThan(0);
 
     cleanup();
     renderSuperAdmin('/auditoria');
