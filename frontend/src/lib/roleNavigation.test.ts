@@ -28,7 +28,7 @@ describe('roleNavigation', () => {
     expect(canAccessPath(profile, '/admin')).toBe(false);
   });
 
-  it('keeps linked veterinario out of subscription and independent veterinario in', () => {
+  it('gives linked veterinario read-only subscription access and independent veterinario full access', () => {
     const linked = { rol: 'vet' as const, orgId: 'org_legacy' };
     const independent = {
       rol: 'veterinario' as const,
@@ -37,10 +37,9 @@ describe('roleNavigation', () => {
       planOwnerId: 'vet1',
     };
 
-    expect(getNavbarItemsForProfile(linked).map((item) => item.id)).not.toContain('suscripcion');
-    expect(getDashboardModulesForProfile(linked).map((item) => item.id)).not.toContain(
-      'suscripcion',
-    );
+    expect(getNavbarItemsForProfile(linked).map((item) => item.id)).toContain('suscripcion');
+    expect(getDashboardModulesForProfile(linked).map((item) => item.id)).toContain('suscripcion');
+    expect(canAccessPath(linked, '/suscripcion')).toBe(true);
     expect(getNavbarItemsForProfile(independent).map((item) => item.id)).toContain(
       'suscripcion',
     );

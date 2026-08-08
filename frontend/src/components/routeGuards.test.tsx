@@ -105,11 +105,10 @@ describe('SubscriptionRoute (gestion de plan)', () => {
     expect(screen.getByText(PROTEGIDO)).toBeInTheDocument();
   });
 
-  it('niega a un veterinario vinculado (no dueno de plan) la suscripcion', () => {
+  it('permite a un veterinario vinculado (no dueno de plan) ver la suscripcion en modo lectura', () => {
     meData = { rol: 'vet', orgId: 'orgA', veterinariaId: 'vetA' };
     renderGuard(<SubscriptionRoute />);
-    expect(screen.queryByText(PROTEGIDO)).not.toBeInTheDocument();
-    expect(screen.getByText('HOME_DASHBOARD')).toBeInTheDocument();
+    expect(screen.getByText(PROTEGIDO)).toBeInTheDocument();
   });
 });
 

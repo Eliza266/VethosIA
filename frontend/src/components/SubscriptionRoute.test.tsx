@@ -28,11 +28,10 @@ function renderGuard(profile: Record<string, unknown> | null, loading = false) {
 }
 
 describe('SubscriptionRoute', () => {
-  it('bloquea acceso directo de veterinario vinculado legacy a /suscripcion', () => {
+  it('permite a veterinario vinculado legacy ver /suscripcion en modo lectura', () => {
     renderGuard({ uid: 'vet1', rol: 'vet', orgId: 'iVQURlMlESO5af6hbQ8I' });
 
-    expect(screen.getByText('Dashboard')).toBeInTheDocument();
-    expect(screen.queryByText('Gestion de suscripcion')).not.toBeInTheDocument();
+    expect(screen.getByText('Gestion de suscripcion')).toBeInTheDocument();
   });
 
   it('permite admins de entidad y veterinaria', () => {

@@ -13,13 +13,12 @@ import {
 import { obtenerConsumo } from '../features/metricas/api';
 import { BusinessOverview } from '../features/saas/BusinessOverview';
 import { BillingSummary } from '../features/saas/BillingSummary';
-import { WompiConfigPanel } from '../features/saas/WompiConfigPanel';
 import { PlanesWhatsAppGrid } from '../features/saas/PlanesWhatsApp';
 import { checkoutHabilitado } from '../features/saas/business';
 import { useMe } from '../features/tenant/hooks';
 import { Card, Button, Skeleton, PageHeader } from '../components/ui/Primitives';
 import { getErrorMessage } from '../lib/errors';
-import { puedeGestionarSuscripcion } from '../lib/rbac';
+import { esVeterinarioVinculado, puedeGestionarSuscripcion } from '../lib/rbac';
 
 const DIAS_TRIAL_TOTAL = 7;
 
@@ -71,6 +70,10 @@ const Suscripcion: React.FC = () => {
   const planSel = activos.find((p) => p.id === planId);
   const checkoutOk = checkoutHabilitado(pagosConfig.data);
   const puedeGestionarPlan = puedeGestionarSuscripcion(me ?? null);
+  // Un veterinario vinculado (no admin) ahora puede ver esta pagina para conocer el
+  // plan de su equipo, pero el historial de pagos/cartera sigue siendo terreno del
+  // admin de la clinica.
+  const puedeVerFacturacion = !esVeterinarioVinculado(me ?? null);
 
   const estadoSub = sub.data?.suscripcion?.estado ?? null;
   const enTrial = estadoSub === 'trial_activa';
@@ -105,7 +108,11 @@ const Suscripcion: React.FC = () => {
       <PageHeader
         badge="Cuenta y plan"
         title="Suscripción"
-        description="Plan, consumo, estado de cuenta y checkout seguro para la cuenta activa."
+        description={
+          puedeVerFacturacion
+            ? 'Plan, consumo, estado de cuenta y checkout seguro para la cuenta activa.'
+            : 'Plan y consumo de tu clínica. La gestión y el historial de pagos los maneja tu administrador.'
+        }
       />
 
       {enTrial && (
@@ -197,31 +204,43 @@ const Suscripcion: React.FC = () => {
               <ExternalLink className="h-4 w-4" />
               Ver otros planes
             </a>
-            <a
-              href="#estado-de-cuenta"
-              className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/5 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-white/10"
-            >
-              <Receipt className="h-4 w-4" />
-              Ver historial de pagos
-            </a>
+            {puedeVerFacturacion && (
+              <a
+                href="#estado-de-cuenta"
+                className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/5 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-white/10"
+              >
+                <Receipt className="h-4 w-4" />
+                Ver historial de pagos
+              </a>
+            )}
           </div>
         </div>
       )}
 
       <BusinessOverview rol={me?.role ?? me?.rol} profile={me ?? null} />
-      <div id="estado-de-cuenta" className="scroll-mt-20">
-        <BillingSummary
-          estadoSuscripcion={sub.data?.suscripcion?.estado}
-          cartera={cuentaPagos.data?.cartera ?? null}
-          recibos={cuentaPagos.data?.recibos ?? []}
-          pagosConfig={pagosConfig.data ?? null}
-          isLoading={cuentaPagos.isLoading || pagosConfig.isLoading}
-        />
-      </div>
+      {puedeVerFacturacion && (
+        <div id="estado-de-cuenta" className="scroll-mt-20">
+          <BillingSummary
+            estadoSuscripcion={sub.data?.suscripcion?.estado}
+            cartera={cuentaPagos.data?.cartera ?? null}
+            recibos={cuentaPagos.data?.recibos ?? []}
+            pagosConfig={pagosConfig.data ?? null}
+            isLoading={cuentaPagos.isLoading || pagosConfig.isLoading}
+          />
+        </div>
+      )}
 
-      {puedeGestionarPlan && pagosConfig.data && <WompiConfigPanel config={pagosConfig.data} />}
-
-      {puedeGestionarPlan && (!checkoutOk || mostrarPlanesForzado) ? (
+      {!puedeGestionarPlan && !puedeVerFacturacion ? (
+        <Card>
+          <section aria-label="Plan del equipo" className="space-y-2">
+            <h2 className="text-base font-black text-slate-900">Tu plan</h2>
+            <p className="text-sm leading-6 text-slate-500">
+              Esta es la información del plan de tu clínica. La gestión del plan y del
+              historial de pagos la maneja el administrador de la veterinaria.
+            </p>
+          </section>
+        </Card>
+      ) : puedeGestionarPlan && (!checkoutOk || mostrarPlanesForzado) ? (
         <Card>
           <section aria-label="Planes disponibles" className="space-y-4">
             <div>

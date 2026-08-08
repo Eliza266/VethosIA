@@ -151,7 +151,9 @@ describe('Suscripcion', () => {
     // Sin Wompi configurado (Fase 1), el checkout se reemplaza por las tarjetas
     // de planes con boton de WhatsApp en vez de un boton de pago deshabilitado.
     expect(screen.getByRole('heading', { name: /planes disponibles/i })).toBeInTheDocument();
-    expect(screen.getByRole('region', { name: /configurar pagos wompi/i })).toBeInTheDocument();
+    // El formulario de configuracion de Wompi queda oculto mientras los pagos
+    // sigan siendo manuales.
+    expect(screen.queryByRole('region', { name: /configurar pagos wompi/i })).not.toBeInTheDocument();
   });
 
   it('asistente no ve CTA de configuración Wompi', async () => {

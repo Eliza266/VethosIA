@@ -165,7 +165,9 @@ export function puedeVerSuscripcion(input: Rol | RbacProfileLike | null | undefi
   const canonico = normalizarRol(rolEfectivo(profile));
   if (canonico === 'admin_entidad') return true;
   if (canonico === 'admin_veterinaria') return hasValue(profile?.veterinariaId);
-  if (canonico === 'veterinario') return esVeterinarioIndependiente(profile);
+  // Un veterinario raso (vinculado a la veterinaria/entidad que lo registro) puede ver
+  // el plan de su equipo en modo solo lectura, aunque no pueda gestionarlo.
+  if (canonico === 'veterinario') return esVeterinarioIndependiente(profile) || esVeterinarioVinculado(profile);
   return false;
 }
 

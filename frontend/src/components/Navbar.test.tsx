@@ -106,7 +106,8 @@ describe('Navbar (roles y entidad)', () => {
     expect(screen.getByRole('link', { name: /brigadas/i })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /entidad/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /veterinarias/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /suscripci[o\u00f3]n/i })).not.toBeInTheDocument();
+    // Un veterinario vinculado ahora puede ver (solo lectura) el plan de su equipo.
+    expect(screen.getByRole('link', { name: /suscripci[o\u00f3]n/i })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /soporte plataforma/i })).not.toBeInTheDocument();
   });
 

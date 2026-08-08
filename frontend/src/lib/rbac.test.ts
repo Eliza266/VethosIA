@@ -209,8 +209,9 @@ describe('rbac (matriz de modulos por rol)', () => {
       planOwnerId: 'ent_1',
     };
 
-    expect(navItemsForProfile(vetVinculado).map((i) => i.id)).not.toContain('suscripcion');
-    expect(modulosInicioPorProfile(vetVinculado).map((i) => i.id)).not.toContain('suscripcion');
+    // Un veterinario vinculado ve la suscripcion en modo solo lectura (plan de su equipo).
+    expect(navItemsForProfile(vetVinculado).map((i) => i.id)).toContain('suscripcion');
+    expect(modulosInicioPorProfile(vetVinculado).map((i) => i.id)).toContain('suscripcion');
     expect(navItemsForProfile(vetIndependiente).map((i) => i.id)).toContain('suscripcion');
     expect(modulosInicioPorProfile(vetIndependiente).map((i) => i.id)).toContain('suscripcion');
     expect(navItemsForProfile(adminVetHeredado).map((i) => i.id)).toEqual(
