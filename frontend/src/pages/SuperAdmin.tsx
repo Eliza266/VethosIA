@@ -1,7 +1,16 @@
 import React, { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { crearPlan, listarPagos, listarPlanes, type Plan } from '../features/saas/api';
+import {
+  actualizarPlan,
+  asignarPlanSuscripcion,
+  cambiarEstadoSuscripcion,
+  crearPlan,
+  extenderTrial,
+  listarPagos,
+  listarPlanes,
+  type Plan,
+} from '../features/saas/api';
 import { useMe } from '../features/tenant/hooks';
 import {
   aprobarSolicitudTecnica,
@@ -146,6 +155,34 @@ const SuperAdmin: React.FC = () => {
     onSuccess: () => {
       setPlanDraft(planVacio);
       qc.invalidateQueries({ queryKey: ['planes'] });
+      qc.invalidateQueries({ queryKey: ['backoffice-auditoria'] });
+    },
+  });
+  const editarPlanMutation = useMutation({
+    mutationFn: ({ id, input }: { id: string; input: Partial<Plan> }) => actualizarPlan(id, input),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['planes'] });
+      qc.invalidateQueries({ queryKey: ['backoffice-auditoria'] });
+    },
+  });
+  const extenderTrialMutation = useMutation({
+    mutationFn: ({ id, dias }: { id: string; dias: number }) => extenderTrial(id, dias),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['backoffice-suscripciones'] });
+      qc.invalidateQueries({ queryKey: ['backoffice-auditoria'] });
+    },
+  });
+  const cambiarEstadoSubMutation = useMutation({
+    mutationFn: ({ id, estado }: { id: string; estado: string }) => cambiarEstadoSuscripcion(id, estado),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['backoffice-suscripciones'] });
+      qc.invalidateQueries({ queryKey: ['backoffice-auditoria'] });
+    },
+  });
+  const cambiarPlanSubMutation = useMutation({
+    mutationFn: ({ id, planId }: { id: string; planId: string }) => asignarPlanSuscripcion(id, planId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['backoffice-suscripciones'] });
       qc.invalidateQueries({ queryKey: ['backoffice-auditoria'] });
     },
   });
@@ -318,13 +355,32 @@ const SuperAdmin: React.FC = () => {
       case 'usuarios':
         return <UsuariosPanel data={data} actionState={actionState} onToggleBloqueo={toggleBloqueo} />;
       case 'planes':
-        return <PlanesPanel planes={data.planes} draft={planDraft} setDraft={setPlanDraft} onCreate={() => crearPlanMutation.mutate()} actionState={actionState} />;
+        return (
+          <PlanesPanel
+            planes={data.planes}
+            draft={planDraft}
+            setDraft={setPlanDraft}
+            onCreate={() => crearPlanMutation.mutate()}
+            onEditPlan={(id, input) => editarPlanMutation.mutate({ id, input })}
+            onToggleActivoPlan={(plan) => editarPlanMutation.mutate({ id: plan.id, input: { activo: !plan.activo } })}
+            actionState={actionState}
+          />
+        );
       case 'suscripciones':
-        return <SuscripcionesPanel suscripciones={data.suscripciones} consumos={data.consumos} />;
+        return (
+          <SuscripcionesPanel
+            suscripciones={data.suscripciones}
+            consumos={data.consumos}
+            dataset={data}
+            onExtenderTrial={(id, dias) => extenderTrialMutation.mutate({ id, dias })}
+            onCambiarEstado={(id, estado) => cambiarEstadoSubMutation.mutate({ id, estado })}
+            onCambiarPlan={(id, planId) => cambiarPlanSubMutation.mutate({ id, planId })}
+          />
+        );
       case 'pagos':
         return <PagosPanel pagos={data.pagos} systemConfig={data.systemConfig} />;
       case 'auditoria':
-        return <AuditoriaPanel eventos={data.auditoria} />;
+        return <AuditoriaPanel eventos={data.auditoria} dataset={data} />;
       case 'configuracion':
         return <ConfiguracionPanel config={data.systemConfig} isLoading={systemConfig.isLoading} />;
       default:

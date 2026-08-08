@@ -5,13 +5,15 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import BusinessOverview from './BusinessOverview';
 import type { RbacProfileLike, Rol } from '../../lib/rbac';
 
-const { mockMiSuscripcion, mockObtenerConsumo } = vi.hoisted(() => ({
+const { mockMiSuscripcion, mockObtenerConsumo, mockListarPlanes } = vi.hoisted(() => ({
   mockMiSuscripcion: vi.fn(),
   mockObtenerConsumo: vi.fn(),
+  mockListarPlanes: vi.fn(),
 }));
 
 vi.mock('./api', () => ({
   miSuscripcion: mockMiSuscripcion,
+  listarPlanes: mockListarPlanes,
 }));
 
 vi.mock('../metricas/api', () => ({
@@ -32,6 +34,7 @@ function renderOverview(rol: Rol | null, profile?: RbacProfileLike | null) {
 describe('BusinessOverview', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockListarPlanes.mockResolvedValue([]);
     mockMiSuscripcion.mockResolvedValue({
       suscripcion: {
         id: 'sub1',
@@ -58,7 +61,7 @@ describe('BusinessOverview', () => {
 
     expect(await screen.findByText('Plan, consumo y estado')).toBeInTheDocument();
     expect(screen.getByText('Consumo agregado entidad')).toBeInTheDocument();
-    expect(await screen.findByText('plan-pro')).toBeInTheDocument();
+    expect(await screen.findByText('Clínica Pro')).toBeInTheDocument();
     expect(screen.getByText('Al día')).toBeInTheDocument();
     expect(screen.getByRole('progressbar', { name: /uso del plan/i })).toHaveAttribute('aria-valuenow', '80');
     expect(screen.getByText(/Alerta: consumo alto del plan/i)).toBeInTheDocument();

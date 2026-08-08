@@ -82,6 +82,17 @@ export class SuscripcionesController {
   ) {
     return this.subs.extenderTrial(id, dto.dias ?? 7, user);
   }
+
+  // asignar plan manualmente desde Super Admin
+  @Roles('admin')
+  @Patch(':id/plan')
+  asignarPlan(
+    @Param('id') id: string,
+    @Body() dto: { planId: string },
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.subs.asignarPlan(id, dto.planId, user);
+  }
 }
 
 @Controller('consumo')

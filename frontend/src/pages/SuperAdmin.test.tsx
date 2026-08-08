@@ -243,6 +243,7 @@ describe('SuperAdmin', () => {
     renderSuperAdmin('/admin?panel=entidades');
 
     expect(await screen.findByTestId('superadmin-entidades-panel')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /crear nueva entidad/i }));
     fireEvent.change(screen.getByLabelText(/nombre entidad global/i), { target: { value: 'Entidad Global' } });
     fireEvent.change(screen.getByLabelText(/tipo entidad global/i), { target: { value: 'ong' } });
     fireEvent.change(screen.getByLabelText(/ciudad entidad global/i), { target: { value: 'Cali' } });
@@ -270,6 +271,7 @@ describe('SuperAdmin', () => {
     renderSuperAdmin('/admin?panel=veterinarias');
 
     expect(await screen.findByTestId('superadmin-veterinarias-panel')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /crear nueva sede/i }));
     expect(await screen.findByRole('option', { name: 'Entidad Norte' })).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText(/entidad objetivo sede/i), { target: { value: 'ent_1' } });
     fireEvent.change(screen.getByLabelText(/nombre sede global/i), { target: { value: 'Sede Global' } });
@@ -306,6 +308,7 @@ describe('SuperAdmin', () => {
   it('renderiza planes, suscripciones, pagos, auditoria y configuracion sin placeholders', async () => {
     renderSuperAdmin('/planes');
     expect(await screen.findByTestId('superadmin-planes-panel')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /crear nuevo plan/i }));
     fireEvent.change(screen.getByLabelText(/nombre del plan/i), { target: { value: 'Plan Nuevo' } });
     fireEvent.click(screen.getByRole('button', { name: /^crear plan$/i }));
     await waitFor(() => expect(mockCrearPlan).toHaveBeenCalledWith(expect.objectContaining({ nombre: 'Plan Nuevo' })));
@@ -313,7 +316,7 @@ describe('SuperAdmin', () => {
     cleanup();
     renderSuperAdmin('/suscripciones');
     expect(await screen.findByTestId('superadmin-suscripciones-panel')).toBeInTheDocument();
-    expect(await screen.findByRole('button', { name: /extender trial requiere acci[oó]n backend dedicada/i })).toBeDisabled();
+    expect(await screen.findByRole('button', { name: /Guardar Plan/i })).toBeInTheDocument();
 
     cleanup();
     renderSuperAdmin('/admin?panel=pagos');

@@ -116,6 +116,42 @@ export class SuscripcionesService {
     return { ...actual, id, estado: 'trial_activa', trialHasta: nuevoHasta.toISOString() };
   }
 
+  // Asignar plan manualmente desde Super Admin
+  async asignarPlan(id: string, planId: string, actor?: AuthUser): Promise<SuscripcionDoc> {
+    const ref = this.col.doc(id);
+    const snap = await ref.get();
+    if (!snap.exists) throw new NotFoundException(`Suscripcion ${id} no existe.`);
+    const actual = { id: snap.id, ...(snap.data() as Omit<SuscripcionDoc, 'id'>) };
+    if (actor) this.assertAccesoSuscripcion(actor, actual);
+
+    // Buscar plan en la colección 'planes' para tomar nombre, asientos y límite de historias
+    const planSnap = await this.firebase.firestore.collection(COLLECTIONS.planes).doc(planId).get();
+    const planData = planSnap.exists ? (planSnap.data() as Record<string, unknown>) : null;
+    const planNombre = typeof planData?.nombre === 'string' ? planData.nombre : planId;
+    const asientosMax = typeof planData?.asientosMax === 'number' ? planData.asientosMax : (actual.asientosMax ?? 1);
+    const limiteHistoriasMes = typeof planData?.limiteHistoriasMes === 'number' ? planData.limiteHistoriasMes : (actual.limiteHistoriasMes ?? 50);
+
+    const updatePayload = {
+      planId,
+      planNombre,
+      asientosMax,
+      limiteHistoriasMes,
+      actualizadoEn: new Date().toISOString(),
+    };
+
+    await ref.set(updatePayload, { merge: true });
+
+    await this.auditoria.registrar({
+      accion: 'suscripcion.cambiar',
+      actorUid: actor?.uid ?? 'sistema',
+      orgId: actual.orgId ?? actor?.orgId ?? null,
+      recurso: id,
+      meta: { planId, planNombre },
+    });
+
+    return { ...actual, id, ...updatePayload };
+  }
+
   // Asientos: un alta de miembro no puede exceder asientosMax del plan de la entidad.
   // Para vet independiente no aplica herencia de asientos (asientosMax efectivo = 1).
   async asientosDisponibles(user: AuthUser): Promise<{ usados: number; max: number; libres: number }> {

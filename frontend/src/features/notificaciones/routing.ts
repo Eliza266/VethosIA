@@ -59,6 +59,8 @@ export function etiquetaNotificacion(tipo: string | null | undefined, resourceTy
       return 'Suscripción';
     case 'invitacion_expirada':
       return 'Invitacion';
+    case 'nuevo_registro':
+      return 'Nuevo Registro';
     default:
       switch (resourceType) {
         case 'cita':

@@ -137,6 +137,11 @@ export const cambiarEstadoSuscripcion = async (id: string, estado: string) => {
   return res.data;
 };
 
+export const asignarPlanSuscripcion = async (id: string, planId: string) => {
+  const res = await apiClient.patch(`/v1/suscripciones/${id}/plan`, { planId });
+  return res.data;
+};
+
 export interface CheckoutRequest {
   planId: string;
   ciclo?: CicloFacturacion;

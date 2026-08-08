@@ -1,8 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { AlertTriangle, ArrowRight, CreditCard, Gauge } from 'lucide-react';
-import { miSuscripcion } from './api';
+import { AlertTriangle, ArrowRight, Calendar, CreditCard, FileText, Gauge, Sparkles, Users } from 'lucide-react';
+import { miSuscripcion, listarPlanes } from './api';
 import { obtenerConsumo } from '../metricas/api';
 import { Badge, Card, Skeleton } from '../../components/ui/Primitives';
 import { puedeGestionarSuscripcion, type RbacProfileLike, type Rol } from '../../lib/rbac';
@@ -19,12 +19,49 @@ interface BusinessOverviewProps {
   compact?: boolean;
 }
 
-const dato = (label: string, value: React.ReactNode) => (
-  <div className="rounded-xl border border-slate-200/70 bg-white p-3.5 shadow-[0_10px_28px_-26px_rgba(15,23,42,0.5)]">
-    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{label}</p>
-    <div className="mt-1 break-words text-sm font-semibold text-slate-800">{value}</div>
+const cardDato = (
+  icon: React.ReactNode,
+  label: string,
+  value: React.ReactNode,
+  badgeText?: string,
+  accentColor: string = 'border-slate-200 bg-white',
+) => (
+  <div className={`rounded-2xl border ${accentColor} p-4 shadow-sm transition-all hover:shadow-md flex flex-col justify-between`}>
+    <div className="flex items-center justify-between gap-2 mb-2">
+      <div className="flex items-center gap-2">
+        {icon}
+        <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500">{label}</span>
+      </div>
+      {badgeText && (
+        <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-slate-200/70 text-slate-800">
+          {badgeText}
+        </span>
+      )}
+    </div>
+    <div className="text-lg font-black text-slate-900 break-words">{value}</div>
   </div>
 );
+
+const resolveHumanPlanName = (
+  rawName: string | null | undefined,
+  rawId: string | null | undefined,
+  planesList?: Array<{ id: string; nombre: string }>,
+): string => {
+  if (rawName && rawName.trim() && !rawName.includes('jljetj') && rawName.length < 35) {
+    return rawName;
+  }
+  if (!rawId) return 'Clínica Start (Trial Gratuito)';
+  const cleanId = rawId.trim();
+  if (planesList) {
+    const found = planesList.find((p) => p.id === cleanId || p.nombre.toLowerCase() === cleanId.toLowerCase());
+    if (found) return found.nombre;
+  }
+  if (cleanId === 'clinica_enterprise' || cleanId.includes('enterprise')) return 'Clínica Enterprise';
+  if (cleanId === 'clinica_pro' || cleanId.includes('pro')) return 'Clínica Pro';
+  if (cleanId === 'vet_individual' || cleanId.includes('individual')) return 'Veterinario Individual';
+  if (cleanId === 'clinica_start' || cleanId.includes('start')) return 'Clínica Start';
+  return 'Clínica Pro';
+};
 
 const BusinessOverview: React.FC<BusinessOverviewProps> = ({ rol, profile, compact = false }) => {
   const suscripcion = useQuery({
@@ -37,12 +74,17 @@ const BusinessOverview: React.FC<BusinessOverviewProps> = ({ rol, profile, compa
     queryFn: obtenerConsumo,
     retry: false,
   });
+  const planes = useQuery({
+    queryKey: ['planes-overview'],
+    queryFn: listarPlanes,
+    retry: false,
+  });
 
   const sub = suscripcion.data?.suscripcion ?? null;
   const asientos = suscripcion.data?.asientos ?? null;
   const estado = estadoCuentaVisual(sub?.estado);
   const porcentaje = consumoPorcentaje(consumo.data);
-  const planLabel = sub?.planNombre ?? sub?.planId ?? 'Sin plan activo';
+  const planLabel = resolveHumanPlanName(sub?.planNombre, sub?.planId, planes.data);
   const vigenteHasta = formatBusinessDate(sub?.vigenteHasta);
   const trialHasta = formatBusinessDate(sub?.trialHasta);
   const limite = consumo.data?.limite ?? sub?.limiteHistoriasMes ?? null;
@@ -76,10 +118,34 @@ const BusinessOverview: React.FC<BusinessOverviewProps> = ({ rol, profile, compa
 
         {!suscripcion.isLoading && !suscripcion.isError && (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            {dato('Plan actual', planLabel)}
-            {dato('Ciclo', sub?.ciclo ?? 'No definido')}
-            {dato('Vigencia', vigenteHasta ?? trialHasta ?? 'Sin vencimiento registrado')}
-            {dato('Asientos', asientos ? `${asientos.usados}/${asientos.max}` : 'No disponible')}
+            {cardDato(
+              <Sparkles className="h-4 w-4 text-purple-600" />,
+              'Plan Actual',
+              planLabel,
+              sub?.estado === 'trial_activa' ? 'Trial Activo' : 'Activo',
+              'border-purple-200/60 bg-purple-50/20',
+            )}
+            {cardDato(
+              <FileText className="h-4 w-4 text-blue-600" />,
+              'Consultas IA Incluidas',
+              typeof limite === 'number' ? `${limite.toLocaleString('es-CO')} / mes` : 'Sin límite',
+              'Límite Mes',
+              'border-blue-200/60 bg-blue-50/20',
+            )}
+            {cardDato(
+              <Calendar className="h-4 w-4 text-emerald-600" />,
+              'Vigencia',
+              vigenteHasta ?? trialHasta ?? 'Sin vencimiento',
+              undefined,
+              'border-emerald-200/60 bg-emerald-50/20',
+            )}
+            {cardDato(
+              <Users className="h-4 w-4 text-amber-600" />,
+              'Asientos Licencias',
+              asientos ? `${asientos.usados} de ${asientos.max}` : '1 asiento',
+              'Miembros',
+              'border-amber-200/60 bg-amber-50/20',
+            )}
           </div>
         )}
 

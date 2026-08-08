@@ -208,29 +208,26 @@ const Perfil: React.FC = () => {
         currentFotoUrl = await getDownloadURL(uploadResult.ref);
       }
 
-      // Solo actualizamos campos de perfil si no es superadmin
-      if (!isSuperAdmin) {
-        const updatePayload = {
-          nombre: fields.nombre.trim(),
-          foto: currentFotoUrl,
-          telefono: joinPhone(telPais, telNumero),
-          whatsapp: joinPhone(waPais, waNumero),
-          ciudad: fields.ciudad,
-          pais: fields.pais,
-          sede: fields.sede,
-          veterinaria: fields.veterinaria,
-          matriculaProfesional: fields.matriculaProfesional,
-        };
-        if (getFeatureFlags().useApiCRUD) {
-          await actualizarMe(updatePayload);
-        } else {
-          const docRef = doc(db, 'veterinarios', user.uid);
-          await setDoc(docRef, {
-            uid: user.uid,
-            email: user.email,
-            ...updatePayload,
-          }, { merge: true });
-        }
+      const updatePayload = {
+        nombre: fields.nombre.trim(),
+        foto: currentFotoUrl,
+        telefono: joinPhone(telPais, telNumero),
+        whatsapp: joinPhone(waPais, waNumero),
+        ciudad: fields.ciudad,
+        pais: fields.pais,
+        sede: fields.sede,
+        veterinaria: fields.veterinaria,
+        matriculaProfesional: fields.matriculaProfesional,
+      };
+      if (getFeatureFlags().useApiCRUD) {
+        await actualizarMe(updatePayload);
+      } else {
+        const docRef = doc(db, 'veterinarios', user.uid);
+        await setDoc(docRef, {
+          uid: user.uid,
+          email: user.email,
+          ...updatePayload,
+        }, { merge: true });
       }
 
       setStatus({ type: 'success', message: '¡Perfil actualizado con éxito!' });

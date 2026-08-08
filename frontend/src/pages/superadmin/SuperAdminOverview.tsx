@@ -7,11 +7,17 @@ import {
   DollarSign,
   FileText,
   CreditCard,
-  CheckCircle2
+  CheckCircle2,
+  Clock
 } from 'lucide-react';
 import { Card, KpiCard, SectionHeader } from '../../components/ui/Primitives';
 import type { SuperAdminDataset } from './types';
-import { isVeterinario, planOwnerLabel } from './utils';
+import {
+  calcularTiempoTrialRestante,
+  formatFechaRegistro,
+  isVeterinario,
+  planOwnerLabel
+} from './utils';
 import {
   BarChart,
   Bar,
@@ -218,6 +224,85 @@ export const SuperAdminOverview: React.FC<{ data: SuperAdminDataset }> = ({ data
           <strong className="mt-2 block text-2xl font-black text-[var(--text)]">{nuevosRegistrosMes}</strong>
         </div>
       </section>
+
+      {/* Tabla de Registros y Tiempo Restante de Trial */}
+      <Card className="premium-card" data-testid="superadmin-registros-trial-panel">
+        <SectionHeader
+          title="Cuentas Registradas y Tiempo Restante de Trial"
+          description="Detalle de registros en la plataforma: fecha/hora de registro y tiempo exacto restante en días y horas para terminar la prueba gratuita."
+        />
+        <div className="mt-4 overflow-x-auto">
+          {data.suscripciones.length === 0 && data.miembros.length === 0 ? (
+            <p className="text-xs text-[var(--muted)] py-4 text-center">No hay registros de cuentas activos.</p>
+          ) : (
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="border-b border-[var(--border)] text-[var(--muted)] font-bold uppercase tracking-wider">
+                  <th className="py-2.5 px-3">Cuenta / Usuario</th>
+                  <th className="py-2.5 px-3">Fecha y Hora de Registro</th>
+                  <th className="py-2.5 px-3">Tiempo Restante de Trial (Días y Horas)</th>
+                  <th className="py-2.5 px-3">Estado</th>
+                  <th className="py-2.5 px-3 text-right">Acción</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[var(--border)]">
+                {data.suscripciones.map((suscripcion) => {
+                  const owner = planOwnerLabel(suscripcion);
+                  const fechaRegistroStr = formatFechaRegistro(suscripcion.creadoEn ?? suscripcion.createdAt);
+                  const trialInfo = calcularTiempoTrialRestante(
+                    suscripcion.trialHasta,
+                    suscripcion.creadoEn ?? suscripcion.createdAt,
+                    suscripcion.estado,
+                  );
+
+                  return (
+                    <tr key={String(suscripcion.id)} className="hover:bg-[var(--surface-2)] transition-colors">
+                      <td className="py-3 px-3">
+                        <strong className="text-sm font-bold text-[var(--text)] block">{owner}</strong>
+                        <span className="text-[11px] text-[var(--muted)]">
+                          Tipo: {String(suscripcion.planOwnerType ?? 'veterinaria')}
+                        </span>
+                      </td>
+                      <td className="py-3 px-3 font-mono text-[var(--text)]">
+                        📅 {fechaRegistroStr}
+                      </td>
+                      <td className="py-3 px-3">
+                        <span
+                          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-bold text-xs ${
+                            trialInfo.esDePago
+                              ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20'
+                              : trialInfo.expirado
+                              ? 'bg-red-500/10 text-red-700 dark:text-red-400 border border-red-500/20'
+                              : trialInfo.dias <= 1
+                              ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20'
+                              : 'bg-cyan-500/10 text-cyan-700 dark:text-cyan-400 border border-cyan-500/20'
+                          }`}
+                        >
+                          <Clock className="h-3.5 w-3.5" />
+                          {trialInfo.textoDetallado}
+                        </span>
+                      </td>
+                      <td className="py-3 px-3">
+                        <span className="capitalize font-bold text-[var(--muted)]">
+                          {String(suscripcion.estado || 'trial_activa')}
+                        </span>
+                      </td>
+                      <td className="py-3 px-3 text-right">
+                        <Link
+                          to="/suscripciones"
+                          className="text-[11px] font-bold text-[var(--accent)] hover:underline inline-flex items-center gap-1"
+                        >
+                          Ver suscripciones →
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </Card>
 
       {/* Gráficas y Alertas */}
       <div className="grid gap-5 lg:grid-cols-3">

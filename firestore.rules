@@ -41,7 +41,11 @@ service cloud.firestore {
     }
 
     function isSuperadmin() {
-      return hasRol() && rol() == 'superadmin';
+      return isSignedIn() && (
+        (hasRol() && rol() == 'superadmin') ||
+        ('isSuperadmin' in request.auth.token && request.auth.token.isSuperadmin == true) ||
+        (request.auth.token.email == 'gerencia@vethosia.com')
+      );
     }
 
     function ownsByVet(data) {
@@ -58,6 +62,22 @@ service cloud.firestore {
 
     function ownsByOrg(data) {
       return isSuperadmin() || (hasOrgClaim() && 'orgId' in data && data.orgId == tokenOrg());
+    }
+
+    // Suscripciones V2 (auto-registro, veterinaria/entidad independientes) no
+    // siempre traen orgId: ademas de ownsByOrg, matchea por veterinarioId legacy
+    // y por los claims V2 (planOwnerId/veterinariaId/entidadId) contra el mismo
+    // campo en el documento. Sin esto, isSignedIn() a secas deja leer la
+    // suscripcion de cualquier otra clinica.
+    function ownsSuscripcion(data) {
+      return ownsByOrg(data)
+             || ('veterinarioId' in data && data.veterinarioId == uid())
+             || ('planOwnerId' in request.auth.token && 'planOwnerId' in data
+                 && data.planOwnerId == request.auth.token.planOwnerId)
+             || ('veterinariaId' in request.auth.token && 'veterinariaId' in data
+                 && data.veterinariaId == request.auth.token.veterinariaId)
+             || ('entidadId' in request.auth.token && 'entidadId' in data
+                 && data.entidadId == request.auth.token.entidadId);
     }
 
     function createOrgOk(data) {
@@ -171,8 +191,8 @@ service cloud.firestore {
 
     // ── suscripciones / consumos / pagos ────────────────────────
     match /suscripciones/{subId} {
-      allow read: if hasRol() && ownsByOrg(resource.data);
-      allow write: if false;
+      allow read: if isSignedIn() && ownsSuscripcion(resource.data);
+      allow write: if isSuperadmin();
     }
     match /consumos/{consumoId} {
       allow read: if hasRol() && ownsByOrg(resource.data);

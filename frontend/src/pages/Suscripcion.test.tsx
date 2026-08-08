@@ -114,7 +114,7 @@ describe('Suscripcion', () => {
   it('muestra plan, consumo y estado vacio de recibos sin datos falsos', async () => {
     renderSuscripcion();
 
-    expect(await screen.findByText('plan-pro')).toBeInTheDocument();
+    expect(await screen.findByText('Clínica Pro')).toBeInTheDocument();
     expect(screen.getAllByText('Al día').length).toBeGreaterThan(0);
     expect(screen.getByRole('progressbar', { name: /uso del plan/i })).toHaveAttribute('aria-valuenow', '65');
     expect(screen.getByText('Sin recibos recientes')).toBeInTheDocument();

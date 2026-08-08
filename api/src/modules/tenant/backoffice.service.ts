@@ -803,6 +803,8 @@ export class BackofficeService {
       vinculoTipo: parseVinculoTipo(data.vinculoTipo),
       estado: parseEstadoMembership(data.estado),
       bloqueado: data.bloqueado === true || data.estado === 'bloqueado',
+      creadoEn: data.creadoEn ?? data.createdAt ?? null,
+      createdAt: data.createdAt ?? data.creadoEn ?? null,
     }) as BackofficeMiembro;
   }
 }

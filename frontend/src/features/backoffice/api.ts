@@ -26,6 +26,8 @@ export interface BackofficeEntidad {
   legacyOrgId?: string | null;
   planOwnerType?: 'entidad';
   planOwnerId?: string;
+  creadoEn?: unknown;
+  createdAt?: unknown;
 }
 
 export interface BackofficeVeterinaria {
@@ -45,6 +47,8 @@ export interface BackofficeVeterinaria {
   accountType: 'veterinaria';
   accountId: string;
   estado: 'activa' | 'inactiva';
+  creadoEn?: unknown;
+  createdAt?: unknown;
 }
 
 export interface BackofficeMiembro {
@@ -64,6 +68,8 @@ export interface BackofficeMiembro {
   vinculoTipo?: 'staff' | 'freelance' | 'owner';
   estado?: 'activo' | 'inactivo' | 'bloqueado';
   bloqueado: boolean;
+  creadoEn?: unknown;
+  createdAt?: unknown;
 }
 
 export interface BackofficeConsumo {
