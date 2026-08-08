@@ -12,6 +12,7 @@ import {
 import { Card, KpiCard, SectionHeader } from '../../components/ui/Primitives';
 import type { SuperAdminDataset } from './types';
 import { isVeterinario, planOwnerLabel } from './utils';
+import { ESPECIES_COLORS } from '../../lib/chartColors';
 import {
   BarChart,
   Bar,
@@ -238,7 +239,11 @@ export const SuperAdminOverview: React.FC<{ data: SuperAdminDataset }> = ({ data
                     fontSize: 12,
                   }}
                 />
-                <Bar dataKey="SOAP" fill="var(--accent)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="SOAP" radius={[4, 4, 0, 0]}>
+                  {last6Months.map((m, index) => (
+                    <Cell key={m.periodo} fill={ESPECIES_COLORS[index % ESPECIES_COLORS.length]} />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -260,8 +265,8 @@ export const SuperAdminOverview: React.FC<{ data: SuperAdminDataset }> = ({ data
                     paddingAngle={5}
                     dataKey="value"
                   >
-                    {distributionData.map((_, index) => (
-                      <Cell key={`cell-${index}`} fill={index === 0 ? 'var(--accent)' : 'var(--clinical-blue)'} />
+                    {distributionData.map((entry, index) => (
+                      <Cell key={entry.name} fill={ESPECIES_COLORS[index % ESPECIES_COLORS.length]} />
                     ))}
                   </Pie>
                   <Tooltip
