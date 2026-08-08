@@ -20,7 +20,7 @@ import { obtenerMetricas, obtenerConsumo } from './api';
 import { listarVeterinariosBackoffice, listarVeterinariasBackoffice } from '../backoffice/api';
 import { Card, SectionHeader, Skeleton } from '../../components/ui/Primitives';
 import type { Rol } from '../../lib/rbac';
-import { NAVY, CYAN, LIME, RED, ESPECIES_COLORS, VACUNAS_COLORS, AGENDA_COLORS, BRIGADAS_COLORS } from '../../lib/chartColors';
+import { BRAND_BLUE, CYAN, LIME, RED, ESPECIES_COLORS, VACUNAS_COLORS, AGENDA_COLORS, BRIGADAS_COLORS } from '../../lib/chartColors';
 
 const RANGOS = [
   { value: 'hoy', label: 'Hoy' },
@@ -383,9 +383,9 @@ const MetricsPanel: React.FC<{ rol?: Rol | null }> = ({ rol }) => {
             a proposito: es el total de la cuenta, no algo que fluctue por periodo), asi
             que no tiene sentido mostrarle una variacion vs. periodo anterior — siempre
             daria 0%. Solo se muestra la mini-tendencia de altas por mes. */}
-        <KpiCardShell icon={<Users className="h-5 w-5" />} label="Total pacientes" accent={NAVY} value={m.pacientes}>
+        <KpiCardShell icon={<Users className="h-5 w-5" />} label="Total pacientes" accent={BRAND_BLUE} value={m.pacientes}>
           <div className="mt-2 flex items-end justify-end gap-2">
-            <MiniSparkline datos={pacientesPorMes} color={NAVY} />
+            <MiniSparkline datos={pacientesPorMes} color={BRAND_BLUE} />
           </div>
         </KpiCardShell>
         <KpiCardShell icon={<Stethoscope className="h-5 w-5" />} label="Total consultas" accent={CYAN} value={m.consultas}>
@@ -440,7 +440,7 @@ const MetricsPanel: React.FC<{ rol?: Rol | null }> = ({ rol }) => {
                 <YAxis tick={axisTick} axisLine={false} tickLine={false} width={25} allowDecimals={false} />
                 <Tooltip contentStyle={tooltipStyle} />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Line type="monotone" dataKey="Consultas" stroke={NAVY} strokeWidth={3} dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="Consultas" stroke={BRAND_BLUE} strokeWidth={3} dot={{ r: 3 }} />
                 <Line type="monotone" dataKey="Pacientes" stroke={CYAN} strokeWidth={3} dot={{ r: 3 }} />
               </LineChart>
             </ResponsiveContainer>
@@ -466,7 +466,7 @@ const MetricsPanel: React.FC<{ rol?: Rol | null }> = ({ rol }) => {
                     <div className="h-3 flex-1 overflow-hidden rounded-full bg-[var(--surface-2)]">
                       <div
                         className="h-3 rounded-full"
-                        style={{ width: `${Math.max((d.total / maxTotal) * 100, 6)}%`, background: index === 0 ? NAVY : CYAN }}
+                        style={{ width: `${Math.max((d.total / maxTotal) * 100, 6)}%`, background: index === 0 ? BRAND_BLUE : CYAN }}
                       />
                     </div>
                     <span className="w-6 shrink-0 text-right text-sm font-black text-[var(--text)]">{d.total}</span>
@@ -503,7 +503,7 @@ const MetricsPanel: React.FC<{ rol?: Rol | null }> = ({ rol }) => {
                   <XAxis dataKey="nombre" tick={axisTick} axisLine={false} tickLine={false} />
                   <YAxis tick={axisTick} axisLine={false} tickLine={false} width={20} allowDecimals={false} />
                   <Tooltip contentStyle={tooltipStyle} />
-                  <Bar dataKey="Consultas" fill={NAVY} radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="Consultas" fill={BRAND_BLUE} radius={[3, 3, 0, 0]} />
                   <Bar dataKey="Historias IA" fill={LIME} radius={[3, 3, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -526,7 +526,7 @@ const MetricsPanel: React.FC<{ rol?: Rol | null }> = ({ rol }) => {
                 <YAxis tick={axisTick} axisLine={false} tickLine={false} width={25} allowDecimals={false} />
                 <Tooltip contentStyle={tooltipStyle} />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Bar dataKey="Consultas" fill={NAVY} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Consultas" fill={BRAND_BLUE} radius={[4, 4, 0, 0]} />
                 <Bar dataKey="Pacientes" fill={CYAN} radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>

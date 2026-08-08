@@ -129,7 +129,6 @@ describe('AdminVeterinaria', () => {
     expect(screen.getByText('Configuración')).toBeInTheDocument();
     expect(screen.getByText('Datos de la clínica')).toBeInTheDocument();
     expect(screen.getByText('Catálogo de vacunas')).toBeInTheDocument();
-    expect(screen.getByText('Solicitudes técnicas y plan')).toBeInTheDocument();
     expect(screen.getAllByText(/Equipo cl[ií]nico/i).length).toBeGreaterThan(0);
     expect(screen.queryByText(/Vista Entidad/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Soporte Plataforma/i)).not.toBeInTheDocument();

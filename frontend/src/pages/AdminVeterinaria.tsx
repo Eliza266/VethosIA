@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { useTourGuide } from '../hooks/useTourGuide';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Building2, CreditCard, FileClock, Syringe, Users } from 'lucide-react';
+import { Building2, Syringe, Users } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '../services/firebase';
 import { buildVeterinariaLogoStoragePath } from '../lib/veterinariaLogoStorage';
 import { useMe } from '../features/tenant/hooks';
-import { crearInvitacionVeterinaria, listarSolicitudesTecnicas } from '../features/tenant/api';
+import { crearInvitacionVeterinaria } from '../features/tenant/api';
 import {
   actualizarVeterinariaBackoffice,
   crearVeterinarioCredencialesBackoffice,
@@ -18,7 +18,7 @@ import {
   setBloqueoMiembroBackoffice,
 } from '../features/backoffice/api';
 import { Button, Card, EmptyState, SectionHeader } from '../components/ui/Primitives';
-import { puedeVerSuscripcion, rolLabel } from '../lib/rbac';
+import { rolLabel } from '../lib/rbac';
 import { getErrorMessage } from '../lib/errors';
 import { DEMO_ACTION_HINT, isDemoSession } from '../lib/demoSession';
 import {
@@ -55,12 +55,6 @@ const CONFIG_CARDS: ConfigCard[] = [
     descripcion: 'Vacunas propias de tu clínica, además de las del sistema.',
     icon: Syringe,
   },
-  {
-    tab: 'solicitudes',
-    titulo: 'Solicitudes técnicas y plan',
-    descripcion: 'Conflictos de vinculación pendientes y estado de tu suscripción.',
-    icon: FileClock,
-  },
 ];
 
 const TOUR_STEPS_ADMIN_VETERINARIA = [
@@ -69,7 +63,7 @@ const TOUR_STEPS_ADMIN_VETERINARIA = [
     popover: {
       title: 'Configuración',
       description:
-        'Aquí administras la ficha de tu veterinaria, el equipo clínico, el catálogo de vacunas y las solicitudes técnicas junto al plan, cada uno en su propia vista.',
+        'Aquí administras la ficha de tu veterinaria, el equipo clínico y el catálogo de vacunas, cada uno en su propia vista.',
     },
   },
 ];
@@ -178,12 +172,6 @@ const AdminVeterinaria: React.FC = () => {
     queryFn: listarConsumosBackoffice,
     enabled: scopeListo,
   });
-  const solicitudes = useQuery({
-    queryKey: ['solicitudes-tecnicas', me?.orgId, me?.veterinariaId],
-    queryFn: () => listarSolicitudesTecnicas(),
-    enabled: !!me?.orgId,
-  });
-
   React.useEffect(() => {
     const data = veterinaria.data;
     if (!data) return;
@@ -303,7 +291,7 @@ const AdminVeterinaria: React.FC = () => {
         </span>
         <h1 className="mt-4 text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">Configuración</h1>
         <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
-          Gestiona sede, equipo clínico, catálogo de vacunas y solicitudes técnicas desde una consola ejecutiva.
+          Gestiona sede, equipo clínico y catálogo de vacunas desde una consola ejecutiva.
         </p>
       </section>
 
@@ -845,53 +833,6 @@ const AdminVeterinaria: React.FC = () => {
         </Card>
       )}
 
-      {tab === 'solicitudes' && (
-        <section className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
-          <Card className="premium-card">
-            <SectionHeader
-              title="Solicitudes técnicas"
-              description="Vinculaciones con conflicto quedan visibles para seguimiento mientras Área Técnica las resuelve."
-            />
-            <div className="mt-3 grid gap-2">
-              {solicitudes.isLoading && <p className="text-sm text-slate-500">Cargando...</p>}
-              {(solicitudes.data ?? []).length === 0 && !solicitudes.isLoading && (
-                <EmptyState
-                  variant="controlled"
-                  titulo="Sin solicitudes técnicas"
-                  mensaje="No hay conflictos pendientes de vinculación para esta veterinaria."
-                />
-              )}
-              {(solicitudes.data ?? []).map((s) => (
-                <div key={s.id} className="rounded-xl border border-slate-200 p-3">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <strong className="text-sm text-slate-900">{s.emailInvitado}</strong>
-                    <span className={s.estado === 'pendiente' ? 'text-sm font-bold text-amber-700' : 'text-sm font-bold text-slate-500'}>
-                      {s.estado}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-sm text-slate-500">{s.conflicto ?? s.motivo ?? 'Revisión pendiente.'}</p>
-                </div>
-              ))}
-            </div>
-          </Card>
-
-          {puedeVerSuscripcion(me ?? null) && (
-            <Link to="/suscripcion" className="group">
-              <Card className="h-full shadow-[0_14px_35px_-30px_rgba(15,23,42,0.45)] transition-all group-hover:-translate-y-0.5 group-hover:shadow-[0_18px_45px_-32px_rgba(15,110,86,0.55)]">
-                <div className="flex items-start gap-4">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent/10 text-accent">
-                    <CreditCard className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h2 className="text-base font-bold text-slate-900 group-hover:text-accent">Plan / Suscripción</h2>
-                    <p className="mt-1 text-sm text-slate-500">Consumo, cupos y estado del plan heredado o propio.</p>
-                  </div>
-                </div>
-              </Card>
-            </Link>
-          )}
-        </section>
-      )}
     </div>
   );
 };
