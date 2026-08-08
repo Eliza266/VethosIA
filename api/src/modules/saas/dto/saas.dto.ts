@@ -48,3 +48,11 @@ export class ConfigurarWompiDto {
 export class ExtenderTrialDto {
   @IsOptional() @IsInt() @Min(1) dias?: number;
 }
+
+export class RegistrarPagoManualDto {
+  @IsInt() @Min(0) amountInCents!: number;
+  @IsString() @MinLength(2) medioPago!: string;
+  @IsOptional() @IsString() fechaPago?: string;
+  @IsOptional() @IsString() referencia?: string;
+  @IsOptional() @IsIn(['mensual', 'anual']) extenderCiclo?: 'mensual' | 'anual';
+}

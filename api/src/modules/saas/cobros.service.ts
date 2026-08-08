@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import * as admin from 'firebase-admin';
 import { FirebaseService } from '../../common/firebase/firebase.service';
 import { COLLECTIONS } from '../../common/firebase/collections';
@@ -29,11 +29,12 @@ export interface ReciboDoc {
   amountInCents: number;
   currency: string;
   estado: 'emitido';
-  tipo: 'recibo_fase1_no_fiscal';
+  tipo: 'recibo_fase1_no_fiscal' | 'recibo_manual';
   orgId?: string | null;
   veterinarioId?: string | null;
   planId?: string | null;
   fechaEmision: string;
+  medioPago?: string | null;
   creadoEn?: unknown;
 }
 
@@ -42,6 +43,14 @@ export interface PagoAprobadoInput {
   reference: string;
   amountInCents: number;
   currency: string;
+}
+
+export interface RegistrarPagoManualInput {
+  amountInCents: number;
+  medioPago: string;
+  fechaPago?: string;
+  referencia?: string;
+  extenderCiclo?: 'mensual' | 'anual';
 }
 
 export function diasVencidos(vencimiento: string | undefined | null, hoy = new Date()): number {
@@ -147,6 +156,62 @@ export class CobrosService {
     return this.firebase.firestore.collection(COLLECTIONS.recibos).doc(id);
   }
 
+  // Fase 1: Eliza cobra por WhatsApp (efectivo, transferencia, Nequi, etc.), sin pasarela
+  // activa. Esto deja constancia del pago (fecha + medio) y, si se indica el ciclo, extiende
+  // la vigencia del plan y reactiva la cuenta -- sin esperar a integrar un cobro automatico.
+  async registrarPagoManual(
+    subscriptionId: string,
+    input: RegistrarPagoManualInput,
+    actor: AuthUser,
+  ): Promise<{ suscripcion: SuscripcionDoc; recibo: ReciboDoc }> {
+    const sub = await this.subs.obtenerPorId(subscriptionId);
+    this.subs.assertAccesoSuscripcion(actor, sub);
+    if (sub.estado === 'cancelada') {
+      throw new BadRequestException('Esta suscripcion esta cancelada; no se puede registrar un pago sobre ella.');
+    }
+
+    const fechaEmision = input.fechaPago ? new Date(input.fechaPago) : new Date();
+    if (Number.isNaN(fechaEmision.getTime())) {
+      throw new BadRequestException('Fecha de pago invalida.');
+    }
+
+    const reciboId = `manual_${subscriptionId}_${Date.now()}`;
+    const recibo: ReciboDoc = {
+      id: reciboId,
+      transactionId: reciboId,
+      subscriptionId,
+      reference: input.referencia?.trim() || `Pago manual (${input.medioPago})`,
+      amountInCents: input.amountInCents,
+      currency: 'COP',
+      estado: 'emitido',
+      tipo: 'recibo_manual',
+      orgId: sub.orgId ?? null,
+      veterinarioId: sub.veterinarioId ?? null,
+      planId: sub.planId ?? null,
+      fechaEmision: fechaEmision.toISOString(),
+      medioPago: input.medioPago,
+    };
+    await this.refRecibo(reciboId).set({
+      ...recibo,
+      creadoEn: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    let suscripcion = sub;
+    if (input.extenderCiclo) {
+      const base = sub.vigenteHasta ? new Date(sub.vigenteHasta) : fechaEmision;
+      const desde = base.getTime() > fechaEmision.getTime() ? base : fechaEmision;
+      const nuevoHasta = new Date(desde);
+      if (input.extenderCiclo === 'anual') {
+        nuevoHasta.setFullYear(nuevoHasta.getFullYear() + 1);
+      } else {
+        nuevoHasta.setMonth(nuevoHasta.getMonth() + 1);
+      }
+      suscripcion = await this.subs.extenderVigenciaPorPago(subscriptionId, nuevoHasta.toISOString(), actor);
+    }
+
+    return { suscripcion, recibo };
+  }
+
   fromSnap(
     snap: admin.firestore.DocumentSnapshot | admin.firestore.QueryDocumentSnapshot,
   ): ReciboDoc {
@@ -161,11 +226,12 @@ export class CobrosService {
       amountInCents: num(d.amountInCents),
       currency: str(d.currency) ?? 'COP',
       estado: 'emitido',
-      tipo: 'recibo_fase1_no_fiscal',
+      tipo: d.tipo === 'recibo_manual' ? 'recibo_manual' : 'recibo_fase1_no_fiscal',
       orgId: str(d.orgId) ?? null,
       veterinarioId: str(d.veterinarioId) ?? null,
       planId: str(d.planId) ?? null,
       fechaEmision: str(d.fechaEmision) ?? '',
+      medioPago: str(d.medioPago) ?? null,
       creadoEn: d.creadoEn,
     };
   }

@@ -116,6 +116,29 @@ export class SuscripcionesService {
     return { ...actual, id, estado: 'trial_activa', trialHasta: nuevoHasta.toISOString() };
   }
 
+  // Fase 1: el cobro se gestiona por WhatsApp, sin pasarela. Al registrar un pago manual
+  // (ver CobrosService.registrarPagoManual), se extiende la vigencia y se reactiva la
+  // cuenta (vencida/bloqueada -> activa).
+  async extenderVigenciaPorPago(id: string, vigenteHasta: string, actor?: AuthUser): Promise<SuscripcionDoc> {
+    const ref = this.col.doc(id);
+    const snap = await ref.get();
+    if (!snap.exists) throw new NotFoundException(`Suscripcion ${id} no existe.`);
+    const actual = { id: snap.id, ...(snap.data() as Omit<SuscripcionDoc, 'id'>) };
+    if (actor) this.assertAccesoSuscripcion(actor, actual);
+    if (actual.estado === 'cancelada') {
+      throw new BadRequestException('Esta suscripcion esta cancelada; no se puede registrar un pago sobre ella.');
+    }
+    await ref.set({ estado: 'activa', vigenteHasta }, { merge: true });
+    await this.auditoria.registrar({
+      accion: 'suscripcion.cambiar',
+      actorUid: actor?.uid ?? 'sistema',
+      orgId: actual.orgId ?? actor?.orgId ?? null,
+      recurso: id,
+      meta: { pagoManualVigenteHasta: vigenteHasta },
+    });
+    return { ...actual, id, estado: 'activa', vigenteHasta };
+  }
+
   // Asignar plan manualmente desde Super Admin
   async asignarPlan(id: string, planId: string, actor?: AuthUser): Promise<SuscripcionDoc> {
     const ref = this.col.doc(id);

@@ -79,9 +79,18 @@ export interface ReciboLigero {
   amountInCents: number;
   currency: string;
   estado: 'emitido';
-  tipo: 'recibo_fase1_no_fiscal';
+  tipo: 'recibo_fase1_no_fiscal' | 'recibo_manual';
   fechaEmision: string;
   planId?: string | null;
+  medioPago?: string | null;
+}
+
+export interface RegistrarPagoManualRequest {
+  amountInCents: number;
+  medioPago: string;
+  fechaPago?: string;
+  referencia?: string;
+  extenderCiclo?: CicloFacturacion;
 }
 
 export interface EstadoCuentaPagosResponse {
@@ -140,6 +149,11 @@ export const cambiarEstadoSuscripcion = async (id: string, estado: string) => {
 
 export const asignarPlanSuscripcion = async (id: string, planId: string) => {
   const res = await apiClient.patch(`/v1/suscripciones/${id}/plan`, { planId });
+  return res.data;
+};
+
+export const registrarPagoManual = async (id: string, dto: RegistrarPagoManualRequest) => {
+  const res = await apiClient.post(`/v1/suscripciones/${id}/pago-manual`, dto);
   return res.data;
 };
 

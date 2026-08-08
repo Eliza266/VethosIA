@@ -2,6 +2,7 @@ import { Body, Controller, Get, Param, Patch, Post, HttpCode, Put } from '@nestj
 import { PlanesService } from './planes.service';
 import { SuscripcionesService } from './suscripciones.service';
 import { ConsumoService } from './consumo.service';
+import { CobrosService } from './cobros.service';
 import { WompiService, WompiEvent } from './wompi.service';
 import { PagosConfigService } from './pagos-config.service';
 import {
@@ -11,6 +12,7 @@ import {
   CheckoutDto,
   ConfigurarWompiDto,
   ExtenderTrialDto,
+  RegistrarPagoManualDto,
 } from './dto/saas.dto';
 import { PlanDoc } from './plan.types';
 import { Roles } from '../../common/auth/roles.decorator';
@@ -51,6 +53,7 @@ export class SuscripcionesController {
   constructor(
     private readonly subs: SuscripcionesService,
     private readonly consumo: ConsumoService,
+    private readonly cobros: CobrosService,
   ) {}
 
   @Get('me')
@@ -92,6 +95,18 @@ export class SuscripcionesController {
     @CurrentUser() user: AuthUser,
   ) {
     return this.subs.asignarPlan(id, dto.planId, user);
+  }
+
+  // registrar un pago cobrado por fuera de la pasarela (Fase 1: WhatsApp/manual).
+  @Roles('admin')
+  @Post(':id/pago-manual')
+  @HttpCode(200)
+  registrarPagoManual(
+    @Param('id') id: string,
+    @Body() dto: RegistrarPagoManualDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.cobros.registrarPagoManual(id, dto, user);
   }
 }
 
